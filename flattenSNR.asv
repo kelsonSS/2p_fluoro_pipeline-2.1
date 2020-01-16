@@ -1,0 +1,19 @@
+function SNR_flat = flattenSNR(SNR)
+
+flds = fieldnames(SNR);
+for name_idx = 1:length(flds)
+    name =  flds( name_idx);
+    name = name{1};
+    [r,c] = size( SNR.( name ));
+    
+    if r >1 && c > 1 && iscell( SNR. (name) )
+        temp = SNR.( name );
+        temp =  cellfun( @(z) z',temp,'UniformOutput',0);
+        temp = [temp{:}];
+        temp = reshape 
+        
+        SNR_flat.(name) = temp;
+    else 
+        SNR_flat.( name ) = SNR.( name );
+    end 
+end 
