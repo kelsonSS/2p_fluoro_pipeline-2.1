@@ -1,4 +1,4 @@
-function TimingInfo = getTimingInfo_H5(ThorSyncFile, PsignalTimingFile, fps,xml)
+function TimingInfo = getTimingInfo_H5(ThorSyncFile, PsignalTimingFile, fps,xml,num_frames_actual)
 %This function finds the frames that correspond to trials
 
 if ~exist('fps','var')
@@ -42,6 +42,7 @@ try
 gate=h5read(ThorSyncFile,'/AI/ai4'); % trial gate signal
 fo=h5read(ThorSyncFile,'/DI/Frame Out');
 catch    
+  fprintf('%s is bad /n', ThorSyncFile)
     return
 end 
 
@@ -73,13 +74,36 @@ firstframe = floor(find(fc,1)/1000);
 on = on - firstframe + 1;
 off = off - firstframe + 1;
 
-if on(1) == 0
-    on(1) = 1; 
-    off = off+1;
+
+
+
+%% sanity checks
+
+num_frames_predicted = findpeaks(diff(fc),1);
+num_frames_predicted = length(num_frames_predicted.loc);
+
+% if more frames in actual than predicted, shift times
+% to reflect true start time 
+if num_frames_predicted < num_frames_actual
+    
+   shift =  num_frames_actual - num_frames_predicted;
+   on =  on+shift;
+   off = off+shift;
+    sprintf('%s, %s' ,num_frames_predicted,num_frames_actual);
+end
+
+% if frames are off by one shift first start frame by 1 
+% indicates one frame dropped at beginning 
+if any(size(on) == 0)
+    on(1) = 1;
 end 
 
+if num_frames_predicted == num_frames_actual + 1 || on(1) == 0 
+        on(1) = 1;  
+       % off(1) = off(1)+1;
+end 
+    
 
-%sanity checks#
 % frames_actual = findpeaks(diff(fo(on(1)*1000:off(1)*1000 )),1);
 % bad_frame_flag = length(frames_actual.loc) ~= TimingInfo.tarFnums ;
 % 
