@@ -13,6 +13,12 @@
 clear all; close all;
 
 %Path to code
+try 
+d = dir('C:\Users\**\Documents\GitHub\2p_fluoro_pipeline-2.1');    
+git_path = d(1).folder;
+addpath(genpath(git_path))
+cd(git_path)
+catch
 try
     cd('C:\Users\Kelson\Google Drive\2p_fluoro_pipeline 2.1')
     addpath(genpath('C:\Users\Kelson\Google Drive\2p_fluoro_pipeline 2.1'))
@@ -22,6 +28,8 @@ catch
     addpath(genpath('G:\My Drive\2p_fluoro_pipeline 2.1'))
     addpath(genpath('G:\My Drive\Psignal'))
 end
+
+end 
 %Path to Data
 inpath = '\\vault3\Data\Kelson\Files to upload'
 %Input variables
