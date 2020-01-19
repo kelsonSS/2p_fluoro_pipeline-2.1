@@ -14,10 +14,11 @@ clear all; close all;
 
 %Path to code
 try 
-d = dir('C:\Users\**\Documents\GitHub\2p_fluoro_pipeline-2.1');    
-git_path = d(1).folder;
-addpath(genpath(git_path))
-cd(git_path)
+%% uncomment if you don't have github GitHub\2p_fluoro_pipeline-2.1 added and on your main path
+% d = dir('C:\Users\**\Documents\GitHub\2p_fluoro_pipeline-2.1');    
+% git_path = d(1).folder;
+% addpath(genpath(git_path))
+% cd(git_path)
 catch
 try
     cd('C:\Users\Kelson\Google Drive\2p_fluoro_pipeline 2.1')
@@ -199,7 +200,7 @@ for i=1:length(paths)
     %Select current Psignal file
     input.psignalfiles = psignalfiles(~cellfun(@isempty,psignalfiles(:,i)),i);
     fprintf('analyzing %d of %d: %s \n',i,length(paths),input.path) 
-    ExtractFluorescence(input,1);
+    ExtractFluorescence(input);
 end 
 
 %% package into Experiments 
