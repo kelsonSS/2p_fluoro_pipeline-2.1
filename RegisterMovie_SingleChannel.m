@@ -15,12 +15,12 @@ disp(newpath)
 
 % check if expt has already been registered
 if ~ isempty(dir([newpath 'greenchannelregistered.raw']))
-        newfile = dir([newpath 'greenchannelregistered.raw']);
-        oldfile = dir([newpath 'greenchannel.raw']);         
-        if newfile.bytes == oldfile.bytes 
-            continue
-        end
-    end 
+    newfile = dir([newpath 'greenchannelregistered.raw']);
+    oldfile = dir([newpath 'greenchannel.raw']);
+    if newfile.bytes == oldfile.bytes
+        continue
+    end
+end
    
 %Movies are already seperated by channel, so we only need to select 1st channel.
 origpath= char(strcat(input.path, '\', input.expname(expnum), '\Experiment.xml'));
@@ -31,7 +31,7 @@ opts.format = {'uint16', [opts.dimX, opts.dimY 1], 'channels'};
 nframes = opts.numframes;
 sampInd = round(linspace(1,nframes,nframes/input.winsize));
 corrSeq = zeros(length(sampInd),3);
-tstartCorr = tic;
+
 
 
 %% Load the input .raw file into a matrix
@@ -41,7 +41,7 @@ fh = fopen(fullpathIMG); %
 numFrames_total =  FindRawImgSize(fh,[opts.dimX opts.dimY]);
 
 ItemsPerImage = opts.dimX* opts.dimY;
-chunkSize =  7500; % frames 
+chunkSize =  input.maxframechunk; % frames 
 chunks = ceil(numFrames_total/chunkSize); 
 
 tstartCorr = tic;
@@ -61,15 +61,16 @@ for chunk_count = 1:chunks
 
 %% Generate motion offsets using DFT
 %% FIND SEGMENT OF MOVIE WITH HIGH CORR VALUES
-winsize = 99;
+winsize = 99; 
 nframes = size(IMG,3);
-sampInd = round(linspace(1,nframes,50));
+sampInd = round(linspace(winsize+1,nframes-winsize,10));
 corrSeq = zeros(length(sampInd),3);
 
 
 
 if ~exist('imTemplate','var')
     disp('Finding "stable" segment of movie....');
+    tstartCorr = tic;
     for k = 1:length(sampInd)
         lwin = max(1, sampInd(k)-winsize);
         rwin = min(sampInd(k)+winsize, nframes);
@@ -81,14 +82,15 @@ if ~exist('imTemplate','var')
     
     pkCorrInd = find(corrSeq(1:end-1,1) == max(corrSeq(1:end-1,1)));
     tEndCorr = toc(tstartCorr);
-    disp([' Time to find stable portion of movie ' ,num2str(tEndCorr)/60,' minutes'])
+    fprintf(' Time to find stable portion of movie %d seconds \n',round(tEndCorr))
     
     
    
     timPtWindow = (corrSeq(pkCorrInd,3) + corrSeq(pkCorrInd,2))/2;
-    I = (mean(IMG(:,:,timPtWindow-50:timPtWindow+50),3));
+    I = (mean(IMG(:,:,timPtWindow-winsize:timPtWindow+winsize),3));
     fixed = (I - min(I(:)))./range(I(:));
-    imTemplate = fft2(fixed);
+    imTemplate = fft2(whiten(fixed));
+    save(fullfile(newpath,'AvgImg.m'),'fixed')
 end
 if isempty(gcp('nocreate'))
     parpool('local');
@@ -99,12 +101,10 @@ disp('Finding motion correction coordinates....');
 tStartMotionOffsets = tic;
 parfor j = 1 :  nframes
     % using Fourier transformation of images for registration
-    error  = dftregistration(imTemplate,fft2(IMG(:,:,j)),10);
+    error  = dftregistration(imTemplate,fft2(whiten(IMG(:,:,j))),10);
     ty(j) = error(3);
     tx(j) = error(4);
 end
-txty = [ty' tx'];
-txty = round(txty);
 telapsedMotionOffset = toc(tStartMotionOffsets);
 disp('')
 disp(['     Time Elapsed for Motion Offsets was: ', num2str(telapsedMotionOffset), ' seconds'])
@@ -121,6 +121,9 @@ RegIMG = zeros( dimY , dimX , nframes );
 
 %% register data 
 % check to ensure we don't go over IMG size on last img
+tRegistration= tic; 
+
+
 for t = 1:nframes
     tmpRegIMG = zeros(dimY+pd,dimX+pd);
     try
@@ -129,11 +132,12 @@ for t = 1:nframes
         RegIMG( : , : , t) =  tmpRegIMG(pd/2:pd/2+dimY-1 , pd/2:pd/2+dimX-1);
     catch % in case there is a large jump in the frame larger than padding
         %tmpRegIMG(pd/2:pd/2+dimY-1,pd/2:pd/2+dimX-1) = IMG(:,:,t)
-        RegIMG = IMG(:,:,t);
+        RegIMG(:,:,t) = IMG(:,:,t);
     end
 end
-    % delete registered portion of image
 
+telapsedRegistration = toc(tRegistration);
+fprintf('Registration took %d seconds \n',ceil(telapsedRegistration))
     
     %% Save registered .raw file
     RegFname = 'greenchannelregistered.raw';
@@ -146,6 +150,7 @@ end
     end 
     fwrite(fileID,RegIMG,'uint16','ieee-le');
     fclose(fileID);
+    fprintf('saved! loading next file');
 clear IMG  
 clear RegIMG
 clear tmpRegIMG
@@ -189,5 +194,3 @@ end
 
 fprintf('Elapsed time: %g. minutes \n', toc()/60);
 end 
-
-    
