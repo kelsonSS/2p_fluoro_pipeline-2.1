@@ -28,11 +28,6 @@ opts = get_options_from_xml(origpath);
 opts.format = {'uint16', [opts.dimX, opts.dimY 1], 'channels'};
 %Load registration image sequences into memory
 
-nframes = opts.numframes;
-sampInd = round(linspace(1,nframes,nframes/input.winsize));
-corrSeq = zeros(length(sampInd),3);
-
-
 
 %% Load the input .raw file into a matrix
 fullpathIMG = [newpath 'greenchannel.raw'];
