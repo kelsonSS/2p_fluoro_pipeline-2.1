@@ -220,7 +220,7 @@ if isfield(handles,'GreenfilteredadjMnIMG')
 end
 guidata(hObject, handles);
 function selectneurons_Callback(hObject, eventdata, handles)
-handles.numonoff.Value=1;
+%handles.numonoff.Value=1;
 %Select neuron centers
 title(['0 Neurons Selected'],'Parent',handles.axes1)
 title(['0 Neurons Selected'],'Parent',handles.axes2)
@@ -258,7 +258,6 @@ if isfield(handles,'RedfilteredadjMnIMG') && iscellstr(handles.pthname)
         ptsIdx = [[1:length(xc)]' xc yc];
         title([num2str(size(ptsIdx,1)) ' Neurons Selected'],'Parent',handles.axes1)
         title([num2str(size(ptsIdx,1)) ' Neurons Selected'],'Parent',handles.axes2)
-        if 
         for nn = 1:length(xc)
             hold on
             neuronNumb = num2str(ptsIdx(nn));
@@ -355,6 +354,8 @@ try
     xc = [handles.selectedneurons.Data(:,1); xc];
     yc = [handles.selectedneurons.Data(:,2); yc];
     ptsIdx = [[1:length(xc)]' [xc yc]];
+    handles.selectedneurons.Data = [xc yc];
+    
     title([num2str(size(ptsIdx,1)) ' Neurons Selected'],'Parent',handles.axes1)
     title([num2str(size(ptsIdx,1)) ' Neurons Selected'],'Parent',handles.axes2)
     cla(handles.axes1)
@@ -363,10 +364,11 @@ try
     cla(handles.axes2)
     imshow((handles.GreenContAdjfilteredadjMnIMG),[],'Parent',handles.axes2);
     hold(handles.axes2,'on')
-    rois_Callback(hObject,eventdata, handles)
+%     rois_Callback(hObject,eventdata, handles)
+    guidata(hObject,handles)
     numonoff_Callback(hObject, eventdata, handles)
-    handles.selectedneurons.Data = [xc yc];
-    guidata(hObject,handles);
+   
+
     title([handles.filename ': ' num2str(size(ptsIdx,1)) ' Neuron(s) Selected'], ...
         'Parent',handles.axes1)
     title([handles.filename ': ' num2str(size(ptsIdx,1)) ' Neuron(s) Selected'], ...
@@ -376,7 +378,7 @@ function selectedneurons_CellSelectionCallback(hObject, eventdata, handles)
 handles.deleteneuron = eventdata.Indices;
 guidata(hObject,handles);
 function numonoff_Callback(hObject, eventdata, handles)
-if ~handles.numonoff.Value
+    
     xc = handles.selectedneurons.Data(:,1);
     yc = handles.selectedneurons.Data(:,2);
     ptsIdx = [[1:length(xc)]' [xc yc]];
@@ -389,6 +391,12 @@ if ~handles.numonoff.Value
     imshow((handles.GreenContAdjfilteredadjMnIMG),[],'Parent',handles.axes2);
     hold(handles.axes2,'on')
     rois_Callback(hObject,eventdata, handles)
+    
+    
+    
+    
+    
+    if ~handles.numonoff.Value
     for nn = 1:length(xc)
         hold on
         plot(xc(nn), yc(nn),'r.','markersize', ...
@@ -401,40 +409,29 @@ if ~handles.numonoff.Value
         'Parent',handles.axes1)
     title([handles.filename ': ' num2str(size(ptsIdx,1)) ' Neuron(s) Selected'], ...
         'Parent',handles.axes2)
-else
-    xc = handles.selectedneurons.Data(:,1);
-    yc = handles.selectedneurons.Data(:,2);
-    ptsIdx = [[1:length(xc)]' [xc yc]];
-    title([num2str(size(ptsIdx,1)) ' Neurons Selected'],'Parent',handles.axes1)
-    cla(handles.axes1)
-    imshow((handles.RedContAdjfilteredadjMnIMG),[],'Parent',handles.axes1);
-    hold(handles.axes1,'on')
-    title([num2str(size(ptsIdx,1)) ' Neurons Selected'],'Parent',handles.axes2)
-    cla(handles.axes2)
-    imshow((handles.GreenContAdjfilteredadjMnIMG),[],'Parent',handles.axes2);
-    hold(handles.axes2,'on')
-    rois_Callback(hObject,eventdata, handles)
-    for nn = 1:length(xc)
-        hold on
-        neuronNumb = num2str(ptsIdx(nn));
-        text(xc(nn)+10, yc(nn)+10,neuronNumb,'FontSize',16,'Color','b', ...
-            'fontweight','bold','Parent',handles.axes1)
-        text(xc(nn)+10, yc(nn)+10,neuronNumb,'FontSize',14,'Color','c', ...
-            'fontweight','bold','Parent',handles.axes1)
-        text(xc(nn)+10, yc(nn)+10,neuronNumb,'FontSize',16,'Color','b', ...
-            'fontweight','bold','Parent',handles.axes2)
-        text(xc(nn)+10, yc(nn)+10,neuronNumb,'FontSize',14,'Color','c', ...
-            'fontweight','bold','Parent',handles.axes2)
-        plot(xc(nn), yc(nn),'r.','markersize', ...
-            size(handles.RedContAdjfilteredadjMnIMG,1)/32,'Parent',handles.axes1)
-        plot(xc(nn), yc(nn),'r.','markersize', ...
-            size(handles.GreenContAdjfilteredadjMnIMG,1)/32,'Parent',handles.axes2)
-    end
-    guidata(hObject,handles);
-    title([handles.filename ': ' num2str(size(ptsIdx,1)) ' Neuron(s) Selected'], ...
-        'Parent',handles.axes1)
-    title([handles.filename ': ' num2str(size(ptsIdx,1)) ' Neuron(s) Selected'], ...
-        'Parent',handles.axes2)
+    else
+        
+        for nn = 1:length(xc)
+            hold on
+            neuronNumb = num2str(ptsIdx(nn));
+            text(xc(nn)+10, yc(nn)+10,neuronNumb,'FontSize',16,'Color','b', ...
+                'fontweight','bold','Parent',handles.axes1)
+            text(xc(nn)+10, yc(nn)+10,neuronNumb,'FontSize',14,'Color','c', ...
+                'fontweight','bold','Parent',handles.axes1)
+            text(xc(nn)+10, yc(nn)+10,neuronNumb,'FontSize',16,'Color','b', ...
+                'fontweight','bold','Parent',handles.axes2)
+            text(xc(nn)+10, yc(nn)+10,neuronNumb,'FontSize',14,'Color','c', ...
+                'fontweight','bold','Parent',handles.axes2)
+            plot(xc(nn), yc(nn),'r.','markersize', ...
+                size(handles.RedContAdjfilteredadjMnIMG,1)/32,'Parent',handles.axes1)
+            plot(xc(nn), yc(nn),'r.','markersize', ...
+                size(handles.GreenContAdjfilteredadjMnIMG,1)/32,'Parent',handles.axes2)
+        end
+        guidata(hObject,handles);
+        title([handles.filename ': ' num2str(size(ptsIdx,1)) ' Neuron(s) Selected'], ...
+            'Parent',handles.axes1)
+        title([handles.filename ': ' num2str(size(ptsIdx,1)) ' Neuron(s) Selected'], ...
+            'Parent',handles.axes2)
 end
 function loadselection_Callback(hObject, eventdata, handles)
 fNameString = ['CellDefinitions.mat'];
