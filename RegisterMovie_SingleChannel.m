@@ -31,24 +31,29 @@ opts.format = {'uint16', [opts.dimX, opts.dimY 1], 'channels'};
 
 %% Load the input .raw file into a matrix
 fullpathIMG = [newpath 'greenchannel.raw'];
-fh = fopen(fullpathIMG); %
 
+fh = fopen(fullpathIMG); 
 numFrames_total =  FindRawImgSize(fh,[opts.dimX opts.dimY]);
-
-ItemsPerImage = opts.dimX* opts.dimY;
+ItemsPerImage = opts.dimX* opts.dimY ;
 chunkSize =  input.maxframechunk; % frames 
 chunks = ceil(numFrames_total/chunkSize); 
+fclose(fh);
 
 tstartCorr = tic;
 for chunk_count = 1:chunks
     %% register data 
+     
+    % open file and move pointer to next chunk
+    fh = fopen(fullpathIMG); 
+    start_idx = (chunk_count-1) * ItemsPerImage * chunkSize * 2 %bytes  ;
+    fseek(fh,start_idx,'bof')
     % check to ensure we don't go over IMG size on last img
     if chunk_count == chunks 
         IMG = fread(fh,inf,'uint16');
-        
     else 
         IMG =fread(fh,ItemsPerImage * chunkSize,'uint16');
     end 
+    fclose(fh);
 
 
     IMG =  permute( reshape(IMG,opts.dimX, opts.dimY, []),[2 1 3]); 
@@ -100,6 +105,10 @@ parfor j = 1 :  nframes
     ty(j) = error(3);
     tx(j) = error(4);
 end
+
+txty = [ty' tx'];
+txty = round(txty);
+
 telapsedMotionOffset = toc(tStartMotionOffsets);
 disp('')
 disp(['     Time Elapsed for Motion Offsets was: ', num2str(telapsedMotionOffset), ' seconds'])
@@ -128,6 +137,7 @@ for t = 1:nframes
     catch % in case there is a large jump in the frame larger than padding
         %tmpRegIMG(pd/2:pd/2+dimY-1,pd/2:pd/2+dimX-1) = IMG(:,:,t)
         RegIMG(:,:,t) = IMG(:,:,t);
+        warning('Problem registering frame %d',t)
     end
 end
 
@@ -136,7 +146,7 @@ fprintf('Registration took %d seconds \n',ceil(telapsedRegistration))
     
     %% Save registered .raw file
     RegFname = 'greenchannelregistered.raw';
-    RegFullPath = [newpath RegFname];
+    RegFullPath = fullfile('C:\Users\KanoldLab\Desktop\Kelson\registration_temp', RegFname);
     fprintf('Saving Registered file %d of %d in %s \n',chunk_count,chunks, RegFullPath);
     if chunk_count == 1
         fileID = fopen(RegFullPath,'w+');
@@ -146,12 +156,22 @@ fprintf('Registration took %d seconds \n',ceil(telapsedRegistration))
     fwrite(fileID,RegIMG,'uint16','ieee-le');
     fclose(fileID);
     fprintf('saved! loading next file');
-clear IMG  
+   
+clear IMG
 clear RegIMG
 clear tmpRegIMG
 clear txty
 clear tx
 clear ty
+
+ if chunk_count == chunks
+        RegFname = 'greenchannelregistered.raw';
+        TransferFullPath = [newpath RegFname];
+        movefile(RegFullPath,TransferFullPath)
+        deletefile(RegFullPath)
+ end
+
+
 end
 
 
