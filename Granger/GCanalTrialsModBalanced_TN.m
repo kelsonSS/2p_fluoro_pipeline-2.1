@@ -25,10 +25,10 @@ function GCanalTrialsModBalanced_TN(dataDir,Type,RedChannel)
   end 
   
 
-dir_main = 'G:\My Drive\2p_fluoro_pipeline 2.1\Granger';
-dir_data = '\\vault3\Data\Kelson\Analyzed';
-
-dir_funcs = strcat(dir_main,'Function Directory');
+%  dir_main = 'G:\My Drive\2p_fluoro_pipeline 2.1\Granger';
+% dir_data = '\\vault3\Data\Kelson\Analyzed';
+% 
+% dir_funcs = strcat(dir_main,'Function Directory');
 dir_out_main = strcat('\\Vault3\data\Kelson\GrangerResults\');
 % Add directories to path
 %addpath(dir_data,dir_funcs)
@@ -53,32 +53,32 @@ end
 irun = 1
 for iif = 1:length(dataDir) %For each file in a directory
     
-    % file directory setup
-    try
-    Datapath = dataDir{iif};
-    catch 
-        Datapath = dataDir;
-    end
-    fn = strrep(Datapath,'-','_');
-    fn = strrep(Datapath,'/','\');
-    fn = strsplit(fn,'\');
-    fileName1 = strcat(fn{6} ,'_',fn{7}, '_' , Type);
-    if RedChannel
-        fileName1 = [fileName1 '_Labeled'];
-    end 
-    dir_out = fullfile(dir_out_main,fileName1);
-    if ~exist(dir_out,'dir')
-        mkdir(dir_out)
-    end
+%     % file directory setup
+%     try
+%     Datapath = dataDir{iif};
+%     catch 
+%         Datapath = dataDir;
+%     end
+%     fn = strrep(Datapath,'-','_');
+%     fn = strrep(Datapath,'/','\');
+%     fn = strsplit(fn,'\');
+%     fileName1 = strcat(fn{6} ,'_',fn{7}, '_' , Type);
+%     if RedChannel
+%         fileName1 = [fileName1 '_Labeled'];
+%     end 
+%     dir_out = fullfile(dir_out_main,fileName1);
+%     if ~exist(dir_out,'dir')
+%         mkdir(dir_out)
+%     end
+%     
+%     % grab and Preprocess data
+     Data = dataDir{iif};
     
-    % grab and Preprocess data
-    Data = Fluoro_to_Table(dataDir{iif});
-    
-    cdef = Data.CellID{1};
-    xy = cdef.ptsIdx(:,2:3);
-    FLO = Data.FreqLevelOrder;
-    active_idx = Data.active{:,2} >= 1; % find all cells active P<.001
-    
+     cdef = Data.CellID{1}
+     xy = cdef.ptsIdx(:,2:3);
+     FLO = Data.FreqLevelOrder;
+     active_idx = Data.active{:,2} >= 1; % find all cells active P<.001
+     
      
     try 
         Fluoro = Data.DFF(:,:,active_idx);  
