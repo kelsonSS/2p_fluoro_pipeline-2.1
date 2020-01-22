@@ -45,14 +45,15 @@ Fluo_file = 'Fluorescence.mat';
 
 dir_t = dir([Main_path] );
 dir_t = {dir_t.name};
-f_bl= ~ cellfun(@isempty,(regexp( dir_t  ,'_Phys_')));
-
+f_bl= ~cellfun(@isempty,(regexp( dir_t  ,'_Phys_')));
+mat_bl= ~cellfun(@isempty,(regexp( dir_t  ,'.mat')));
+f_bl = f_bl & mat_bl;
 if sum(f_bl) == 0
     continue
 elseif sum(f_bl) == 1
 Psignal_file= dir_t{f_bl};
 else 
-[PsigName, PsigPath] = uigetfile(Main_path);
+[PsigName, PsigPath] = uigetfile(Main_path,'load Psignal file');
 
 Psignal_file =   [PsigPath,PsigName];
 end 
