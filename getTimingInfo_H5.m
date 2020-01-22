@@ -52,6 +52,13 @@ catch
     fc = fo;
 end 
     
+try
+gate=h5read(ThorSyncFile,'/AI/ai4'); % trial gate signal
+catch    
+ gate=h5read(ThorSyncFile,'/AI/PsignalGate');
+end 
+
+
 nchannels = xml.format{2}(3);
 
 %first_frame = find(fc,1);
