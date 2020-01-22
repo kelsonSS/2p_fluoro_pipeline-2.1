@@ -22,7 +22,10 @@ for i = 1:length(input.expname)
     
    
     out_path = fullfile(newpath,'greenchannel.raw');
+    red_path = fullfile(newpath,'redchannel.raw');
     
+    if opts.numchannels == 1
+        
     % chcek to see if the file has already be extracted 
     if ~ isempty(dir(out_path))
         newfile = dir(out_path);
@@ -31,14 +34,25 @@ for i = 1:length(input.expname)
             continue
         end
     end 
-    
-    if opts.numchannels == 1
+        
         
         old_path = fullfile(input.path,input.expname{i},'Image_0001_0001.raw');
         
         copyfile(old_path,out_path, 'f')
         
     elseif opts.numchannels == 2
+            if ~ isempty(dir(out_path))
+        newfile = dir(out_path);
+        redfile = dir(red_path);
+        oldfile = dir(fullfile(input.path,input.expname{i},'\Image_0001_0001.raw'));         
+        if newfile.bytes + redfile.bytes == oldfile.bytes 
+            continue
+        end
+    end 
+        
+        
+        
+        
         
         out_path = fullfile(newpath,'greenchannel');
         img = fopen(fullfile(input.path,input.expname{i},'Image_0001_0001.raw'));
@@ -83,27 +97,37 @@ for i = 1:length(input.expname)
        % reshape and extract red
        
        
+
+       
+       
        
   
         outpathRed  = fullfile(newpath,'redchannel.raw');
         outpathGreen= fullfile(newpath,'greenchannel.raw');
         
-        if exist(outpathRed,'file')
-            delete(outpathRed)
-        end
+         if exist(outpathRed,'file')
+             delete(outpathRed)
+         end
+         
+         if exist(outpathGreen,'file')
+             delete(outpathGreen)
+         end 
         
-        if exist(outpathGreen,'file')
-            delete(outpathGreen)
+        
+        red_out = fopen(outpathRed,'w+');
+        if red_out ~= -1
+            fwrite(red_out, Red,'uint16'); 
+            fclose(red_out);
+        end 
+     
+        
+        green_out = fopen(outpathGreen,'w+');
+         if green_out ~= -1
+            fwrite(green_out,Green,'uint16');
+            fclose(green_out);
         end 
         
         
-        red_out = fopen(outpathRed,'w');
-        fwrite(red_out, Red,'uint16');
-        fclose(red_out);
-        
-        green_out = fopen(outpathGreen,'w');
-        fwrite(green_out,Green,'uint16');     
-        fclose(green_out);
         
     else
         warning('There were more channels than expected in %s',input.expname{i})
