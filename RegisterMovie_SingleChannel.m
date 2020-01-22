@@ -146,7 +146,8 @@ fprintf('Registration took %d seconds \n',ceil(telapsedRegistration))
     
     %% Save registered .raw file
     RegFname = 'greenchannelregistered.raw';
-    RegFullPath = fullfile('C:\Users\KanoldLab\Desktop\Kelson\registration_temp', RegFname);
+    RegFullPath = [newpath RegFname]; 
+    %RegFullPath = fullfile('C:\Users\KanoldLab\Desktop\Kelson\registration_temp', RegFname);
     fprintf('Saving Registered file %d of %d in %s \n',chunk_count,chunks, RegFullPath);
     if chunk_count == 1
         fileID = fopen(RegFullPath,'w+');
@@ -164,12 +165,12 @@ clear txty
 clear tx
 clear ty
 
- if chunk_count == chunks
-        RegFname = 'greenchannelregistered.raw';
-        TransferFullPath = [newpath RegFname];
-        movefile(RegFullPath,TransferFullPath)
-        deletefile(RegFullPath)
- end
+%  if chunk_count == chunks
+%          RegFname = 'greenchannelregistered.raw';
+%          TransferFullPath = [newpath RegFname];
+%         movefile(RegFullPath,TransferFullPath)
+%         deletefile(RegFullPath)
+%  end
 
 
 end
@@ -203,7 +204,7 @@ end
 % end 
 %% cleanup
 
-fclose(fh);
+%fclose(fh);
 
 end 
 
