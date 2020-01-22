@@ -17,7 +17,8 @@ if ~exist('experiment_files','var')
     run = 1;
     expt = 1;
     while run 
-        experiment_files{expt,1} = uigetdir('\\vault3\data\kelson\Analyzed')
+        experiment_files{expt,1} = uigetdir('\\vault3\data\kelson\Analyzed','Load Passive')
+        experiment_files{expt,2} = uigetdir(experiment_files{expt,1},'Load Active')
         expt = expt+1;
         
        build_experiments_flag =  questdlg('continue?');
@@ -36,10 +37,23 @@ Active_list=  cell(length(experiment_files),1) ;
 
 for expt_id = 1:m
     try
-    active = Fluoro_to_Table(experiment_files{expt_id});
-    Active_list{expt_id} = active;
+        % get passive data
+    passive = Fluoro_to_Table(experiment_files{expt_id,1});
+    Active_list{expt_id,1} = passive;
+    Active_list{expt_id,3} = experiment_files{expt_id,1};
+    
+  
     catch
-        continue
+ 
     end 
+    try
+        % get active data
+    active =  Fluoro_to_Table(experiment_files{expt_id,2});  
+    Active_list{expt_id,2} = active; 
+    Active_list{expt_id,4} = experiment_files{expt_id,2};
+    catch
+        
+    end 
+    
 end 
 
