@@ -10,7 +10,7 @@ if ~exist('debug','var')
     debug = 0 ;
 end 
 for expnum = 1:length(input.expname)
-    sprintf( 'registering movie\n %s \n elapsed time: %d minutes \n',...
+    sprintf( 'making smooth img \n %s \n elapsed time: %d minutes \n',...
     fullfile(input.path,input.expname{expnum},floor(toc()/60) ))
     bb=strsplit(input.path,'\'); % KA- switced from strsep to strsplit
     
@@ -20,14 +20,21 @@ for expnum = 1:length(input.expname)
     if ~ isempty(dir([newpath 'AvgImageSmooth.tif']))
              continue
      end
+ end
+  
+ if isempty(dir([newpath 'greenchannelregistered.raw'])
+    continue
  end 
      opts = get_options_from_xml(fullfile(newpath,'Experiment.xml'));
     
+    try
     fh = fopen(fullfile(newpath,'greenchannelregistered.raw'));
     IMG = fread(fh,opts.dimX* opts.dimY *1000,'uint16=>uint16');
     IMG = reshape(IMG,opts.dimX, opts.dimY,[]);
     fclose(fh);
-    
+    catch
+        continue
+    end 
     %  bin values together to remove PMT noise 
     bin_size = 10;
     r = mod(size(IMG,3), bin_size); 
@@ -44,6 +51,7 @@ for expnum = 1:length(input.expname)
     h = figure;imagesc(smooth_img);colormap gray;axis square;axis off
     saveas(h,fullfile(newpath,'AvgImageSmooth.tif'))
     save(fullfile(newpath,'smooth_img.mat'),'smooth_img')
+    title([bb{end}, ': ', input.expname{expnum}],'Interpreter','none')
     clear smooth_img;
    
     
