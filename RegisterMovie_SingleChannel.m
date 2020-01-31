@@ -21,7 +21,11 @@ if ~ isempty(dir([newpath 'greenchannelregistered.raw']))
         continue
     end
 end
-   
+
+ if isempty(dir([newpath 'greenchannel.raw']))
+    continue
+ end 
+
 %Movies are already seperated by channel, so we only need to select 1st channel.
 origpath= char(strcat(input.path, '\', input.expname(expnum), '\Experiment.xml'));
 opts = get_options_from_xml(origpath);
@@ -89,7 +93,7 @@ if ~exist('imTemplate','var')
     timPtWindow = (corrSeq(pkCorrInd,3) + corrSeq(pkCorrInd,2))/2;
     I = (mean(IMG(:,:,timPtWindow-winsize:timPtWindow+winsize),3));
     fixed = (I - min(I(:)))./range(I(:));
-    imTemplate = fft2(whiten(fixed));
+    imTemplate = fft2(fixed);
     save(fullfile(newpath,'AvgImg.m'),'fixed')
 end
 if isempty(gcp('nocreate'))
@@ -101,7 +105,7 @@ disp('Finding motion correction coordinates....');
 tStartMotionOffsets = tic;
 parfor j = 1 :  nframes
     % using Fourier transformation of images for registration
-    error  = dftregistration(imTemplate,fft2(whiten(IMG(:,:,j))),10);
+    error  = dftregistration(imTemplate,fft2(IMG(:,:,j)),10);
     ty(j) = error(3);
     tx(j) = error(4);
 end
@@ -158,6 +162,16 @@ fprintf('Registration took %d seconds \n',ceil(telapsedRegistration))
     fclose(fileID);
     fprintf('saved! loading next file');
    
+
+%% Plot side-by-side correction
+%  figure;
+%  for ii =1:1000
+% imagesc(imfuse(fixed,RegIMG(:,:,ii)))
+% pause(.01)
+% end
+    
+    
+    
 clear IMG
 clear RegIMG
 clear tmpRegIMG
@@ -174,7 +188,7 @@ clear ty
 
 
 end
-
+clear imTemplate
 
 
 
@@ -182,12 +196,7 @@ end
 % save('directory/filename.mat','RegIMG','tx','ty','-v7.3')
 
 
-%% Plot side-by-side correction
-%  figure;
-%  for ii =1:1000
-% imagesc(imfuse(fixed,RegIMG(:,:,ii)))
-% pause(.01)
-% end
+
     
 %%
 
