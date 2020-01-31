@@ -38,11 +38,12 @@ end
   % also need to show which files need behavior (ART) files so we can 
   % add them if they are missing
   
- matfiles = dir([file_path, '\**\ART*']);
- matfiles = [matfiles;dir([file_path,'\**\RND*'])] ; 
+ matfiles = dir([file_path, '\**\ART*.mat']);
+ matfiles = [matfiles;dir([file_path,'\**\RND*.mat'])] ; 
  matfiles = struct2cell(matfiles);
  ARTs     = matfiles(1,:)';
  matfiles = matfiles(2,:)';
+ 
  matfiles = cellfun(file_shorten,matfiles,'UniformOutput',0);
  % remove all analyzed files
  mask_mat = ~contains(matfiles,'\Analyzed');
