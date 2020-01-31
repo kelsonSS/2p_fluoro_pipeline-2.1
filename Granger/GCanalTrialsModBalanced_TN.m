@@ -51,7 +51,7 @@ end
 
 %%
 irun = 1
-for iif = 1:length(dataDir) %For each file in a directory
+for expt = 1:length(dataDir) %For each file in a directory
     
 %     % file directory setup
 %     try
@@ -59,26 +59,38 @@ for iif = 1:length(dataDir) %For each file in a directory
 %     catch 
 %         Datapath = dataDir;
 %     end
-%     fn = strrep(Datapath,'-','_');
-%     fn = strrep(Datapath,'/','\');
-%     fn = strsplit(fn,'\');
-%     fileName1 = strcat(fn{6} ,'_',fn{7}, '_' , Type);
-%     if RedChannel
-%         fileName1 = [fileName1 '_Labeled'];
-%     end 
-%     dir_out = fullfile(dir_out_main,fileName1);
-%     if ~exist(dir_out,'dir')
-%         mkdir(dir_out)
-%     end
-%     
-%     % grab and Preprocess data
-     Data = dataDir{iif};
+   
+ %% grab and Preprocess data
+    try
+     %% data unpacking
+     Data = dataDir{expt};
     
-     cdef = Data.CellID{1}
+     cdef = Data.CellID{1};
      xy = cdef.ptsIdx(:,2:3);
      FLO = Data.FreqLevelOrder;
-     active_idx = Data.active{:,2} >= 1; % find all cells active P<.001
+     active_idx = Data.active{:,2} >= 1; % find all cells active P<.05
+    
+     %% name and file path creation
+     Datapath = Data.DataDirs;
      
+     fn = strrep(Datapath,'-','_');
+     fn = strrep(Datapath,'/','\');
+     fn = strsplit(fn,'\');
+     fileName1 = strcat(fn{6} ,'_',fn{7}, '_' , Type);
+     if RedChannel
+         fileName1 = [fileName1 '_Labeled'];
+     end 
+    
+     dir_out = fullfile(dir_out_main,fileName1);
+     if ~exist(dir_out,'dir')
+         mkdir(dir_out)
+     end
+     
+     
+    catch
+        % if given empty cell
+        continue
+    end 
      
     try 
         Fluoro = Data.DFF(:,:,active_idx);  
@@ -121,14 +133,25 @@ for iif = 1:length(dataDir) %For each file in a directory
 
   
     switch Type
-        case 'Passive'
+        case 'Passive' 
             % Passive-(ALL Data)
-            mode = {'Passive'}; nmode = numel(mode);
+            mode = {'Passive'};
+            nmode = numel(mode);
             resp{1} = Fluoro;
+            
+        case 'Active'
+            % Passive-(ALL Data)
+            mode = {'Passive'};
+            nmode = numel(mode);
+            resp{1} = Fluoro;
+  
+            
             
         case 'SNR'
             % Passive SNR
-            mode = {'Tone','+30db SNR','+20db SNR','+10db SNR'};
+            freqs = unique(FLO(:,2));
+            mode = cellfun(@num2str , table2cell(freqs),'UniformOutput',0);
+           % mode = {'Tone','+30db SNR','+20db SNR','+10db SNR'};
             nmode = numel(mode);
             Levels =table2array(Data.FreqLevelOrder(:,2));
             uL = unique(Levels);
@@ -176,7 +199,7 @@ for iif = 1:length(dataDir) %For each file in a directory
             resp{1} = Fluoro(:,hit_idx,:);
             resp{2} = Fluoro(:,early_idx,:);
             resp{3} = Fluoro(:,miss_idx,:);
-       case 'PassiveActive'      
+         
             
        case 'HitMiss'
             mode = {'Hit','Miss'}
@@ -713,30 +736,30 @@ end
 
 
 %%
-ct = 11
-
-rct = robstotal{ct,imd};
-
-figure
-plot(rct)
+% ct = 11
+% 
+% rct = robstotal{ct,imd};
+% 
+% figure
+% plot(rct)
 
 %% Find Most Significant GC Links
-imd = 1;
-[Ncells,~,~] = size(Devtotal);
-cids = cellidstotal{imd};
-Dev = Devtotal(:,:,imd);
-Devv = Dev(:);
-[~,indev] = sort(Devv,'descend');
-
-cnt = 20;
-ii = zeros(cnt,1); jj = ii;
-for l = 1:cnt;
-    jj(l) = ceil(indev(l)/Ncells);
-    ii(l) = indev(l) - (jj(l)-1)*Ncells;
-end
-
-GClist = [ii,jj]
-GClistp = [cids(ii),cids(jj)]
+% imd = 1;
+% [Ncells,~,~] = size(Devtotal);
+% cids = cellidstotal{imd};
+% Dev = Devtotal(:,:,imd);
+% Devv = Dev(:);
+% [~,indev] = sort(Devv,'descend');
+% 
+% cnt = 20;
+% ii = zeros(cnt,1); jj = ii;
+% for l = 1:cnt;
+%     jj(l) = ceil(indev(l)/Ncells);
+%     ii(l) = indev(l) - (jj(l)-1)*Ncells;
+% end
+% 
+% GClist = [ii,jj]
+% GClistp = [cids(ii),cids(jj)]
 
 %% Plot responses associated with two target cells: Confirm detected GCs visually
 % imd = 1
