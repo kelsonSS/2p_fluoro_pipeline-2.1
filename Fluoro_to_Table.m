@@ -39,6 +39,10 @@ if class(dataDir) == 'char'
 else
     Main_path = dataDir{expt_id};
 end 
+
+if isempty(Main_path)
+    continue
+end 
 % Paths creation
 Cell_file = 'CellDefinitions.mat';
 Fluo_file = 'Fluorescence.mat';

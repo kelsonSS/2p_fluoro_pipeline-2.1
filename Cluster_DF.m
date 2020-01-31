@@ -96,6 +96,15 @@ for clust_iter = 1:m
     subplot(rc(1),rc(2), clust_iter)
     shadedErrorBar([],mu,sigma)
     title( sprintf('%d Neurons', clust_n) );
+    ylim([-1 1])
+    aa = axis;
+    hold on
+    
+    
+    plot([aa(1) aa(2)], [0 0 ] ,'k--')
+    plot([30 30], [aa(3) aa(4)],'r--')
+    plot([60 60], [aa(3) aa(4)],'r--')
+    axis tight 
 end 
     
     
