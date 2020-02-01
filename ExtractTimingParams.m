@@ -23,6 +23,7 @@ for e = 1:length(input.expname)
      if exist(fullfile(SavePath,ExpName,'redchannel.mat'),'file')
          fps = fps/2;
      end 
+     
      xml = get_options_from_xml(xmlfile);
      
     %% File Prep
@@ -48,11 +49,15 @@ for e = 1:length(input.expname)
             load(TimingFile)
             continue 
     end 
+    %% get actual number of frames in registered file 
     
-   
+    fh = fopen( fullfile(SavePath,ExpName,'greenchannelregistered.raw'));
+   num_frames_actual = FindRawImgSize(fh,[xml.dimX xml.dimY]);
+   fclose(fh);
         
         
         %% extraction    
+        
         
         ThorFile = fullfile(LocalPath, 'Episode001.h5');
         if exist(ThorFile,'file')
@@ -62,7 +67,7 @@ for e = 1:length(input.expname)
                 
             end
             
-            TimingInfo = getTimingInfo_H5(ThorFile, PsignalFile, fps,xml );
+            TimingInfo = getTimingInfo_H5(ThorFile, PsignalFile, fps,xml,num_frames_actual);
             save(TimingFile,'TimingInfo')
             
         else

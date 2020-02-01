@@ -39,7 +39,6 @@ end
 
 %% Extract Timing Info from h5 file
 try
-gate=h5read(ThorSyncFile,'/AI/ai4'); % trial gate signal
 fo=h5read(ThorSyncFile,'/DI/Frame Out');
 catch    
   fprintf('%s is bad /n', ThorSyncFile)
@@ -53,10 +52,19 @@ catch
 end 
     
 try
-gate=h5read(ThorSyncFile,'/AI/ai4'); % trial gate signal
-catch    
- gate=h5read(ThorSyncFile,'/AI/PsignalGate');
-end 
+    gate=h5read(ThorSyncFile,'/AI/ai4'); % trial gate signal
+catch
+    try
+        gate=h5read(ThorSyncFile,'/AI/PsignalGate');
+    catch
+        try
+        gate=h5read(ThorSyncFile,'/AI/ai5')
+        catch
+             fprintf('%s is bad /n', ThorSyncFile)
+        end
+        
+    end
+end
 
 
 nchannels = xml.format{2}(3);
@@ -91,6 +99,7 @@ num_frames_predicted = length(num_frames_predicted.loc);
 
 % if more frames in actual than predicted, shift times
 % to reflect true start time 
+try
 if num_frames_predicted < num_frames_actual
     
    shift =  num_frames_actual - num_frames_predicted;
@@ -98,7 +107,9 @@ if num_frames_predicted < num_frames_actual
    off = off+shift;
     sprintf('%s, %s' ,num_frames_predicted,num_frames_actual);
 end
-
+catch
+    warning('num_frames_error')
+end 
 % if frames are off by one shift first start frame by 1 
 % indicates one frame dropped at beginning 
 if any(size(on) == 0)
