@@ -69,21 +69,33 @@ end
 
 nchannels = xml.format{2}(3);
 
-%first_frame = find(fc,1);
-    
+first_frame = find(fc,1);
 
 % find onsets and offsets by looking at the derivative of the gate 
+TotalTrials = PsignalData.exptevents(end).Trial ; %
 
-on  = findpeaks(diff(gate),1);
-off = findpeaks(diff(gate * -1),1);
 
-if isempty(on.loc)
-    on =  findpeaks(diff(gate),.1);
-    off = findpeaks(diff(gate * -1),.1);
+on =  findpeaks(diff(gate),.1);
+off = findpeaks(diff(gate * -1),.1);
+
+    
+on  = floor(on.loc/1000);
+off = floor(off.loc/1000);    
+    
+if find(fc,1) == 1 
+    on = cat(1,1, on);
+    off = off(2:end);
 end 
 
-on  = floor(on.loc/1000);
-off = floor(off.loc/1000);
+
+
+if length(on)<TotalTrials
+    fprintf( '%s, \n',ThorSyncFile)
+    warning('Timing info incorrect manual extraction needed')
+    
+end 
+
+
 
 
 
@@ -144,11 +156,6 @@ frameseconds = findpeaks(diff(fc ),1);
 frameseconds = frameseconds.loc /1000/30;
 %% Create TimingInfo Structure
 
-TotalTrials = PsignalData.exptevents(end).Trial ; %
-
-if length(on) ~= TotalTrials
-    warning('Extraction error manual inspection needed')     
-end
  
 %Find frame timing for each trial; length(SeqEndVals)==#trials
 FrameIdx(:,1) = on;
