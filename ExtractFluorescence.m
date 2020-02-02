@@ -178,10 +178,30 @@ try
 %         fluoAllCorr = fluoAllRaw - (input.percNP * NPfluoAll);
 %     else
         
-        fh_GreenChanImg = fopen(fullfile(LocalPath, input.expname{e},...
-                                'greenchannelregistered.raw'));
-        greenChanImg = fread(fh_GreenChanImg, 'uint16=>uint16');
-                fclose(fh_GreenChanImg)
+fullpathIMG = fullfile(LocalPath, input.expname{e}, 'greenchannelregistered.raw');
+
+fh = fopen(fullpathIMG); 
+numFrames_total =  FindRawImgSize(fh,[opts.dimX opts.dimY]);
+ItemsPerImage = opts.dimX* opts.dimY ;
+chunkSize =  input.maxframechunk  ; % frames 
+chunks = ceil(numFrames_total/chunkSize); 
+fclose(fh);
+NPfluoAll_temp = [];
+fluoAllRaw_temp= [];
+
+tstartCorr = tic;
+for chunk_count = 1:chunks
+         fh = fopen(fullpathIMG); 
+         start_idx = (chunk_count-1) * ItemsPerImage * chunkSize * 2; %bytes  ;
+    fseek(fh,start_idx,'bof');
+    fprintf('%s : %d of %d \n', input.expname{1},chunk_count,chunks)
+    % check to ensure we don't go over IMG size on last img
+    if chunk_count == chunks 
+        greenChanImg = fread(fh,inf,'uint16');
+    else 
+        greenChanImg =fread(fh,ItemsPerImage * chunkSize,'uint16');
+    end 
+    fclose(fh);
                
                 try
                 greenChanImg = reshape(greenChanImg,opts.dimX,opts.dimY,[]);
@@ -221,14 +241,15 @@ try
                    numPixels = length(cell_ind);
                    cell_ind_full = [ cell_ind + imageInPixels *(0:numframes-1)];
                    g = greenChanImg(cell_ind_full);
-                   fluoAllRaw(:,nn) =  nanmean(g);
+                   fluoAllRaw_temp(:,nn) =  nanmean(g);
                   %repeat for neuropil
                    np_ind = sub2ind( [opts.dimX,opts.dimY],rNp,cNp);
                    numPixels = length(np_ind);
                    np_ind_full = [ np_ind + imageInPixels *(0:numframes-1)];
                    g = greenChanImg(np_ind_full);
-                   NPfluoAll(:,nn) =  nanmean(g);
-                  
+                   NPfluoAll_temp(:,nn) =  nanmean(g);
+                
+                
                    
                    
                     
@@ -256,6 +277,9 @@ try
                     %%NPfluoAll_100pct(fidx,nn) = NPfluotemp_100pct;
                 end
             end
+  fluoAllRaw = cat(1,fluoAllRaw,fluoAllRaw_temp);
+  NPfluoAll = cat(1,NPfluoAll,NPfluoAll_temp);
+end
             fluoAllCorr = fluoAllRaw - (input.percNP * NPfluoAll);
             %fluoAllCorr_100pct = fluoAllRaw - (input.percNP * NPfluoAll_100pct);
     %Extract timing parameters
