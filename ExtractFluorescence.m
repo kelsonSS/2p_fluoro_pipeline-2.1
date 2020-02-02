@@ -186,8 +186,8 @@ ItemsPerImage = opts.dimX* opts.dimY ;
 chunkSize =  input.maxframechunk  ; % frames 
 chunks = ceil(numFrames_total/chunkSize); 
 fclose(fh);
-NPfluoAll_temp = [];
-fluoAllRaw_temp= [];
+NPfluoAll  = [];
+fluoAllRaw = [];
 
 tstartCorr = tic;
 for chunk_count = 1:chunks
@@ -198,6 +198,8 @@ for chunk_count = 1:chunks
     % check to ensure we don't go over IMG size on last img
     if chunk_count == chunks 
         greenChanImg = fread(fh,inf,'uint16');
+        clear NPfluoAll_temp
+        clear fluoAllRaw_temp
     else 
         greenChanImg =fread(fh,ItemsPerImage * chunkSize,'uint16');
     end 
@@ -218,8 +220,8 @@ for chunk_count = 1:chunks
               numframes = size(greenChanImg,3);
             fidx = size(greenChanImg,3);
             %Border Mask
-            fluoAllRaw(1:numframes,length(xc))=nan;
-            NPfluoAll(1:numframes,length(xc))=nan;
+            fluoAllRaw_temp(numframes,length(xc))=nan;
+            NPfluoAll_temp(1:numframes,length(xc))=nan;
            
           
             %Find flouro traces
@@ -279,6 +281,7 @@ for chunk_count = 1:chunks
             end
   fluoAllRaw = cat(1,fluoAllRaw,fluoAllRaw_temp);
   NPfluoAll = cat(1,NPfluoAll,NPfluoAll_temp);
+  
 end
             fluoAllCorr = fluoAllRaw - (input.percNP * NPfluoAll);
             %fluoAllCorr_100pct = fluoAllRaw - (input.percNP * NPfluoAll_100pct);
