@@ -6,14 +6,10 @@ function PlotFRAS(In,activity,Save)
 % this function uses the associated myFRA and numSubplots function to plot multiple FRAs
 % onto the same axis 
 
- outpath1 = '\\Vault3\Data\Kelson\Aging\FRAs\FRA';
- outpath2 = '\\Vault3\Data\Kelson\Aging\FRAs\MeanTrace';
- 
-% mkdir(outpath1)
-% mkdir(outpath2)
-
- if ~exist('Save','var')
-     Save = 0;
+% outpath1 = 'C:\Users\Kelson\Dropbox\Passive_paper\PV\FRAs\FRA'
+% outpath2 = 'C:\Users\Kelson\Dropbox\Passive_paper\PV\FRAs\MeanTrace'
+ if ~exist('save','var')
+     Save = 0
  end 
 
 try
@@ -111,8 +107,8 @@ for ii =1:size(df_by_level)
 
      if mod(nn,n) == 0 
          if Save
-             SaveStyleFig(h1,outpath1,n_fig,Save)
-             SaveStyleFig(h1,outpath2,n_fig,Save)
+             SaveStyleFig(h1,outpath1,n_fig)
+             SaveStyleFig(h1,outpath2,n_fig)
          end
          h1 = figure;
          h2 = figure;
@@ -123,15 +119,16 @@ for ii =1:size(df_by_level)
   
 end 
 % for last figure after loop
+
   SaveStyleFig(h1,outpath1,n_fig,Save)    
   SaveStyleFig(h2,outpath1,n_fig,Save) 
 end 
 
-function SaveStyleFig(h1,outpath,n_fig,Save)
+function SaveStyleFig(h1,outpath,n_fig,save)
 
 set(h1, 'Units', 'Inches', 'Position', [0, 0, 11, 8.5],...
              'PaperUnits', 'Inches', 'PaperSize', [11, 8.5])
-if Save
+if save
     saveas(h1,fullfile(outpath,sprintf('figure%d.pdf',n_fig)))         
 end 
 end 

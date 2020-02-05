@@ -28,8 +28,8 @@ for subgroup1 = 1:4
     TN_temp = TN;
     combined_index = Indicies{subgroup1} | Indicies{subgroup2};
     TN_temp.DFF = TN.DFF(:,:,combined_index);
-    TN_temp.experiment_list = TN.experiment_list(combined_index);
-    TN_temp.active = TN.active(combined_index,:);
+    TN_temp.experiment_list = TN.Experiment_list(combined_index);
+    TN_temp.active = TN.Active(combined_index,:);
     
     
     Corrs{subgroup1,subgroup2} = Correlations(TN_temp);

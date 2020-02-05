@@ -178,7 +178,7 @@ gausfilt = fspecial('gaussian',[5,1],4);
 Vec_DFF = imfilter(Vec_DFF,gausfilt);
 
 % cut trials if too many trials occured
-if  any(size(Vec_DFF_all) ~= 0)
+if size(Vec_DFF_all) ~= 0
     nt = size(Vec_DFF_all,2);
     if numtrials > nt
         Vec_DFF = Vec_DFF(:,1:nt,:);
@@ -189,7 +189,7 @@ if  any(size(Vec_DFF_all) ~= 0)
     
   if  numtrials < nt
       small_trial_text = sprintf('expected trials = %d actual = %d. add?',...
-          nt, numtrials);
+          nt), numtrials)
      small_flag = questdialog(small_trial_text, 'yes' ,'no')
        
       if strcmp(small_flag,'yes')
@@ -197,11 +197,10 @@ if  any(size(Vec_DFF_all) ~= 0)
         blank_data = nan( size(Vec_DFF_all,1),...
                               trials_to_add,...
                               size(Vec_DFF_all,3));
-          Vec_DFF = cat(2,Vec_DFF,blank_data);                
+          Vec_DFF = cat(2,Vec_DFF,b                
       else 
           continue
       end 
-  end 
       
 end
 

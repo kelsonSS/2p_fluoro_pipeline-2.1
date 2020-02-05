@@ -103,8 +103,11 @@ for clust_iter = 1:m
     
     plot([aa(1) aa(2)], [0 0 ] ,'k--')
     plot([30 30], [aa(3) aa(4)],'r--')
-    plot([60 60], [aa(3) aa(4)],'r--')
+    plot([60 60], [aa(3) aa(4)],'g--')
+    plot([90 90], [aa(3) aa(4)],'g--')
+    plot([120 120], [aa(3) aa(4)],'r--')
     axis tight 
+    xlim([0 150])
 end 
     
     
