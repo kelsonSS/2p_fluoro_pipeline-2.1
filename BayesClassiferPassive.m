@@ -82,7 +82,7 @@ for run = 1:num_reps
         %% indexing
         class_idx = Passive.Classes == class;
         
-        active_idx = Passive.Active{:,2} == 3;
+        active_idx = Passive.Active{:,2} > 0;
         
         in_idx = class_idx & active_idx & ~ bad_idx;
         AllData = Passive.DFF_Z(60:100,:,in_idx);

@@ -75,16 +75,16 @@ first_frame = find(fc,1);
 TotalTrials = PsignalData.exptevents(end).Trial ; %
 
 
-on =  findpeaks(diff(gate),.1);
-off = findpeaks(diff(gate * -1),.1);
+on =  findpeaks(diff(gate),.7);
+off = findpeaks(diff(gate * -1),.7);
 
     
 on  = floor(on.loc/1000);
 off = floor(off.loc/1000);    
     
-if fc == 1 
-    on = cat(1,1, on)
-    off = off(2:end)
+if find(fc,1) == 1 
+    on = cat(1,1, on);
+    off = off(2:end);
 end 
 
 
