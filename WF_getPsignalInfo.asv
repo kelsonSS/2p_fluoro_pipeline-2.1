@@ -91,14 +91,9 @@ handles.framespertrial = handles.pfs*(handles.PreStimSilence +...
                     handles.Hits = handles.Hits(1:end-1);
                     handles.Early = handles.Early(1:end-1);
                     handles.Miss = handles.Miss(1:end-1);
-                    if length(handles.uLevels)>1 
-                    for lvl = 1:length(handles.uLevels)
-                        idx = handles.Levels == handles.uLevels(lvl);
-                        handles.HitsLevels{lvl} = handles.Hits(idx);
-                        handles.EarlyLevels{lvl} =  handles.Early(idx); 
-                        handles.MissLevels{lvl} =  handles.Miss(idx);
-                    end 
-                    end 
+                    handles.hit
+                    
+                     
                     
                  end 
                  
@@ -115,7 +110,7 @@ handles.framespertrial = handles.pfs*(handles.PreStimSilence +...
               handles.soundTimes = [[exptevents.Timestamp] + seconds(handles.PreStimSilence);...
                   [exptevents.Timestamp] + seconds(handles.PreStimSilence)+...
                   seconds(handles.PrimaryDuration)];
-              if (handles.BackgroundNoise(1) ~= -99) && (length(handles.BackgroundNoise)>1)
+              if handles.BackgroundNoise ~= -99
                   handles.NoiseTimes = [[exptevents.Timestamp] + seconds(handles.BackgroundNoise(2));...
                       [exptevents.Timestamp] + seconds(handles.BackgroundNoise(3))];
               end

@@ -67,20 +67,67 @@ catch
 end
 
 
+
 nchannels = xml.format{2}(3);
 
 first_frame = find(fc,1);
 
 % find onsets and offsets by looking at the derivative of the gate 
+
 TotalTrials = PsignalData.exptevents(end).Trial ; %
+peak_val = .5;
+on =  findpeaks(diff(gate),.5);
+off = findpeaks(diff(gate * -1),.5);
+on = on.loc;
+off = off.loc;
 
 
-on =  findpeaks(diff(gate),.7);
-off = findpeaks(diff(gate * -1),.7);
 
+if length(on) ~=TotalTrials
+    delta_peak = .1; % how much to change peak val by 
+    pv_lower_flag= 0;  % if the last trial was too small
+    pv_higher_flag = 0; % if last trial was too large
+end 
+while length(on) ~= TotalTrials
+    m = length(on);
+    if m > 5000 || peak_val < 0.1 || peak_val > 2
+        warning('trial error manual inspection needed')
+        return
+    end
+        
     
-on  = floor(on.loc/1000);
-off = floor(off.loc/1000);    
+    
+    % if we have switched directions decrease the delta size
+    if pv_lower_flag && pv_higher_flag
+        delta_peak = delta_peak/2
+    end 
+    if m < TotalTrials
+        pv_lower_flag = 1;
+        peak_val= peak_val+ delta_peak
+        fprintf('too few estimated trials \n')   
+        fprintf('estimated trials:%d actual: %d peak val: %d Delta: %d \n',...
+            m,TotalTrials,peak_val,delta_peak)
+    end 
+    
+      if m > TotalTrials
+        pv_higher_flag = 1;
+        peak_val= peak_val - delta_peak;
+        fprintf('too many estimated trials \n')   
+        fprintf('estimated trials:%d actual: %d peak val: %d Delta: %d \n',...
+            m,TotalTrials,peak_val,delta_peak)
+      end 
+    on =  findpeaks(diff(gate),peak_val);
+    off = findpeaks(diff(gate * -1),peak_val);
+    on = on.loc;
+    off = off.loc;
+end  
+    
+
+
+
+ % fix timing params to seconds    
+on  = floor(on/1000);
+off = floor(off/1000);    
     
 if find(fc,1) == 1 
     on = cat(1,1, on);
@@ -89,11 +136,6 @@ end
 
 
 
-if length(on)<TotalTrials
-    fprintf( '%s, \n',ThorSyncFile)
-    warning('Timing info incorrect manual extraction needed')
-    
-end 
 
 
 
@@ -106,7 +148,6 @@ end
 firstframe = floor(find(fc,1)/1000);
 on = on - firstframe + 1;
 off = off - firstframe + 1;
-
 
 
 
@@ -139,6 +180,12 @@ if num_frames_predicted == num_frames_actual + 1 || on(1) == 0
        % off(1) = off(1)+1;
 end 
     
+%  change on and off to reflect frame times if in stimulus mode 
+if ~strcmp(xml.Streaming,'1')|| strcmp(xml.StimTrigger,'1')
+  [on,off] =  extract_h5_stimulus_mode;
+end
+
+
 
 % frames_actual = findpeaks(diff(fo(on(1)*1000:off(1)*1000 )),1);
 % bad_frame_flag = length(frames_actual.loc) ~= TimingInfo.tarFnums ;
@@ -150,11 +197,15 @@ end
 %     warning(sprintf('%s may be wrong file! manual inspection needed',ThorSyncFile))
 % end 
 
+
 % timing extraction
 
 frameseconds = findpeaks(diff(fc ),1);
 frameseconds = frameseconds.loc /1000/30;
+
 %% Create TimingInfo Structure
+
+ 
 
  
 %Find frame timing for each trial; length(SeqEndVals)==#trials
@@ -165,5 +216,30 @@ TimingInfo.FrameIdx = FrameIdx;
 TimingInfo.SeqEndVals = FrameIdx(:,2);
 TimingInfo.FrameTiming = frameseconds;
 %TimingInfo.ITI = ITI;
+
+
+function [TimingInfo] = extract_h5_stimulus_mode
+
+
+fidx
+frameseconds = findpeaks(diff(fc ),1);
+frameseconds = frameseconds.loc /1000/30;
+on 
+
+%% Create TimingInfo Structure
+
+
+
+ 
+
+end 
+
+end 
+
+
+
+
+
+        
 
 

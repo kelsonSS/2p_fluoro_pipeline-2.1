@@ -13,6 +13,7 @@ opts.dimX =  str2double(xml.LSM.Attributes.pixelX);
 opts.dimY =  str2double(xml.LSM.Attributes.pixelY);
 opts.TriggerMode=xml.Timelapse.Attributes.triggerMode; % 0 for finite, 2 for stimulus
 opts.Streaming = xml.Streaming.Attributes.triggerMode; % 4 for fininte, 1 for stimulus
+opts.StimTrigger = xml.Streaming.Attributes.stimulusTriggering;% 0 for finite 1 for stimulus?   
 try
 opts.micronsPerPixel = str2double(xml.LSM.Attributes.pixelSizeUM);
 opts.dimXmicrons = str2double(xml.LSM.Attributes.widthUM);
