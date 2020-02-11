@@ -76,6 +76,10 @@ first_frame = find(fc,1);
 
 TotalTrials = PsignalData.exptevents(end).Trial ; %
 peak_val = .5;
+
+if gate(1) > 1  % if gate starts high fix gate trigger to show it going high  
+    gate(1) = 0;
+end 
 on =  findpeaks(diff(gate),.5);
 off = findpeaks(diff(gate * -1),.5);
 on = on.loc;
@@ -90,8 +94,9 @@ if length(on) ~=TotalTrials
 end 
 while length(on) ~= TotalTrials
     m = length(on);
-    if m > 5000 || peak_val < 0.1 || peak_val > 2
-        warning('trial error manual inspection needed')
+    if m > 5000 || peak_val < 0.1 || peak_val > 2 || delta_peak < 5e-2
+        warning('trial error manual inspection needed \n %s \n',ThorSyncFile)
+        pause
         return
     end
         
@@ -99,11 +104,13 @@ while length(on) ~= TotalTrials
     
     % if we have switched directions decrease the delta size
     if pv_lower_flag && pv_higher_flag
-        delta_peak = delta_peak/2
+        delta_peak = delta_peak/2;
+        pv_lower_flag = 0;
+        pv_higher_flag = 0;
     end 
     if m < TotalTrials
         pv_lower_flag = 1;
-        peak_val= peak_val+ delta_peak
+        peak_val= peak_val - delta_peak
         fprintf('too few estimated trials \n')   
         fprintf('estimated trials:%d actual: %d peak val: %d Delta: %d \n',...
             m,TotalTrials,peak_val,delta_peak)
@@ -111,7 +118,7 @@ while length(on) ~= TotalTrials
     
       if m > TotalTrials
         pv_higher_flag = 1;
-        peak_val= peak_val - delta_peak;
+        peak_val= peak_val + delta_peak;
         fprintf('too many estimated trials \n')   
         fprintf('estimated trials:%d actual: %d peak val: %d Delta: %d \n',...
             m,TotalTrials,peak_val,delta_peak)
@@ -181,8 +188,8 @@ if num_frames_predicted == num_frames_actual + 1 || on(1) == 0
 end 
     
 %  change on and off to reflect frame times if in stimulus mode 
-if ~strcmp(xml.Streaming,'1')|| strcmp(xml.StimTrigger,'1')
-  [on,off] =  extract_h5_stimulus_mode;
+if  ~strcmp(xml.Streaming,'1')
+  [on,off] =  extract_h5_stimulus_mode(on,off);
 end
 
 
@@ -218,15 +225,32 @@ TimingInfo.FrameTiming = frameseconds;
 %TimingInfo.ITI = ITI;
 
 
-function [on off] = extract_h5_stimulus_mode
+function [on off] = extract_h5_stimulus_mode(on,off)
+
+
+
+if num_frames_actual == TimingInfo.tarFnums  * TotalTrials
+    on = 1 + TimingInfo.tarFnums .*(0:TotalTrials-1);
+    off = on + TimingInfo.tarFnums - 1; 
+return
+end 
 
 
 frameseconds = findpeaks(diff(fc ),1);
 frameseconds = frameseconds.loc /1000/30;
 
+on_gate = on;
+off_gate = off;
+
+
+
 for ii = 1:TotalTrials
     
+    
+    
 
+    
+    
 
 %% Create TimingInfo Structure
 

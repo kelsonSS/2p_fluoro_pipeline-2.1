@@ -33,6 +33,7 @@ try
     handles.PostStimSilence = get(PrimaryHandle,'PostStimSilence');
     handles.BackgroundNoise = get(PrimaryHandle,'BackgroundNoise');
     handles.OverallDB       = get(exptparams.TrialObject,'OveralldB');
+    handles.Class            =get(PrimaryHandle,'type');
 catch
     
    
