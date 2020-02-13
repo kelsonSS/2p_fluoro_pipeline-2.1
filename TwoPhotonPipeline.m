@@ -14,11 +14,11 @@ clear all; close all;
 
 %Path to code
 try 
-%% uncomment if you don't have github GitHub\2p_fluoro_pipeline-2.1 added and on your main path
-% d = dir('C:\Users\**\Documents\GitHub\2p_fluoro_pipeline-2.1');    
-% git_path = d(1).folder;
-% addpath(genpath(git_path))
-% cd(git_path)
+% uncomment if you don't have github GitHub\2p_fluoro_pipeline-2.1 added and on your main path
+d = dir('C:\Users\**\Documents\GitHub\2p_fluoro_pipeline-2.1');    
+git_path = d(1).folder;
+addpath(genpath(git_path))
+cd(git_path)
 catch
 try
     cd('C:\Users\Kelson\Google Drive\2p_fluoro_pipeline 2.1')
@@ -32,7 +32,7 @@ end
 
 end 
 %Path to Data
-inpath = '\\vault3\Data\Kelson\Files to upload'
+inpath = '\\vault3\Data\Kelson\Files to upload';
 %Input variables
 input=[];
 %Expected frame rate form experiment. According to Thorlabs, the frame rate is
@@ -87,7 +87,7 @@ input.border = 1;
 input.savepath = '\\Vault3\Data\Kelson\Analyzed';
 %largest movie to load based on number of frames. Beyond this # the movie
 %is processed in chunks for extracting fluorescence.
-input.maxframechunk = 50000;
+input.maxframechunk = 7500;
 
 
 strsep = @strsplit;
@@ -142,6 +142,8 @@ for i=1:length(paths)
 end
 
 
+
+CreateCellDefinitionList(Input) 
 %%
 %Click cell centers of registered movies. CellDefinitionGUI will save cell
 %definitions to the directory that the images were loaded from, so be sure
@@ -177,7 +179,7 @@ end
 
 
 %% Extract Timing Params
-for i=1:length(paths)
+for i=12:length(paths)
     %Select current path
     input.path = paths{i};
     input.expname = expnames(~cellfun(@isempty,expnames(:,i)),i);
