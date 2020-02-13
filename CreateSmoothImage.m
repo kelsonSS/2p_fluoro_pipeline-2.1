@@ -22,7 +22,7 @@ for expnum = 1:length(input.expname)
      end
  end
   
- if isempty(dir([newpath 'greenchannelregistered.raw'])
+ if isempty(dir([newpath 'greenchannelregistered.raw']))
     continue
  end 
      opts = get_options_from_xml(fullfile(newpath,'Experiment.xml'));
@@ -50,7 +50,9 @@ for expnum = 1:length(input.expname)
     % ploting
     h = figure;imagesc(smooth_img);colormap gray;axis square;axis off
     saveas(h,fullfile(newpath,'AvgImageSmooth.tif'))
-    save(fullfile(newpath,'smooth_img.mat'),'smooth_img')
+    fileID = fopen(fullfile(newpath,'smooth_img.raw'),'w+');
+      fwrite(fileID,smooth_img,'uint16','ieee-le');
+    fclose(fileID);
     title([bb{end}, ': ', input.expname{expnum}],'Interpreter','none')
     clear smooth_img;
    

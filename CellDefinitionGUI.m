@@ -99,9 +99,14 @@ if iscellstr({pthname})
       
     %Process green image
     fh = fopen(GfullpathIMG);
-  
-    IMG = reshape(fread(fh,[dimX*dimY*numImages],'uint16=>uint16'), ...
-        [dimX, dimY, numImages]);
+    numImages = min([2000 numChannels * numTimePts]);
+    
+    array = fread(fh,[dimX*dimY*numImages],'uint16=>uint16');
+    numImagesActual = length(array) / dimX /dimY;
+    numImages = min(numImages,numImagesActual); 
+    
+    
+    IMG = reshape(array,[dimX, dimY,numImages]);
     IMG = permute(IMG, [2 1 3]);
     fclose(fh);
     mnIMG = squeeze(mean(double(IMG(:,:,:)),3));
@@ -622,29 +627,22 @@ save(DestPath,'n_neurons')
 
 
 % --- Executes on button press in Overlay_Smooth.
-function OverlaySmooth_Callback(hObject, eventdata, handles)
-% hObject    handle to Overlay_Smooth (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-if ~isfield(handles,'overlayOn')| handles.overlayOn ==0
-    handles.overlayOn = 1
-      if exist(fullfile(pthname,handles.filename,'AvgImageSmooth.tif'),'file')
-       figure
-        fh = Tiff(fullfile(pthname,handles.filename,'AvgImageSmooth.tif'),'r')
-        img = fh.read();
-        img = permute(img,[2 ,1,3]);
-        fh.close()
-        load(fullfile(pthname,handles.filename,'smooth_img.mat'))
-        imshow(permute(smooth_img,[2,1,3]) ,[],'Parent',handles.axes2);
-        smooth_img = (smooth_img - min(smooth_img(:))) ./ (range(smooth_img(:)));
-     end 
- 
-    
-end 
-
-
-% --- Executes on button press in Overlay_Smooth.
 function Overlay_Smooth_Callback(hObject, eventdata, handles)
 % hObject    handle to Overlay_Smooth (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+   smooth_file = fullfile(handles.pthname{1},'AvgImageSmooth.tif');
+      if exist(smooth_file,'file')
+       %figure
+        fh = Tiff(smooth_file,'r')
+        img = fh.read();
+        img = permute(img,[2 ,1,3]);
+        fh.close()
+        load(fullfile(handles.pthname{1},'smooth_img.mat'))
+         smooth_img = (smooth_img - min(smooth_img(:))) ./ (range(smooth_img(:)));
+        imshow(permute(smooth_img,[2,1,3]) ,[],'Parent',handles.axes2);
+      end  
+
+guidata(hObject,handles)
+     
+
