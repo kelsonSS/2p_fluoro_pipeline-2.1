@@ -38,6 +38,7 @@ catch
 end
 
 %% Extract Timing Info from h5 file
+fprintf('loading %s \n',ThorSyncFile) 
 try
 fo=h5read(ThorSyncFile,'/DI/Frame Out');
 catch    
@@ -75,11 +76,14 @@ first_frame = find(fc,1);
 % find onsets and offsets by looking at the derivative of the gate 
 
 TotalTrials = PsignalData.exptevents(end).Trial ; %
-peak_val = .5;
+peak_val = .521;
 
-if gate(1) > 1  % if gate starts high fix gate trigger to show it going high  
-    gate(1) = 0;
+if  any(gate(50:100) > 1)  % if gate starts high fix gate trigger to show it going high  
+    gate(1:10) = 0;
+else 
+    gate(1:100) = 0; 
 end 
+
 on =  findpeaks(diff(gate),.5);
 off = findpeaks(diff(gate * -1),.5);
 on = on.loc;
@@ -94,7 +98,8 @@ if length(on) ~=TotalTrials
 end 
 while length(on) ~= TotalTrials
     m = length(on);
-    if m > 5000 || peak_val < 0.1 || peak_val > 2 || delta_peak < 5e-2
+    g = length(gate);
+    if m > 5000 || peak_val < 0.001 || peak_val > 2 || delta_peak < 5e-2
         warning('trial error manual inspection needed \n %s \n',ThorSyncFile)
         pause
         return
@@ -110,9 +115,9 @@ while length(on) ~= TotalTrials
     end 
     if m < TotalTrials
         pv_lower_flag = 1;
-        peak_val= peak_val - delta_peak
+        peak_val= peak_val - delta_peak;
         fprintf('too few estimated trials \n')   
-        fprintf('estimated trials:%d actual: %d peak val: %d Delta: %d \n',...
+        fprintf('estimated trials:%d actual: %d peak val: %.2f Delta: %.2f \n',...
             m,TotalTrials,peak_val,delta_peak)
     end 
     
@@ -120,13 +125,25 @@ while length(on) ~= TotalTrials
         pv_higher_flag = 1;
         peak_val= peak_val + delta_peak;
         fprintf('too many estimated trials \n')   
-        fprintf('estimated trials:%d actual: %d peak val: %d Delta: %d \n',...
+        fprintf('estimated trials:%d actual: %d peak val: %.2f Delta: %.2f \n',...
             m,TotalTrials,peak_val,delta_peak)
-      end 
+      end
+    
+      
     on =  findpeaks(diff(gate),peak_val);
-    off = findpeaks(diff(gate * -1),peak_val);
+    % ensure on peaks are acutally on
+
     on = on.loc;
+    on_idx = gate(min(on+9,g)) - gate(max(on-10,1)) > 0;
+    on = on(on_idx);
+    
+    off = findpeaks(diff(gate * -1),peak_val);
+    %ensure off peaks are off  
     off = off.loc;
+    off_idx = gate(max(off-10,1)) - gate(min(off+9,g)) > 0;
+    off = off(off_idx);
+    
+    
 end  
     
 
@@ -160,6 +177,12 @@ off = off - firstframe + 1;
 
 %% sanity checks
 
+if num_frames_acutal < TotalTrials * TimingInfo.TarFnums -1
+    warning('trial has too few frames, skipping')
+    return
+end 
+
+
 num_frames_predicted = findpeaks(diff(fc),1);
 num_frames_predicted = length(num_frames_predicted.loc);
 
@@ -188,7 +211,7 @@ if num_frames_predicted == num_frames_actual + 1 || on(1) == 0
 end 
     
 %  change on and off to reflect frame times if in stimulus mode 
-if  ~strcmp(xml.Streaming,'1')
+if  strcmp(xml.Streaming,'0')
   [on,off] =  extract_h5_stimulus_mode(on,off);
 end
 
@@ -217,7 +240,7 @@ frameseconds = frameseconds.loc /1000/30;
  
 %Find frame timing for each trial; length(SeqEndVals)==#trials
 FrameIdx(:,1) = on;
-FrameIdx(:,2) = on + TimingInfo.tarFnums;
+FrameIdx(:,2) = on + TimingInfo.tarFnums - 1 ;
 
 TimingInfo.FrameIdx = FrameIdx;
 TimingInfo.SeqEndVals = FrameIdx(:,2);
@@ -233,20 +256,13 @@ if num_frames_actual == TimingInfo.tarFnums  * TotalTrials
     on = 1 + TimingInfo.tarFnums .*(0:TotalTrials-1);
     off = on + TimingInfo.tarFnums - 1; 
 return
-end 
+end
 
-
-frameseconds = findpeaks(diff(fc ),1);
-frameseconds = frameseconds.loc /1000/30;
-
-on_gate = on;
-off_gate = off;
 
 
 
 for ii = 1:TotalTrials
-    
-    
+   
     
 
     
@@ -259,6 +275,8 @@ for ii = 1:TotalTrials
  
 
 end 
+
+    
 
 end
 
