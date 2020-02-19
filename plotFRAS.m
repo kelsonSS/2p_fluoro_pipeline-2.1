@@ -21,6 +21,11 @@ handles = In.handles;
 catch 
  handles = In.Handles;
 end 
+if length(handles)> 1 
+    handles = handles(1);
+end 
+
+
 DFF = In.DFF;
 active_list = In.Active.Activity;
 FreqLevels = unique(In.FreqLevelOrder);
@@ -107,9 +112,8 @@ for ii =1:size(df_by_level)
      xlm = get(gca,'Xlim');
      plot([xlm(1), xlm(2)],[0, 0])
      hold off
-    end 
-
-     if mod(nn,n) == 0 
+    
+      if mod(nn,n) == 0 
          if Save
              SaveStyleFig(h1,outpath1,n_fig,Save)
              SaveStyleFig(h1,outpath2,n_fig,Save)
@@ -119,6 +123,12 @@ for ii =1:size(df_by_level)
          nn= 0;
          n_fig = n_fig+1 
      end 
+    
+    
+    
+    end 
+
+    
      
   
 end 

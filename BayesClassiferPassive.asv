@@ -5,20 +5,21 @@ function  Loss = BayesClassiferPassive(Passive,Savepath)
 % of neurons, time during the trial , and Neuron Class
 %
 % init
-if ~exist
+if ~exist('Savepath','var')
 Savepath = '\\vault3\Data\Kelson\Aging\Passive.mat';
-
+end 
 
 
 num_classes = 4;
 num_neurons = 80;
 num_types = 2;
 num_reps = 10;
-classes = {'Tones','Noise','Offsett'};
+%classes = {'Tones','Noise','Offsett'};
+classes = {'All'};
 Freqs = Passive.FreqLevelOrder{:,1};
 Levels = Passive.FreqLevelOrder{:,2};
 uLevels = sort(unique(Levels),'descend');
-bad_idx = ~Passive.Clean_idx';
+bad_idx = ~Passive.Clean_idx;
 if ~(isfield(Passive,'Classes'))
     Passive.Classes = ones(size(Passive.DFF,3),1);
 end
@@ -71,6 +72,7 @@ for expt = 1:size(Passive.DataDirs)
         end
     end
 end
+Passive.BayesModels.NumbersLossLvl = reshape(
 
 save(Savepath,'Passive','-v7.3') 
 

@@ -72,6 +72,7 @@ for expt = 1:size(Passive.DataDirs)
         end
     end
 end
+Passive.BayesModels.NumbersLossLvl = permute(Passive.BayesModels.NumbersLossLvl,[2,1,3,4]);
 
 save(Savepath,'Passive','-v7.3') 
 
@@ -117,6 +118,7 @@ for run = 1:num_reps
         end
     end
 end
+Passive.BayesModels.ClassesTonesLossLvl = permute(Passive.BayesModels.ClassesTonesLossLvl,[2,1,3,4]);
 
 % save(Savepath,'Passive','-v7.3') 
 
@@ -396,6 +398,8 @@ for run = 1:num_reps
         end
 end
 
+  Passive.BayesModels.ToneClassesTonesLosslvl =  permute(...
+      Passive.BayesModels.ToneClassesTonesLosslvl,[ 2,1,3,4]);
 
 save(Savepath,'Passive','-v7.3') 
 
