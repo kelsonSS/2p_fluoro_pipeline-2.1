@@ -323,7 +323,7 @@ end
  
 Out.DFF = Vec_DFF_all;
 Out.DFF_Z = DFF_Z;
-Out.Clean_idx;
+Out.Clean_idx= Clean_idx;
 Out.DFF_norm = DFF_normalized;
 Out.active = ActiveTable;
 Out.FreqLevelOrder = FreqLevelOrder;
