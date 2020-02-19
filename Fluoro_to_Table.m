@@ -314,9 +314,7 @@ new_ids = ones( 1 + n_end - n_start  ,1)* expt_id;
  expt_list = [ expt_list ; new_ids];
  
  
-  if class(dataDir) == 'char'
-      break
-  end 
+ 
 
 end 
 
