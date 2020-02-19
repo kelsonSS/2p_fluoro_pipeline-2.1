@@ -63,8 +63,13 @@ for expt = 1:length(dataDir) %For each file in a directory
  %% grab and Preprocess data
     try
      %% data unpacking
+     
      Data = dataDir{expt};
-    
+     
+     if ~isstruct(Data) && ischar(Data)
+     Data = Fluoro_to_Table(Data);    
+     end 
+     
      cdef = Data.CellID{1};
      xy = cdef.ptsIdx(:,2:3);
      FLO = Data.FreqLevelOrder;

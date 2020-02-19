@@ -1,4 +1,4 @@
-function needs_CellIDS = CreateCellDefinitionList(savepath)
+function needs_CellIDs = CreateCellDefinitionList(savepath)
 
 if ~exist('savepath','var')
     savepath = '\\vault3\data\kelson\analyzed';
@@ -14,7 +14,7 @@ end
  CellDefinitions = CellDefinitions(2,:)';
  
  
- needs_CellIDs = needs_CellIDS =  setdiff(registered,CellDefinitions);
+ needs_CellIDs =  setdiff(registered,CellDefinitions);
 
 
 end 

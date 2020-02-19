@@ -143,7 +143,7 @@ end
 
 
 
-CreateCellDefinitionList(Input) 
+CreateCellDefinitionList(input) 
 %%
 %Click cell centers of registered movies. CellDefinitionGUI will save cell
 %definitions to the directory that the images were loaded from, so be sure
@@ -251,6 +251,9 @@ end
 
 %% Analysis Starts here 
  
+FindFilesByExptName('FRANoise')
+
+
 Data = Fluoro_to_Table_interactive('\\Vault3\Data\Kelson\Analyzed')
 
 Data.df_by_level = getTracesAndFRA(Data) 

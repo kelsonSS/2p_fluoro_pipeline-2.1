@@ -29,14 +29,8 @@ noise_settings = [-20 1 4];   % used for automated checking
 expt_list = [];
 
 
-if ischar(dataDir)
-num_expts = 1;
-else 
-    num_expts = length(dataDir);
-end 
 
-
-for expt_id = 1:num_expts
+for expt_id = 1:length(dataDir)
 
 
 %[Cells_path,Main_path]  = uigetfile(Main_path,'Select Cell Definitions');
@@ -314,9 +308,9 @@ new_ids = ones( 1 + n_end - n_start  ,1)* expt_id;
  expt_list = [ expt_list ; new_ids];
  
  
-  if class(dataDir) == 'char'
-      break
-  end 
+ if class(dataDir) == 'char'
+     break
+ end 
 
 end 
 

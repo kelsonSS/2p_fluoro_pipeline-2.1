@@ -1,21 +1,25 @@
-function  Loss = BayesClassiferPassive(Passive)
+function  Loss = BayesClassiferPassive(Passive,Savepath)
 
 % this function takes in the passiveData and creates a number of
 % classifiers and looks at their classification performance based on number
 % of neurons, time during the trial , and Neuron Class
 %
 % init
+if ~exist('Savepath','var')
 Savepath = '\\vault3\Data\Kelson\Aging\Passive.mat';
+end 
+
 
 num_classes = 4;
 num_neurons = 80;
 num_types = 2;
 num_reps = 10;
-classes = {'Tones','Noise','Offsett'};
+%classes = {'Tones','Noise','Offsett'};
+classes = {'All'};
 Freqs = Passive.FreqLevelOrder{:,1};
 Levels = Passive.FreqLevelOrder{:,2};
 uLevels = sort(unique(Levels),'descend');
-bad_idx = ~Passive.Clean_idx';
+bad_idx = ~Passive.Clean_idx;
 if ~(isfield(Passive,'Classes'))
     Passive.Classes = ones(size(Passive.DFF,3),1);
 end
@@ -256,7 +260,7 @@ for run = 1:num_reps
     end
 end
 
-save(Savepath,'Passive','-v7.3') 
+save(Savepath,'P','-v7.3') 
 
 
 %% Noise Over time 
