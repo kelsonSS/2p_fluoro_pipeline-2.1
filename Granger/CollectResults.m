@@ -1,4 +1,4 @@
-function  [results,dataDir] = Collect_GC_Results(dataDir)
+function  [results,dataDir] = CollectResults(dataDir)
 
 % file setup
 if ~exist('dataDir','var')
