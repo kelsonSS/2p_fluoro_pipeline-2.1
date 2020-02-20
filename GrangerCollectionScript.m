@@ -14,7 +14,7 @@ GrangerResults = struct();
 for class = 1:size(Classes,2)
 FilesTemp = cellfun(@(x) [x Classes{1,class}],GrangerData,'UniformOutput',0);
 
-GrangerResults.(Classes{2,class}) = CollectResults(FilesTemp)  ;
+GrangerResults.(Classes{2,class}) = CollectGCResults(FilesTemp)  ;
           
 end    
           
