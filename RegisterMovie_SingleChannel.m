@@ -91,7 +91,12 @@ if ~exist('imTemplate','var')
     
    
     timPtWindow = (corrSeq(pkCorrInd,3) + corrSeq(pkCorrInd,2))/2;
-    I = (mean(IMG(:,:,timPtWindow-winsize:timPtWindow+winsize),3));
+    lwin = max(1, timPtWindow-winsize);
+    rwin = min(timPtWindow+winsize, nframes);
+    
+    I = (mean(IMG(:,:,lwin:rwin),3));
+  
+        
     fixed = (I - min(I(:)))./range(I(:));
     imTemplate = fft2(fixed);
     save(fullfile(newpath,'AvgImg.m'),'fixed')

@@ -123,6 +123,7 @@ for i=1:length(paths)
      ExtractChannels(input)
 end
 
+
 %Register movies
 for i=1:length(paths)
     %Select current path

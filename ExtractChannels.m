@@ -35,8 +35,11 @@ for i = 1:length(input.expname)
     if opts.numchannels == 1
         
         old_path = fullfile(input.path,input.expname{i},'Image_0001_0001.raw');
-        
+        try
         copyfile(old_path,out_path, 'f')
+        catch
+            continue
+        end
         
     elseif opts.numchannels == 2
         
