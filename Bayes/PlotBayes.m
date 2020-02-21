@@ -3,7 +3,17 @@ function PlotBayes(BayesModels)
 % this function takes a BayesModel struct from the Output of
 % BayesClassifierPassive and plots the resulting models 
 
+
+if isfield(BayesModels,'BayesModels')
+    BayesModels = BayesModels.BayesModels;
+end 
+    
+if ~isfield(BayesModels,'NumbersLossTotal')
+    error('Object must be BayesModelsObject or Contain a field named BayesModels')
+end
+
 fn = fieldnames(BayesModels);
+
 
 for model = 1:length(fn)
     data = BayesModels.(fn{model});

@@ -73,4 +73,6 @@ results.GCnumbers_mu = mean(results.GCnumbers);
 results.GCnumbers_std = std(results.GCnumbers);
 results.InsufficientCells = InsufficientCells;
 
+Plot_GC_Results(results)
+
 

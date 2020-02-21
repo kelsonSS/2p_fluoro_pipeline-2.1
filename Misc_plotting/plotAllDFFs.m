@@ -1,10 +1,14 @@
-function plotAllDFFs(DFF)
+function plotAllDFFs(DFF,norm)
     
 if isstruct(DFF)
-    clean_idx = DFF.Clean_idx;
+    if isfield(DFF,'Clean_idx')
+        clean_idx = DFF.Clean_idx;
+    elseif isfield(DFF,'ArtifactIndex')
+        clean_idx = ~DFF.ArtifactIndex;
+    end 
+    
+    
     DFF = DFF.DFF(:,:,clean_idx);
-   
-
 end 
 
 figure

@@ -295,7 +295,8 @@ end
     clear DFFtemp
 
     
- DFF_Z = squeeze( ( Vec_DFF_all - nanmean(nanmean(Vec_DFF_all )) ./ nanstd(nanstd(Vec_DFF_all))));   
+ DFF_Z = squeeze( ( Vec_DFF_all - nanmean(nanmean(Vec_DFF_all )) )...
+                  ./ nanstd(nanstd(Vec_DFF_all)));   
  
  % clean_index is defined by  the absolute variance of the first second
  % before stimulation being relatively low. this may break if prestim
