@@ -1,0 +1,31 @@
+
+
+All_FRA_list =dir('//vault3/data/Kelson/analyzed/**/FRA*');
+All_FRA_list = unique({All_FRA_list.folder})';
+
+young_exp = 'r(\d\d\d[a-zA-Z])|([a-zA-Z]\d\d\d)';
+old_exp = '[Ii][Aa]';
+
+old_list = ~cellfun(@isempty,regexp(All_FRA_list,old_exp))
+young_list ~cellfun(@isempty,regexp(All_FRA_list,young_exp))
+% DataDir Name = Passive2  <- find and replace with name of DataDir
+
+
+
+BD = BandwidthAnalysis(Passive2,'RFS',1);
+
+BayesClassifierPassive(Passive2)
+
+
+
+%Passive GC
+GCanalTrialsModBalanced_TN(Passive2,'SNR')
+GCanalTrialsModBalanced_TN(Passive2,'Tones')
+GCanalTrialsModBalanced_TN(Passive2,'Noise')
+GCanalTrialsModBalanced_TN(Passive2,'Offset')
+GCanalTrialsModBalanced_TN(Passive2,'Off')
+
+
+
+% bayes 
+
