@@ -48,7 +48,7 @@ end
         end
         
         if MultCompare
-           p = multcompare(stat);
+           p = multcompare(stat,[],'off');
         
         end 
   
