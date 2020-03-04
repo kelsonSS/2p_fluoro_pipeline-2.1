@@ -23,7 +23,7 @@ try
     Prestim = get(SoundObject,'PreStimSilence');
     Duration = get(Primary,'Duration');
     Poststim = get(SoundObject,'PostStimSilence');
-    TrialDur =  Prestim+Duration+Poststim;
+    TrialDur =  Prestim+Duration+Poststim;n
     TimingInfo.tarFnums = (TrialDur*fps);
 
     %ITI = get(PsignalData.exptparams.BehaveObject,'ITI');

@@ -45,7 +45,6 @@ for expt_id = 1:m
     catch
  
     end 
-    
     try
         % get active data
     active =  Fluoro_to_Table(experiment_files{expt_id,2});  
