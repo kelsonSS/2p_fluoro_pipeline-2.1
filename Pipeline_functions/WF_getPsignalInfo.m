@@ -11,6 +11,8 @@ if ischar(handles) || isstring(handles)|| iscell(handles) && length(handles) == 
     load(char(handles)) 
     handles = struct('Psignalfile', handles)  ; 
        
+    
+    
 end 
 
 
@@ -33,7 +35,8 @@ try
     handles.PostStimSilence = get(PrimaryHandle,'PostStimSilence');
     handles.BackgroundNoise = get(PrimaryHandle,'BackgroundNoise');
     handles.OverallDB       = get(exptparams.TrialObject,'OveralldB');
-    handles.Class            =get(PrimaryHandle,'type');
+    handles.Class            = get(PrimaryHandle,'type');
+    handles.Trialindicies   = get(exptparams.TrialObject','TrialIndices');
 catch
     
    
@@ -71,6 +74,7 @@ handles.framespertrial = handles.pfs*(handles.PreStimSilence +...
                     handles.Levels =  handles.OverallDB + handles.Levels  ;
                     handles.uFreqs  = unique(cellfun(@(y) y{1},FreqLevel));
                     handles.uLevels = unique(handles.Levels);
+                    
                  end
                  
              catch
