@@ -52,6 +52,10 @@ for e = 1:length(input.expname)
     %% get actual number of frames in registered file 
     
     fh = fopen( fullfile(SavePath,ExpName,'greenchannelregistered.raw'));
+    if fh == -1
+        continue
+    end 
+    
    num_frames_actual = FindRawImgSize(fh,[xml.dimX xml.dimY]);
    fclose(fh);
         
@@ -68,7 +72,7 @@ for e = 1:length(input.expname)
             end
             
             TimingInfo = getTimingInfo_H5(ThorFile, PsignalFile, fps,xml,num_frames_actual);
-            save(TimingFile,'TimingInfo')
+     
             
         else
             
@@ -81,11 +85,52 @@ for e = 1:length(input.expname)
                 end
                 
                 TimingInfo = getTimingInfo(ThorFile, PsignalFile, fps);
-                save(TimingFile,'TimingInfo')
+               
             end
         end
 
 
- end 
+if  isfield(TimingInfo,'FrameIdx') % if extraction was successful
+
+if debug
+    % if there is already a file check that these changes dont affect the
+    % data
+    if exist(TimingFile,'file')
+        old  = load(TimingFile);
+        old = old.TimingInfo;
+        % if there is a shift more than 1 frame stop for manual inspection
+      try
+        shift_flag = max(max(abs(old.FrameIdx - TimingInfo.FrameIdx))) > 1; 
+      catch
+          shift_flag = 1;
+      end 
+        
+        if shift_flag == 1 
+             fo=h5read(ThorFile,'/DI/Frame Out');
+             try
+                 gate=h5read(ThorFile,'/AI/ai5'); % trial gate signal
+             catch
+                 gate=h5read(ThorFile,'/AI/PsignalGate');
+             end
+            fprintf('Trial 1 New:%d-%d \n Trial 1 Old:%d-%d \n',...
+                   TimingInfo.FrameIdx(1,:),old.FrameIdx(1,:))
+             figure; plot(gate); hold on; plot(fo);
+             
+             title(sprintf('%s \n %s',  SavePath,input.expname{e}),...
+                 'interpreter','none')
+               xlabel(sprintf('Trial 1 New:%d-%d \n Trial 1 Old:%d-%d',...
+                   TimingInfo.FrameIdx(1,:),old.FrameIdx(1,:) ));
+             clear gate 
+             clear fo
+        end 
+    end 
+end 
+
+% save the timing file 
+
+save(TimingFile,'TimingInfo')
+clear TimingInfo
+end
+end 
 
 end 
