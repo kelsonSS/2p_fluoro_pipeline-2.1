@@ -30,12 +30,13 @@ if exist(TimingFile,'file')
          
           load(TimingFile);    
        
-      else 
-          % hotfix- consider rework
-         temp = input;
-         temp.expname = temp.expname{e};
-         TimingInfo =  ExtractTimingParams(input,1);
-         clear temp
+else 
+          continue
+%           % hotfix- consider rework
+%          temp = input;
+%          temp.expname = temp.expname{e};
+%          TimingInfo =  ExtractTimingParams(input,1);
+%          clear temp
 
       end
      try
