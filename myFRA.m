@@ -15,18 +15,27 @@ end
  end 
  
  % normalize  df responses to 1 
-%df_by_level  = df_by_level ./ max( df_by_level(:) )  ;
+fra ./ max( fra(:) )  ;
  
 %% reshape into FRA, add zeros to bottom row since pcolor colors by top
  % left position 
  if isrow(fra) || iscolumn(fra)
    fra = reshape(fra,L,t);
  end 
+ 
+ if size(fra,2) == L && size(fra,1) == t
+     fra = permute(fra,[2,1]);
+ end 
+ 
   fra = [[fra ; nan(1,t)], nan(L+1,1)];
-
+  
+  
+  
+  
+  
   %% create figure 
    pcolor(fra) 
-
+   set(gca,'Ydir','Reverse')    
    
    
  %% Format Figure 
