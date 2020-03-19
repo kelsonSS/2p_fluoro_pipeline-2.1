@@ -7,10 +7,10 @@
     '\\Vault3\Data\Kelson\Analyzed\n242\18-07-06\ToneNoiseNaive'};
 
 
-All_FRA_list =dir('//vault3/data/Kelson/analyzed/**/fra*/Fluorescence.mat')
+All_FRA_list =dir('//vault3/data/Kelson/analyzed/**/FRA*/Fluorescence.mat');
 All_FRA_list = unique({All_FRA_list.folder})';
 
-no_Fluoro = dir('//vault3/data/Kelson/analyzed/**/fra*/greenchannelregistered.raw');
+no_Fluoro = dir('//vault3/data/Kelson/analyzed/**/FRA*/greenchannelregistered.raw');
 no_Fluoro = {no_Fluoro.folder}';
 
 no_Fluoro =  setdiff(no_Fluoro,All_FRA_list);
@@ -47,15 +47,13 @@ GCanalTrialsModBalanced_TN(Passive2,'SNR')
 GCanalTrialsModBalanced_TN(Passive2,'Tones')
 GCanalTrialsModBalanced_TN(Passive2,'Noise')
 GCanalTrialsModBalanced_TN(Passive2,'Offset')
-GCanalTrialsModBalanced_TN(Passive2,'Off')
+GCanalTrialsModBalanced_TN(Passive2.datadir,'Off')
 
-%
 GCanalTrialsModBalanced_TN(Aging2.DataDirs,'SNR')
 GCanalTrialsModBalanced_TN(Aging2.DataDirs,'Tones')
-GCanalTrialsModBalanced_TN(Aging2.DataDirs,'Noise')
+GCanalTrialsModBalanced_TNzzzz(Aging2.DataDirs,'Noise')
 GCanalTrialsModBalanced_TN(Aging2.DataDirs,'Offset')
 GCanalTrialsModBalanced_TN(Aging2.DataDirs,'Off')
 
-
 % bayes 
-
+BayesClassiferPassive(Aging2,'Aging2')
