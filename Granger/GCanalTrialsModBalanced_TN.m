@@ -271,7 +271,7 @@ for expt = 1:length(dataDir) %For each file in a directory
               end
               
         case 'Offset'   
-             % Passive SNR Noise Responsive Neurons
+             % Passive SNR Tone-OFF/Ramping Responsive Neurons
             
             DFF_mu = squeeze(nanmean(Fluoro,2));
             [~,onsets]  = max(DFF_mu);
@@ -287,7 +287,24 @@ for expt = 1:length(dataDir) %For each file in a directory
               for lvl = 1:length(uL)
                  resp{lvl} = Fluoro(:,Levels == uL(lvl)  ,:);
               end
-          
+       case 'Off'   
+             % Passive SNR Noise-OFF Responsive Neurons
+            
+            DFF_mu = squeeze(nanmean(Fluoro,2));
+            [~,onsets]  = max(DFF_mu);
+            
+             Off_idx  = onsets > 120;
+            Fluoro = Fluoro(:,:,Off_idx);
+            
+            mode = {'NR- Tone','NR +30db SNR','NR +20db SNR','NR +10db SNR'};
+            nmode = numel(mode);
+            Levels =table2array(Data.FreqLevelOrder(:,2));
+            uL = unique(Levels);
+            
+              for lvl = 1:length(uL)
+                 resp{lvl} = Fluoro(:,Levels == uL(lvl)  ,:);
+              end    
+              
               
     end
     
