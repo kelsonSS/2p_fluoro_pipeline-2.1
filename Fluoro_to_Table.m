@@ -76,7 +76,7 @@ CellID{expt_id} = load(fullfile(Main_path,Cell_file));
 load(fullfile(Main_path,Fluo_file))
 handles = WF_getPsignalInfo(fullfile(Main_path,Psignal_file));
 
-handles_all(expt_id) = handles; 
+handles_all{expt_id} = handles; 
     
 
 FCellCorrected = Output.FCellCorrected;
@@ -97,6 +97,7 @@ uLevels = sort(uLevels,'descend');
 Freqs   = handles.Freqs  ;
 Levels  = handles.Levels;
 Levels(Levels>100) = inf;
+uLevels(uLevels>100) = inf;
 FreqLevelOrder = table(Freqs,Levels);
 FreqLevels = unique(FreqLevelOrder);
 FreqLevels = sortrows(FreqLevels, {'Freqs','Levels'},{'ascend','descend'});
@@ -108,9 +109,9 @@ numreps = floor(numtrials / uL / uF);
 
     
 % red channel handling 
-RedCells_file = 'RedNeuronNumber.mat'
+RedCells_file = 'RedNeuronNumber.mat';
 if exist(fullfile(Main_path,RedCells_file),'file')
-  RedCells = load(fullfile(Main_path,RedCells_file))
+  RedCells = load(fullfile(Main_path,RedCells_file));
   RedCells = RedCells.n_neurons;
 else 
     RedCells  = 0;
@@ -127,10 +128,15 @@ end
 
 %% Tests 
 % ensure that trials have the expected duration 
-assert(trialdur == (handles.PreStimSilence + handles.PrimaryDuration+...
+ if  (trialdur ~= (handles.PreStimSilence + handles.PrimaryDuration+...
            handles.PostStimSilence) * handles.pfs);
-
+       continue 
+       
+ end 
      
+  
+ 
+ 
        
   %% activity analysis
   % if we take a ttest of the mean of activity before the stimulus and
@@ -176,9 +182,11 @@ end
 %sorting 
 
 [FreqLevelOrder, fl_ind]= sortrows(FreqLevelOrder, {'Freqs','Levels'},{'Ascend','Descend'});
- Vec_DFF = Vec_DFF(:,fl_ind,:);
-
-
+try
+Vec_DFF = Vec_DFF(:,fl_ind,:);
+catch
+   continue
+end 
   
   active = zeros(Neurons,1);
    for ii = 1:Neurons
@@ -203,31 +211,41 @@ end
    % ex. 10 repeats per trials 32 conditions (4 levels, 8 freqs)
    
    
-   counts =histcounts(log(FreqLevelOrder{:,1}),uF*uL);
-   
-   if mean(counts) == mode(counts)
-    DFF_conditions = reshape(Vec_DFF,trialdur,mode(counts),uF *uL,Neurons);
   
-   else
+   FLO =  table2array(FreqLevelOrder);
+   FLO = sum(FLO,2);
+   counts =histcounts(FLO,unique(FLO));
+   
        DFF_conditions = [];
       rep_mode = mode(counts);
       condition = 1;
     for freq = 1:uF
         for lvl = 1:uL
-           FL_idx=  FreqLevelOrder{:,1} == Freqs(freq) &... 
-               FreqLevelOrder{:,2} == Levels(lvl);
+         %  fprintf('Level %d Freq %d \n', uLevels(lvl),uFreqs(freq))
+           FL_idx=  FreqLevelOrder{:,1} == uFreqs(freq) &... 
+           FreqLevelOrder{:,2} == uLevels(lvl);
            
             Vec_DFF_Temp = Vec_DFF(:,FL_idx,:);
             % in case trials have different reps
+            try
             Vec_DFF_Temp = Vec_DFF_Temp(:,1:rep_mode,:);
-           plot(Vec_DFF_Temp(:,:,1))
-            df_by_level_temp(freq,lvl,:) = ...
-            nanmean(nanmean(Vec_DFF_Temp(soundon:soundoff,:,:),2));
+            catch
+            end
+          %  plot(Vec_DFF_Temp(:,:,1))
+            baseline = squeeze(nanmean(Vec_DFF_Temp(1:30,:,:),2));
+            after_onset = squeeze(nanmean(Vec_DFF_Temp(soundon:soundoff+10,:,:),2));
             
-            df_by_level_offset_temp(freq,lvl,:) =...
-                nanmean(nanmean(...
-                Vec_DFF_Temp(soundoff:soundoff+1*handles.pfs ,:,:),2));
-            
+            for nn = size(Vec_DFF_Temp,3)
+                df_by_level_sig_temp(lvl,freq,nn) = ttest2(baseline(:,nn),after_onset(:,nn));
+            end
+             df_by_level_temp(lvl,freq,:) = ...
+             max(after_onset);
+           
+            df_by_level_temp(:,:,1)
+            df_by_level_offset_temp(lvl,freq,:) =...
+                 nanmean(nanmean(...
+                 Vec_DFF_Temp(soundoff:soundoff+1*handles.pfs ,:,:),2));
+             
             DFF_conditions(:,:,condition,:) = Vec_DFF_Temp;
             
              clear Vec_DFF_Temp 
@@ -235,15 +253,21 @@ end
         
         end
     end 
-   end 
+   
    if ~exist('df_by_level','var')
        df_by_level = [];
+       df_by_level_sig = [];
        df_by_level_offset= [];
+       
    end 
    
-   df_by_level = cat(3,df_by_level,df_by_level_temp);
-   df_by_level_offset = cat(3,df_by_level_offset,df_by_level_offset_temp);
+   
+ 
+   df_by_level{expt_id} = df_by_level_temp;
+   df_by_level_sig{expt_id} = df_by_level_sig_temp;
+   df_by_level_offset{expt_id} = df_by_level_offset_temp;
    clear df_by_level_temp
+   clear df_by_level_sig_temp
    clear df_by_level_offset_temp
    
    
@@ -263,7 +287,7 @@ if ~(exist('anova_idx','var'))
     anova_offset_idx = [];
 end
     anova_idx = cat(2,anova_idx,active2_idx) ;
-    anova_offset_idx = cat(2,anova_offset_idx,offset_idx) 
+    anova_offset_idx = cat(2,anova_offset_idx,offset_idx); 
 %    DFF_cleaned = Vec_DFF(:,:,active2_idx);
    
 %% Clean-up 
@@ -288,22 +312,30 @@ if Behavior == 1  % active condition
     Vec_DFF_all{expt_id} = Vec_DFF;
     
 else  % passive condition
-
+try
 Vec_DFF_all = cat(3,Vec_DFF_all,Vec_DFF);
+catch
+    pause
+end 
 
 end 
     clear DFFtemp
 
     
  DFF_Z = squeeze( ( Vec_DFF_all - nanmean(nanmean(Vec_DFF_all )) )...
-                  ./ nanstd(nanstd(Vec_DFF_all)));   
+                  ./ nanstd(nanstd(Vec_DFF_all)));
+ % baseline correction
+ 
+ B_DFF_Z = repmat(nanmean(DFF_Z(1:30,:,:)),[trialdur,1,1]);  
+   DFF_Z =  DFF_Z - B_DFF_Z ;       
+              
  
  % clean_index is defined by  the absolute variance of the first second
  % before stimulation being relatively low. this may break if prestim
  % silence is less than 1. a noisy trial often has 10-100times the variance
  % of a normal trial which makes it easy to spot in standard deviation
  % before sound onset
- Clean_idx = squeeze(max(abs(nanstd(DFF_Z(1:30,:,:),[],2)))<20 ); 
+ Clean_idx = squeeze(max(abs(nanstd(Vec_DFF_all(1:25,:,:),[],2))) < 25 ); 
  
  DFF2 = nanmean(Vec_DFF_all,2);
 
@@ -314,6 +346,19 @@ DFF_normalized = Vec_DFF_all./DFF_ab_max;
 new_ids = ones( 1 + n_end - n_start  ,1)* expt_id;
  expt_list = [ expt_list ; new_ids];
  
+
+Classes = {'Noise','Tone_on','Tone_off','Noise_off'};
+[~,onsets]  = max(squeeze(DFF2));
+
+
+Noise_idx = (onsets > 30 & onsets <= 60) * 1;
+Tone_idx  = (onsets > 60 & onsets <= 90) * 2;
+Offset_idx = (onsets > 90 & onsets<= 120) * 3;
+Off_idx = (onsets > 120) * 4 ;
+
+Class_idx = Noise_idx + Tone_idx + Offset_idx + Off_idx;
+Class_idx = Class_idx'; 
+
  
  
 
@@ -321,7 +366,8 @@ end
 
 
 %% Packaging 
- 
+
+try
 Out.DFF = Vec_DFF_all;
 Out.DFF_Z = DFF_Z;
 Out.Clean_idx= Clean_idx;
@@ -331,12 +377,16 @@ Out.FreqLevelOrder = FreqLevelOrder;
 Out.experiment_list = expt_list;
 Out.RedCellID = RedCellID;
 Out.df_by_level = df_by_level;
+Out.df_by_level_sig = df_by_level_sig;
 Out.df_by_level_offset = df_by_level_offset;
 Out.CellID = CellID;
 Out.DataDirs = dataDir;
+Out.Class_idx = Class_idx;
+Out.Classes = Classes;
 Out.anova = anova_idx;
 Out.Offset = anova_offset_idx;
 Out.handles =handles_all;
-
-
+catch
+   Out = []
+end 
     
