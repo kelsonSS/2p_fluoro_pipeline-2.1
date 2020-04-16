@@ -27,7 +27,7 @@ total_trials = 320;         % used for automated checking
     
 noise_settings = [-20 1 4];   % used for automated checking 
 expt_list = [];
-
+curr_expt = 1;
 
 if ischar(dataDir)
 num_expts = 1;
@@ -69,10 +69,10 @@ Psignal_file =   [PsigPath,PsigName];
 end 
 clear dir_t
  
-%Cell ID handling
+%% Cell ID handling
 CellID{expt_id} = load(fullfile(Main_path,Cell_file));
 
-% Psignal Handling
+%% Psignal Handling
 load(fullfile(Main_path,Fluo_file))
 handles = WF_getPsignalInfo(fullfile(Main_path,Psignal_file));
 
@@ -81,11 +81,13 @@ handles_all{expt_id} = handles;
 
 FCellCorrected = Output.FCellCorrected;
 trialdur = size(FCellCorrected,1);
+trials = size(FCellCorrected,2);
 Neurons  = size(FCellCorrected,3);
 
-
+fprintf('Expt %d of %d: %d frames x %d trials X %d neurons \n',...
+          expt_id, num_expts, trialdur,trials, Neurons);
  
- % Psignal matrix parsing
+ %% Psignal matrix parsing
 uFreqs  = handles.uFreqs ;
   uF    = length(uFreqs);
 uLevels = handles.uLevels;
@@ -108,7 +110,7 @@ numtrials = size(FreqLevelOrder,1);
 numreps = floor(numtrials / uL / uF);
 
     
-% red channel handling 
+%% red channel handling 
 RedCells_file = 'RedNeuronNumber.mat';
 if exist(fullfile(Main_path,RedCells_file),'file')
   RedCells = load(fullfile(Main_path,RedCells_file));
@@ -134,7 +136,9 @@ end
        
  end 
      
-  
+  if  trials ~= total_trials
+      continue
+  end 
  
  
        
@@ -238,10 +242,10 @@ end
             for nn = size(Vec_DFF_Temp,3)
                 df_by_level_sig_temp(lvl,freq,nn) = ttest2(baseline(:,nn),after_onset(:,nn));
             end
+            
              df_by_level_temp(lvl,freq,:) = ...
              max(after_onset);
-           
-            df_by_level_temp(:,:,1)
+         
             df_by_level_offset_temp(lvl,freq,:) =...
                  nanmean(nanmean(...
                  Vec_DFF_Temp(soundoff:soundoff+1*handles.pfs ,:,:),2));
@@ -306,6 +310,7 @@ end
   clear temp_table
  end
  
+ 
 % append DFF's to output list
 if Behavior == 1  % active condition
 
@@ -315,7 +320,7 @@ else  % passive condition
 try
 Vec_DFF_all = cat(3,Vec_DFF_all,Vec_DFF);
 catch
-    pause
+    
 end 
 
 end 
@@ -325,10 +330,12 @@ end
  DFF_Z = squeeze( ( Vec_DFF_all - nanmean(nanmean(Vec_DFF_all )) )...
                   ./ nanstd(nanstd(Vec_DFF_all)));
  % baseline correction
- 
+ try
  B_DFF_Z = repmat(nanmean(DFF_Z(1:30,:,:)),[trialdur,1,1]);  
-   DFF_Z =  DFF_Z - B_DFF_Z ;       
-              
+ DFF_Z =  DFF_Z - B_DFF_Z ;       
+ catch 
+     continue
+ end 
  
  % clean_index is defined by  the absolute variance of the first second
  % before stimulation being relatively low. this may break if prestim
@@ -343,10 +350,19 @@ DFF_ab_max = max(abs(DFF2));
 DFF_normalized = Vec_DFF_all./DFF_ab_max;
 
 % append Expt_list 
-new_ids = ones( 1 + n_end - n_start  ,1)* expt_id;
+new_ids = ones( 1 + n_end - n_start  ,1)* curr_expt;
  expt_list = [ expt_list ; new_ids];
- 
 
+ curr_expt = curr_expt+1;
+ 
+ % append datapaths 
+ if ~exist('good_dirs','var')
+     good_dirs = {};
+ end 
+ 
+ good_dirs{1,end+1} = dataDir(expt_id);
+ 
+% create class_Idx
 Classes = {'Noise','Tone_on','Tone_off','Noise_off'};
 [~,onsets]  = max(squeeze(DFF2));
 
@@ -360,6 +376,7 @@ Class_idx = Noise_idx + Tone_idx + Offset_idx + Off_idx;
 Class_idx = Class_idx'; 
 
  
+
  
 
 end 
@@ -380,7 +397,7 @@ Out.df_by_level = df_by_level;
 Out.df_by_level_sig = df_by_level_sig;
 Out.df_by_level_offset = df_by_level_offset;
 Out.CellID = CellID;
-Out.DataDirs = dataDir;
+Out.DataDirs = good_dirs;
 Out.Class_idx = Class_idx;
 Out.Classes = Classes;
 Out.anova = anova_idx;
