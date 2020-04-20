@@ -5,8 +5,12 @@ DFF   = TN.DFF;
 active = TN.active.Activity;
 FLO = TN.FreqLevelOrder;
 L_num = unique(FLO.Levels);
+F_num = unique(FLO.Freqs);
 e_ls = TN.experiment_list;
- 
+
+frames = size(DFF,1);
+trials =size(DFF,2);
+neurons = size(DFF,3);
  % rehape Frame X Repeat X Level X Frequency X Neuron 
 
 
@@ -33,7 +37,7 @@ for Expt = 1:length(TN.DataDirs)
    
     
      % rehape Frame X Repeat X Level X Frequency X Neuron 
-    DFF_c =  reshape(DFF_t, [150,10,4,8,N_t]);
+    DFF_c =  reshape(DFF_t, [frames,10,L_num,F_num,N_t]);
     DFF_mu = squeeze(nanmean(nanmean(DFF_c(60:120,:,:,:,:),2))); % average over stim frames and repeats
     % change to column major form 
     DF_flat = reshape(DFF_mu,[32,size(DFF_mu,3)]); 

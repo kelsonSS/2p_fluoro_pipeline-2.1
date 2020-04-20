@@ -76,8 +76,6 @@ CellID{expt_id} = load(fullfile(Main_path,Cell_file));
 load(fullfile(Main_path,Fluo_file))
 handles = WF_getPsignalInfo(fullfile(Main_path,Psignal_file));
 
-handles_all{expt_id} = handles; 
-    
 
 FCellCorrected = Output.FCellCorrected;
 trialdur = size(FCellCorrected,1);
@@ -87,6 +85,24 @@ Neurons  = size(FCellCorrected,3);
 fprintf('Expt %d of %d: %d frames x %d trials X %d neurons \n',...
           expt_id, num_expts, trialdur,trials, Neurons);
  
+%% Tests 
+% ensure that trials have the expected duration 
+ if  (trialdur ~= (handles.PreStimSilence + handles.PrimaryDuration+...
+           handles.PostStimSilence) * handles.pfs);
+       continue 
+       
+ end 
+     
+%   if  trials ~= total_trials
+%       continue
+%   end 
+%        
+
+handles_all{expt_id} = handles; 
+          
+      
+      
+      
  %% Psignal matrix parsing
 uFreqs  = handles.uFreqs ;
   uF    = length(uFreqs);
@@ -128,18 +144,7 @@ end
  
  
 
-%% Tests 
-% ensure that trials have the expected duration 
- if  (trialdur ~= (handles.PreStimSilence + handles.PrimaryDuration+...
-           handles.PostStimSilence) * handles.pfs);
-       continue 
-       
- end 
-     
-  if  trials ~= total_trials
-      continue
-  end 
- 
+
  
        
   %% activity analysis
@@ -360,7 +365,7 @@ new_ids = ones( 1 + n_end - n_start  ,1)* curr_expt;
      good_dirs = {};
  end 
  
- good_dirs{1,end+1} = dataDir(expt_id);
+ good_dirs(1,end+1) = dataDir(expt_id);
  
 % create class_Idx
 Classes = {'Noise','Tone_on','Tone_off','Noise_off'};

@@ -1,4 +1,4 @@
-function [BD,Levels] = BandwidthAnalysis(DF,Type,Classes,Lvl)
+function [BD,P,Levels] = BandwidthAnalysis(DF,Type,Classes,Lvl)
 
 %  DF is a df_by_level (LevelX Freq X neuron) object and returns the bandwidth for each
 %  neuron as a level X neuron object.
@@ -11,28 +11,46 @@ if ~ exist('Classes','var'); Classes = 0; end
 
 Levels = [];
 
-if isstruct(DF)
+if ~isstruct(DF)
+    errordlg('This function currently only accepts structs')
+end 
+
     Freqs = unique(DF.FreqLevelOrder{:,1});
     Levels = sort(unique(DF.FreqLevelOrder{:,2}),'descend');
      
     active = DF.active{:,2};
    
-    df_by_level = DF.df_by_level; 
+    if iscell(DF.df_by_level)
+        
+        DF_shapes = cellfun(@size,DF.df_by_level,'UniformOutput',0);
+        DF_shapes = cell2mat(cellfun(@(x) x(1:2)',DF_shapes,'UniformOutput',0));
+        DF_shape = DF_shapes(:);
+        DF_shape(DF_shapes == 0) = [];
+    end
     
+    
+    if length(unique(DF_shape)) <= 2 % if thereis only 1 DF size 
+        df_by_level = DF.df_by_level; 
+    else 
+        warning('Multiple FRA SHAPES DETECTED Aborting! \n')
+        BD = []
+        return
+    end 
+  
     
     if Classes
       for Class = 1:length(DF.Classes)
         Class_idx = DF.Class_idx == Class;
         final_idx = (active>0) & Class_idx;
         BD{Class,1} = FindBandwidth(df_by_level(:,:,final_idx),Freqs,Lvl,Type,DF.Classes{Class});
-        BD{Class,2} = DF.Classes{Class};
+        BD{Class,3} = DF.Classes{Class};
      end
      
     else 
       df_by_level = DF.df_by_level;
       DF = df_by_level(:,:,active>0);
       BD{1,1} = FindBandwidth(DF,Freqs,Lvl,Type);
-      BD{1,2} = 'All'
+      BD{1,3} = 'All'
     end 
   
    
@@ -43,24 +61,35 @@ if isstruct(DF)
             
             
         end
-        BD2(:,2) = BD(:,2);
-        BD3(:,2) = BD(:,2);
+        BD2(:,3) = BD(:,3);
+        BD3(:,3) = BD(:,3);
         
         
         
         PlotBandwidth(BD2);title('Max')
+     BD = AnalyzeBandwidth(BD2);
         PlotBandwidth(BD3);title('Sum')
     else
-        PlotBandwidth(BD)
+    BD  = AnalyzeBandwidth(BD);
+          PlotBandwidth(BD)
     end
-else
-     errordlg('This function currently only accepts structs')
-
 
 
 end
 
-end
+
+function BD = AnalyzeBandwidth(BD)
+     for ii =  1:size(BD,1)
+        BD{ii,2} = findSignficance(BD{ii,1});
+     end 
+
+
+end 
+
+
+
+
+
 
 function BD = FindBandwidth(DF,Freqs,Lvl,Type,ClassName)
 
@@ -169,11 +198,11 @@ function PlotBandwidth(BD)
         
         
     for ii =  1:size(BD,1)
-        if ii <4
-       errorbar([],nanmean(BD{ii,1},2),nanstd(BD{ii,1},[],2) / sqrt(size(BD{ii,1},2))) 
-        end 
+      
+       errorbar([],nanmean(BD{ii,1},2),nanstd(BD{ii,1},[],2) / sqrt(size(BD{ii,1},2)))
+       
     end 
-     legend(BD(:,2),'Interpreter','none')
+     legend(BD(:,3),'Interpreter','none')
     
     
     
