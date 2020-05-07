@@ -38,6 +38,7 @@ for expnum = 1:length(input.expname)
     %  bin values together to remove PMT noise 
     bin_size = 10;
     r = mod(size(IMG,3), bin_size); 
+    IMG = single(IMG);
     IMG = IMG(:,:,1:end-r);
     
     IMG = reshape(IMG,opts.dimX, opts.dimY,bin_size,[]);
@@ -45,8 +46,7 @@ for expnum = 1:length(input.expname)
       % max filter and hm filter
     smooth_img = squeeze(max(smooth_movie,[],3));
     smooth_img = hmfilter(smooth_img);
-    clear IMG
-    clear smooth_movie
+   
     % ploting
     h = figure;imagesc(smooth_img);colormap gray;axis square;axis off
     saveas(h,fullfile(newpath,'AvgImageSmooth.tif'))
@@ -55,11 +55,15 @@ for expnum = 1:length(input.expname)
     fclose(fileID);
     title([bb{end}, ': ', input.expname{expnum}],'Interpreter','none')
     clear smooth_img;
-   
+    clear IMG
+    clear smooth_movie
     
 end 
 
-function [avgfilteredImage filteredImages] = hmfilter(I)
+function [avgfilteredImage filteredImages] = hmfilter(I,sigma)
+if ~exist('sigma','var')
+    sigma = 1.5
+end 
 filteredImages=zeros(size(I));
 for i = 1:size(I,3)
     I_temp = I(:,:,i);
@@ -67,7 +71,6 @@ for i = 1:size(I,3)
     I_temp = log(1 + I_temp);
     M = 2*size(I_temp,1);
     N = 2*size(I_temp,2);
-    sigma = 1.5; 
     [X, Y] = meshgrid(1:N,1:M);
     centerX = ceil(N/2);
     centerY = ceil(M/2);

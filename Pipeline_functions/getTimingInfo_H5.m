@@ -1,6 +1,7 @@
 function TimingInfo = getTimingInfo_H5(ThorSyncFile, PsignalTimingFile, fps,xml,num_frames_actual)
 %This function finds the frames that correspond to trials by looking
 % comparing the ThorSync and Psignal Files)
+% 
 
 if ~exist('fps','var')
     fps = 30 ; 
@@ -49,8 +50,8 @@ end
 
 try
 fc=h5read(ThorSyncFile,'/CI/Frame Counter'); % may be unreliable
+first_frame = find(fc,1);
 catch
-    fc = fo;
 end 
     
 try
@@ -72,7 +73,7 @@ end
 
 nchannels = xml.format{2}(3);
 
-first_frame = find(fc,1);
+
 
 % find onsets and offsets by looking at the derivative of the gate 
 
@@ -89,7 +90,7 @@ on =  findpeaks(diff(gate),.5);
 off = findpeaks(diff(gate * -1),.5);
 on = on.loc;
 off = off.loc;
-off = off(off >3000); % ensure the first off trigger happens at least .1 sec after trial start
+off = off(off > 3000); % ensure the first off trigger happens at least .1 sec after trial start
 
 
 
@@ -153,7 +154,7 @@ while length(on) ~= TotalTrials || length(on) ~= length(off)
 end  
     
 
-frames = findpeaks(diff(fc),1);
+frames = findpeaks(diff(fo),1);
 frames = frames.loc;
 
 trial_frames = cell(length(on),1);
@@ -187,7 +188,8 @@ for trial = 1:length(on)
        % too many frames
        if length(trial_frames{trial})> TimingInfo.tarFnums
            trial_frames{trial} = trial_frames{trial}(1:TimingInfo.tarFnums);
-      % not enough frames % this shouldn't happen unless an error
+      % not enough frames 
+      % this shouldn't happen unless an error
        else 
            warning('not enough frames found in trial %d',trial)
            % known cases could be
@@ -207,7 +209,7 @@ if num_frames_actual < TotalTrials * TimingInfo.tarFnums -1
 end 
 
 
-num_frames_predicted = findpeaks(diff(fc),1);
+num_frames_predicted = findpeaks(diff(fo),1);
 num_frames_predicted = length(num_frames_predicted.loc);
 
 % if more frames in actual than predicted, shift times

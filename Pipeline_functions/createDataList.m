@@ -1,4 +1,4 @@
-function[paths,expname,psignalfiles, matless] = createDataList(file_path)
+function[paths,expname,psignalfiles, matless,animalIDs] = createDataList(file_path)
 
 % this function checks the folder containing every raw file in 
 % \\VAULT2\Vault2Data\Kelson and checks to see if there is a corresponding 
@@ -93,8 +93,9 @@ for ii = 1:length(todo)
     psiidx = psiidx + 1 ;
     expidx = expidx + 1 ;
     
-end 
-        
+end
+
+[~,animalIDs] = cellfun(@fileparts,paths,'Uni',0);
         
     
     
