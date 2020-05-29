@@ -33,9 +33,9 @@ for model = 1:length(fn)
          end 
     
      saveStyleBayesFig()         
-             
-        
+              
     end 
+    
     
     
 end 
