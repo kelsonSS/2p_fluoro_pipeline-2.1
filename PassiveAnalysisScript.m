@@ -10,6 +10,14 @@
 All_FRA_list =dir('//vault3/data/Kelson/analyzed/**/fra*/Fluorescence.mat')
 All_FRA_list = unique({All_FRA_list.folder})';
 
+FRA_list_noise = All_FRA_list(cellfun(@(X) ~isempty(X),...
+                                                    regexp(All_FRA_list,...
+                                                    '[Nn]oise')))
+                                                
+FRA_list_quiet =  All_FRA_list(cellfun(@(X) ~isempty(X),...
+                                                    regexp(All_FRA_list,...
+                                                    '[Qu]iet')))                                             
+
 no_Fluoro = dir('//vault3/data/Kelson/analyzed/**/fra*/greenchannelregistered.raw');
 no_Fluoro = {no_Fluoro.folder}';
 
@@ -19,43 +27,43 @@ young_exp = '(\d\d\d[a-zA-Z])|([a-zA-Z]\d\d\d)';
 
 old_exp = '[Ii][Aa]';
 
-old_list = All_FRA_list(cellfun(@(X) ~isempty(X),...
-                                                regexp(All_FRA_list,...
+
+
+old_quiet = FRA_list_quiet(cellfun(@(X) ~isempty(X),...
+                                                regexp(FRA_list_quiet,...
                                                 old_exp)));
 
-young_list  = All_FRA_list(cellfun(@(X) ~isempty(X),...
-                                                    regexp(All_FRA_list,...
+young_quiet = FRA_list_quiet(cellfun(@(X) ~isempty(X),...
+                                                    regexp(FRA_list_quiet,...
+                                                   young_exp)));
+
+
+old_noise = FRA_list_noise(cellfun(@(X) ~isempty(X),...
+                                                regexp(FRA_list_noise,...
+                                                old_exp)));
+
+young_noise  = FRA_list_noise(cellfun(@(X) ~isempty(X),...
+                                                    regexp(FRA_list_noise,...
                                                    young_exp)));
                                                
-young_list = young_list(cellfun(@(X) ~isempty(X),...
-                                                    regexp(young_list,...
-                                                    '\\2020')))
+young_noise = young_noise(cellfun(@(X) ~isempty(X),...
+                                                    regexp(young_noise,...
+                                                    '\\2020')));
                                                 
-young_list = cat(1,prev_young_list,young_list);                                               
+young_noise = cat(1,prev_young_list,young_noise);       
+
+
 % DataDir Name = Passive2  <- find and replace with name of DataDir
+ FRA_young_noise = Fluoro_to_Table(young_noise);
+ FRA_young_quiet = Fluoro_to_Table(young_quiet);
+ FRA_old_noise = Fluoro_to_Table(old_noise);
+ FRA_old_quiet = Fluoro_to_Table(old_quiet);
+ 
 
+ 
+ 
 
-
-BD = BandwidthAnalysis(Passive2,'RFS',1);
-
-BayesClassifierPassive(Passive2)
-
-
-
-%Passive GC
-GCanalTrialsModBalanced_TN(Passive2,'SNR')
-GCanalTrialsModBalanced_TN(Passive2,'Tones')
-GCanalTrialsModBalanced_TN(Passive2,'Noise')
-GCanalTrialsModBalanced_TN(Passive2,'Offset')
-GCanalTrialsModBalanced_TN(Passive2,'Off')
-
-%
-GCanalTrialsModBalanced_TN(Aging2.DataDirs,'SNR')
-GCanalTrialsModBalanced_TN(Aging2.DataDirs,'Tones')
-GCanalTrialsModBalanced_TN(Aging2.DataDirs,'Noise')
-GCanalTrialsModBalanced_TN(Aging2.DataDirs,'Offset')
-GCanalTrialsModBalanced_TN(Aging2.DataDirs,'Off')
-
-
+Passive_Paper_Analysis(FRA_young_quiet,'FRA_Quiet_Young')
+Passive_Paper_Analysis(FRA_old_quiet,'FRA_Quiet_Aging')
 % bayes 
 
