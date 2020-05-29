@@ -4,7 +4,7 @@ function  [results,dataDir] = Collect_GC_Results(dataDir)
 if ~exist('dataDir','var')
  gfile_c = 1 ; % gfile counter
     dataDir = {};
-    dir_data = 'G:\My Drive\GrangerResults'
+    dir_data = '\\vault3\Data\Kelson\GrangerResults'
     while true
         dataDir{end+1,1} = uigetdir(dir_data)
         an =  input('Continue? [1/0]');
@@ -47,6 +47,10 @@ for ii =  1:length(dataDir)
         results.GCstrength_L = GCJL;
         results.GCstrength_H = GCJH;
     else
+        if  size(GC_Stats.GCnumbers,1) ~= size(results.GCnumbers,1)
+            disp(dataDir{ii})
+            continue
+        end 
         results.GCnumbers(:,end+1) = GC_Stats.GCnumbers;
         results.GClengths(:,end+1) = GC_Stats.GClengths;
         results.GCangles(:,end+1) = GC_Stats.GCangles;
@@ -73,6 +77,10 @@ results.GCnumbers_mu = mean(results.GCnumbers);
 results.GCnumbers_std = std(results.GCnumbers);
 results.InsufficientCells = InsufficientCells;
 
-Plot_GC_Results(results)
-
+try
+figure()
+title(dataDir{1},'interpreter', 'None')
+Plot_GC_results(results)
+catch
+end 
 
