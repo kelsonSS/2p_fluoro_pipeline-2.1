@@ -573,7 +573,6 @@ function MovePoints_KeyPressFcn(hObject, eventdata, handles)
 xc = handles.selectedneurons.Data(:,1);
 yc = handles.selectedneurons.Data(:,2);
 ptsIdx = [[1:length(xc)]' [xc yc]];
-
 switch eventdata.Key
         case 'leftarrow' 
             xc = xc-1;

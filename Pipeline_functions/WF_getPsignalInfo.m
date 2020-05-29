@@ -1,5 +1,11 @@
  function handles =  WF_getPsignalInfo(handles,SavePath)
 
+ if~exist('handles','var')
+    [file,path] = uigetfile()
+ 
+    handles = fullfile(path,file)
+ end 
+    
 % if a raw file path is given convert it to handles format
 if ischar(handles) || isstring(handles)|| iscell(handles) && length(handles) == 1 
 
