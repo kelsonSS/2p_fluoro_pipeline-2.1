@@ -31,9 +31,11 @@ for ii = 1:numel(Whcv)
     end
 
     for ct = 1:Ncells
-        tic
+        
         N_indto = num2str(ct);
-        disp(['Cross-validation on cell ' N_indto '...'])        
+        x_time = toc;
+        tic
+        line_length = fprintf(['Cross-validation on cell ' N_indto '...' num2str(floor(x_time)) ' seconds elapsed ']);        
         cellC = 1:Ncells; cellC(ct) = [];        
         
         %%% Form SELF-History Covriates
@@ -57,7 +59,7 @@ for ii = 1:numel(Whcv)
         %%% Training stage on all but one repetition (r)
         for r = 1:R
             rC = 1:R ; rC(r) = [];
-            disp(['CV @ repetiton # ' num2str(r) '...'])
+           % disp(['CV @ repetiton # ' num2str(r) '...'])
 
             % Form Testing Data
             Xtest = Xf(:,:,r);
@@ -79,8 +81,8 @@ for ii = 1:numel(Whcv)
             end
             
         end
-        Jcost(ct,:,ii) = mean(sig2test);
-        toc
+        Jcost(ct,:,ii) = nanmean(sig2test);
+        fprintf(repmat('\b',1,line_length))
     end
 end
 

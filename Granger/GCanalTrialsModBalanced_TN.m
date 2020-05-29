@@ -1,9 +1,10 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% GC Analysis %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function GCanalTrialsModBalanced_TN(dataDir,Type,RedChannel)
+function Results = GCanalTrialsModBalanced_TN(TN,Type,RedChannel)
 
-% DataDir - a cell of filepaths to the folders containing the fluorescence,
+% TN - an experiment object created by Fluoro_to_table
+% that conrains the cell of filepaths to the folders containing the fluorescence,
 % experimental, and cell position data for each experiment
 
 % Type determines hwo the data is to be segmented current options
@@ -17,8 +18,9 @@ function GCanalTrialsModBalanced_TN(dataDir,Type,RedChannel)
 % that were labeled in the Data.RedCellID
 
   if ~exist('Type','var')
-        Type = 'Passive'
+        Type = 'SNR'
   end
+  
   
   if ~exist('RedChannel','var')
       RedChannel = false; 
@@ -32,6 +34,17 @@ function GCanalTrialsModBalanced_TN(dataDir,Type,RedChannel)
 dir_out_main = strcat('\\Vault3\data\Kelson\GrangerResults\');
 % Add directories to path
 %addpath(dir_data,dir_funcs)
+
+
+try
+    dataDir = TN.DataDirs;
+catch
+    try
+        dataDir =TN;
+        clear TN
+    catch
+    end 
+end 
 
 % Load files from directory if Datadir is empty
 if ~exist('dataDir','var')
@@ -49,8 +62,10 @@ if ~exist('dataDir','var')
 end
 
 
+
+
 %%
-irun = 1
+irun = 1;
 for expt = 1:length(dataDir) %For each file in a directory
     
 %     % file directory setup
@@ -63,11 +78,33 @@ for expt = 1:length(dataDir) %For each file in a directory
  %% grab and Preprocess data
     try
      %% data unpacking
-     
      Data = dataDir{expt};
-     
+        
      if ~isstruct(Data) && ischar(Data)
-     Data = Fluoro_to_Table(Data);    
+         Datapath = Data;
+         fn = strrep(Datapath,'-','_');
+         fn = strrep(Datapath,'/','\');
+         fn = strsplit(fn,'\');
+         fileName1 = strcat(fn{6} ,'_',fn{7}, '_' , Type);
+         if RedChannel
+             fileName1 = [fileName1 '_Labeled'];
+         end  
+         
+         
+         dir_out = fullfile(dir_out_main,fileName1);
+         
+             
+         dir_out_all{expt} = dir_out;
+         
+     
+         
+     
+     if ~isempty(dir(fullfile(dir_out,'DataResults*')))
+         continue
+     end     
+         
+     Data = Fluoro_to_Table(Data);   
+  
      end 
      
      cdef = Data.CellID{1};
@@ -76,42 +113,61 @@ for expt = 1:length(dataDir) %For each file in a directory
      active_idx = Data.active{:,2} >= 1; % find all cells active P<.05
     
      %% name and file path creation
-     Datapath = Data.DataDirs;
-     
+     Datapath = Data.DataDirs{1};
      fn = strrep(Datapath,'-','_');
      fn = strrep(Datapath,'/','\');
      fn = strsplit(fn,'\');
      fileName1 = strcat(fn{6} ,'_',fn{7}, '_' , Type);
-     if RedChannel
-         fileName1 = [fileName1 '_Labeled'];
+     
+         
+     dir_out_all{expt} = dir_out;    
+     
+     if ~isempty(dir(fullfile(dir_out,'DataResults*')))
+         continue
      end 
-    
-     dir_out = fullfile(dir_out_main,fileName1);
+     
+     
      if ~exist(dir_out,'dir')
          mkdir(dir_out)
-     end
-     
+     end 
+ 
+   
      
     catch
         % if given empty cell
         continue
     end 
      
+    try
+        expt_idx = TN.experiment_list == expt;
+        clean_idx = TN.Clean_idx(expt_idx);
+        active_idx = TN.active{expt_idx,2}>0;
+        Fluoro = TN.DFF_Z(:,:, expt_idx);
+        Fluoro = Fluoro(:,:,clean_idx & active_idx);
+        clusters_temp = TN.Class_idx(expt_idx);
+         clusters = clusters_temp(clean_idx & active_idx) ;
+        
+       
+    catch
+        warning('could not use normal variables, mmanual inspeciton needed')
     try 
         Fluoro = Data.DFF(:,:,active_idx);  
     catch 
         Fluoro = Data.DFF{1}(:,:,active_idx);  
     end 
-    
+ 
+  
     DFF_Z = squeeze( ( Fluoro - nanmean(nanmean(Fluoro )) ./ nanstd(nanstd(Fluoro))));
     
     % remove artifactual data by testing if the silence frames have
     % unusually high variance 
+ 
+    
     clean_idx = squeeze(max(abs(nanstd(DFF_Z(1:30,:,:),[],2)))<20 ); 
     
     Fluoro = Fluoro(:,:,clean_idx);
     
-    
+    end
     
     %%% Data Formatting stage
     %eHDFF = Data.eHDFF; % All Trial Responses for early Hits
@@ -134,10 +190,11 @@ for expt = 1:length(dataDir) %For each file in a directory
     %
     % Choose different modes e.g. 'Hit' for Hits and 'Miss' for Miss
     % Currently must comment out which version you are not using
-    
 
   
     switch Type
+        
+      
         case 'Passive' 
             % Passive-(ALL Data)
             mode = {'Passive'};
@@ -150,6 +207,31 @@ for expt = 1:length(dataDir) %For each file in a directory
             nmode = numel(mode);
             resp{1} = Fluoro;
   
+        case {'Cluster_1','Cluster_2','Cluster_3','Cluster_4'}
+               % Passive SNR
+            clust_num = str2num(Type(end));
+            num_neurons = sum(clusters == clust_num); 
+            fprintf('Experiment %d,Cluster %d: %d neurons \n'...
+                    ,expt,clust_num,num_neurons)
+                if num_neurons <10
+                    continue
+                end 
+            
+            freqs = unique(FLO(:,2));
+            mode = cellfun(@num2str , table2cell(freqs),'UniformOutput',0);
+           % mode = {'Tone','+30db SNR','+20db SNR','+10db SNR'};
+            nmode = numel(mode);
+            Levels =table2array(Data.FreqLevelOrder(:,2));
+            uL = unique(Levels);
+            
+            
+            clear resp
+            for lvl = 1:length(uL) 
+                  mode{lvl} = sprintf('Cluster_%s_%d_db', TN.Classes{clust_num},uL(lvl));
+                  resp{lvl} = Fluoro(:,Levels == uL(lvl),clusters == clust_num);
+                 
+            end 
+             
             
             
         case 'SNR'
@@ -190,8 +272,7 @@ for expt = 1:length(dataDir) %For each file in a directory
                  end
              end 
              nmode = resp_idx - 1; 
-            
-        case 'OnOff'
+   
             
         case 'HitMissEarly'
             mode = {'Hit','Miss','Early'}
@@ -319,28 +400,47 @@ for expt = 1:length(dataDir) %For each file in a directory
  
     
     
-    %clear Data 
-    clear Fluoro
-    clear Data
+%     %clear Data 
+%     clear Fluoro
+%     clear Data
+%     
+%     
+
+  if ~exist('clust_num','var')
+      clust_num = 1;
+  end 
     
-    
-    %%% Locate and remove Nan samples from recordings
+  
     ccorr = [];
-    for imd = 1:nmode
-        imd
-        Resp = resp{imd};
-        Rnan = isnan(Resp);
-        cnan = mean(mean(Rnan,1),2);
-        ccorr(imd,:) = squeeze(cnan == 1);
+       %%% Locate and remove Nan samples from recordings
+    cpass = ones(size(resp{1},3),1);
+       for imd =1:nmode
+        
+        mode_pass =  ~squeeze(any(any(isnan(resp{imd}))));
+           if sum(mode_pass) == 0;
+               resp_temp = resp{imd};
+               resp_temp(isnan(resp_temp)) = 0;
+               resp{imd} = resp_temp;
+               clear resp_temp
+                 mode_pass =  ~squeeze(any(any(isnan(resp{imd}))));
+           end 
+%         Resp = resp{imd};
+%         Rnan = isnan(Resp);
+%         cnan = mean(mean(Rnan,1),2);
+%         ccorr = cat(1,ccorr, squeeze(cnan == 1));
         %inan = sum(sum(Rnan,1),3);
         %rcorr = find(inan)
         %resp{imd}(:,rcorr,:) = [];
         %RR(imd) = RR(imd) - numel(rcorr)
-    end
-    cpass = find(sum(ccorr,1) == 0);
-    Ncellst = numel(cpass);
-   
+        cpass = cpass & mode_pass;
         
+       
+    end
+    %cpass = find(sum(ccorr,1) == 0);
+   Ncellst = sum(cpass);
+    % Ncellst = numel(cpass);
+   
+        disp(num2str(Ncellst))
   
      %Ncells = min(Ncellst,Ncellz);
   % Test to see if responses are okay with using all active cells
@@ -349,15 +449,18 @@ for expt = 1:length(dataDir) %For each file in a directory
      Ncellz = 20;
      Ncells = min(Ncellst,Ncellz);
      
-    for imd = 1:nmode
+    for imd =1:nmode
         Resp = resp{imd}(:,:,cpass);
          Rnan = isnan(Resp);
          inan = sum(sum(Rnan,1),3);
          rcorr = find(inan == 0);
          respc{imd} = Resp(:,rcorr,:);
     end
+    try
     xy = xy(cpass,:);
-    
+    catch
+        continue
+    end 
     %%% Cell Selection need to 10 - 20 cells, depending on number of
     %%% trials
     % Select a Subset of Cells with highest response variability
@@ -368,7 +471,7 @@ for expt = 1:length(dataDir) %For each file in a directory
     
     if  Ncellst > Ncellz 
            
-        for imd = 1:nmode
+        for imd =1:nmode
             Resp = respc{imd};
             RR(imd) = size(Resp,2); 
             for c = 1:Ncellst
@@ -394,8 +497,7 @@ for expt = 1:length(dataDir) %For each file in a directory
     %%% Random Trial Selection [for balanced analysis]
     % If two different modes, balance the number of trials. e.g. hit vs
     % miss
-    RR
-    indc = find(RR < 10) 
+    indc = find(RR < 10) ;
      if numel(indc) == 0
          [Rmin,imin] = min(RR);
          respx = respc;
@@ -434,7 +536,8 @@ for expt = 1:length(dataDir) %For each file in a directory
     cellidstotal = cell(nmode,1);
  
     %% main loop 
-for imd = 1:nmode
+for imd =1:nmode
+    fprintf('Expt %d/%d mode:%d/%d \n', expt,length(dataDir),imd,nmode)
     Resp = respx{imd}(:,:,cellids);
     [N,R,Ncells] = size(Resp);
     %%% GC Analysis: Multi-trial Multi-Cell Mod
@@ -442,14 +545,14 @@ for imd = 1:nmode
     LL = 1000;
     LR = 10;
     % Cross-History covariate setting
-    WH = 5 %window: average the values over the window over moving window: filters data over 6 Hz that are not calcium signals
-    Mhc = 5 %nunber of samples per cell in the model
+    WH = 5; %window: average the values over the window over moving window: filters data over 6 Hz that are not calcium signals
+    Mhc = 5; %nunber of samples per cell in the model
     
     Whc = [1 WH*ones(1,Mhc-1)]; % Cross-Hist Kernel-make sure that the length latency of interaction + latency of Ca maging
     Lhc = sum(Whc);
     
     % Self-Hist covariate setting
-    Mhcs = 5
+    Mhcs = 5;
     Whcs = [1 WH*ones(1,Mhcs-1)]; % Self-Hist Kernel
     Lhcs = sum(Whcs);
     Mf = (Ncells-1)*Mhc+Mhcs; Mr = (Ncells-2)*Mhc+Mhcs;
@@ -478,7 +581,7 @@ for imd = 1:nmode
     for ct = 1:Ncells % ct: index of target cell
         N_indto = num2str(ct);
         cellC = 1:Ncells; cellC(ct) = [];
-        gamma = gammaOpt(ct)
+        gamma = gammaOpt(ct);
         %%% Form SELF-History Covriate matrix
         Xcsz = zeros(Np,Mhc,R);
        for r = 1:R
@@ -494,7 +597,7 @@ for imd = 1:nmode
         %%% Filtering/Estimation Setting
         tic
         [wnf,sig2f,Devf,Bf] = StaticEstim(Xneff,reff,gamma,LL,LR);
-        toc
+     
         %%% Save estimated parameters/arrays
         % Save Tuning AR Coeffs full model for each cell
         wftotal{ct,imd} = wnf;
@@ -512,15 +615,16 @@ for imd = 1:nmode
         
         for cf = cellC % cf : index of Electrode/Unit we check causality from to the target 'ct'
             N_indfrom = num2str(cf) ;
-            disp(['Estimating G-Causality from cell ' N_indfrom ' to cell ' N_indto ' ...'])
+            
+            
+            line_length =  fprintf(['Estimating G-Causality from cell ' N_indfrom ' to cell ' N_indto ' ...']);
             %%% Reduced Model
             Xnefr = Xneff;
             cc = find(cellC == cf);
             Xnefr(:,(cc-1)*Mhc+Mhcs+1:cc*Mhc+Mhcs) = [];
             %%% Estimation Setting           
-            tic
             [wnr,sig2r,Devr,Br] = StaticEstim(Xnefr,reff,gamma,LL,LR);
-            toc
+        
             % Save estimated params/arrays
             sig2rtotal(ct,cf,imd) = sig2r;
             % Reconstructed observation vector reduced model
@@ -532,11 +636,12 @@ for imd = 1:nmode
             rhatrtotal{ct,cf,imd} = rhatr;
             Brtotal(ct,cf,imd) = Br;
             %%% Granger Causality metric: Compute Difference of Deviance Statistic
-            Devd = Devf - Devr
-            DB = Bf - Br
-            DLL = Devd - DB
+            Devd = Devf - Devr;
+            DB = Bf - Br;
+            DLL = Devd - DB;
             Devtotal(ct,cf,imd) = Devd;
             DLLtotal(ct,cf,imd) = DLL;
+            fprintf(repmat('\b',1,line_length));
         end
     end
     cellidstotal{imd} = cellids;
@@ -560,7 +665,7 @@ set(hf, 'position',[10 10 810 610]);
 %( ex ifnmode = 8, rc = [3 3] 
 rc = numSubplots(nmode);
 
-for imd = 1:nmode
+for imd =1:nmode
     cgtxt = {cellidstotal{imd}};
     subplot(rc(1),rc(2),imd), imagesc(Devtotal(:,:,imd))
     cmax = max(max(Devtotal(:,:,imd)));
@@ -584,7 +689,7 @@ close(hf)
 cmax = 1; cmin = -1;
 hf = figure;
 set(hf, 'position',[10 10 810 610]); 
-for imd = 1:nmode
+for imd =1:nmode
     cgtxt = {cellidstotal{imd}};
     subplot(rc(1),rc(2),imd), imagesc(GCJL(:,:,imd))
     caxis([cmin cmax])
@@ -613,7 +718,7 @@ crds = xy;
 
 hf = figure;
 set(hf, 'position',[0 0 800 800]); % To set position and scaling of a figure window
-for imd = 1:nmode
+for imd =1:nmode
     XY = xy(cellidstotal{imd},:);
     crdsf = XY; % Set Locations of Selected Cells
     rlen = zeros(Ncells); rtheta = rlen;
@@ -676,7 +781,7 @@ close(hf)
     GCangles = cell(nmode,1);
     GCavgL = zeros(nmode,1); %GCavgLw = GCavgL;
     
-    for imd = 1:nmode
+    for imd =1:nmode
         %%% Compute number of GC links
         GCnumbers(imd) = numel(find(GCJL(:,:,imd)));
         %%% Compute GC link lengths
@@ -703,7 +808,7 @@ close(hf)
     %%% Plot activation/inhibition effects
     % Plot responses associated with two target cells: Confirm detected GCs visually
     nsubc = 6;
-    for imd = 1:nmode
+    for imd =1:nmode
         nGCs = numel(find(GCJL(:,:,imd)))
         nsubr = ceil(nGCs/nsubc); %min(cnt,nGCs)
         
@@ -743,6 +848,13 @@ close(hf)
 end 
 
 
+%% Gather GC data Back into Experiment object 
+    Results = [];
+    try
+    Results = Collect_GC_Results(dir_out_all);
+    catch
+       warning('Error in collecting GC results!')
+     end 
 %% [Not neccessary to run!] More Detailed Tests on different parts of analysis
 
 %% Check estimated hist kernels of Self + Cross couplings
@@ -916,3 +1028,4 @@ end
 %     subplot(Nc,1,i), plot(respcc(:,i))
 %     axis tight
 % end
+end 
