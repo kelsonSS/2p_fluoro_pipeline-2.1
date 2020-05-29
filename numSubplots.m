@@ -11,6 +11,14 @@ function [ rc ] = numSubplots(n)
        %     ... %plot one here 
        %
        
+  
+       if length(n) > 1 
+           try
+           n = max(n(:));
+           catch
+           end 
+       end 
+       
   if ~ isnumeric(n) ||( floor(n) ~= (n) || n < 0)     
        errordlg('Must imput an integer number')
   end 
