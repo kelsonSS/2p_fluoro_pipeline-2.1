@@ -1,4 +1,5 @@
-function [out_clusters,neuron_id,avg_trace] = Cluster_DF(DF,varargin) 
+function [out_clusters,neuron_id,avg_trace,...
+          var_explained,cluster_centroids] = Cluster_DF(DF,varargin) 
 %%% [clusters,DF] = Cluster_DF(DF,varargin) returns the cluster identity
 %%% [clusters] and average cluster Fluorescence (avg_trace) for each cluster.
 %%% Specifically, avg_trace is a cell containing the mean and STD of each cluster
@@ -23,8 +24,9 @@ function [out_clusters,neuron_id,avg_trace] = Cluster_DF(DF,varargin)
 % inputs 
 
 if nargin>1, mode = varargin{1}; else, mode = 'K-means';end
-if nargin>2 max_clust = varargin{2}; else, max_clust = 20;end
-if nargin>3 norm_mode = varargin{3};else, norm_mode = 'normalized';end    
+if nargin>2, max_clust = varargin{2}; else, max_clust = 20;end
+if nargin>3, norm_mode = varargin{3};else, norm_mode = 'normalized';end    
+if nargin>4, centroids = varargin{4};end ;
 
 if isstruct(DF)
     DF.DFF2 = squeeze(nanmean(DF.DFF,2));
@@ -68,10 +70,16 @@ end
 
 % Create linkage plot and clusters by looking at the correlations between
 % neurons
+
+ var_explained = [];
 switch mode
-    
+   
     case 'K-means'
-        clusters = kmeans_opt(DF.DFF_norm',max_clust);
+        [clusters,cluster_centroids,...
+         ~,~,var_explained] = kmeans_opt(DF.DFF_norm',max_clust);
+    case 'Paired-K-means'
+        [clusters,cluster_centroids] = kmeans(DF.DFF_norm',max_clust,'Start',centroids);
+     
     case 'H-Clust'
         DFF_corr = corr(DF.DFF_norm);    
         Z = linkage(DFF_corr,'Complete','correlation');

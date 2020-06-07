@@ -1,8 +1,11 @@
-function PlotBayes(BayesModels)
+function PlotBayes(BayesModels,savepath)
 
 % this function takes a BayesModel struct from the Output of
 % BayesClassifierPassive and plots the resulting models 
 
+if ~exist('savepath','var')
+    savepath = []
+end 
 
 if isfield(BayesModels,'BayesModels')
     BayesModels = BayesModels.BayesModels;
@@ -26,13 +29,14 @@ for model = 1:length(fn)
         
         figure
          hold on 
-         title([fn{model} ' Experiment: ' num2str(expt) ]) 
+         fig_name = [fn{model} ' Experiment: ' num2str(expt) ];
+         
         
          for lvl = 1:size(data,2)
             BayesFig(data(:,lvl,expt,:))
          end 
     
-     saveStyleBayesFig()         
+     saveStyleBayesFig(fig_name,savepath)         
               
     end 
     
@@ -53,13 +57,20 @@ data = squeeze(data);
 shadedErrorBar([],nanmean(data,2),nanstd(data,[],2))
 
 
-function saveStyleBayesFig
+function saveStyleBayesFig(fig_name,savepath)
 
 
 x_lim = xlim;
 xlim([2 x_lim(2)] )
 ylabel('Fraction Correct')
-
+title(fig_name)
+if ~isempty(savepath) 
+    fig_name =  matlab.lang.makeValidName(fig_name)
+    outpath = fullfile(savepath,[fig_name, '.pdf']);
+    print(outpath,'-dpdf','-bestfit')
+    pause(1)
+    close(gcf)
+end
 
 
 

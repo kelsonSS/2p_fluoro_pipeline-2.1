@@ -1,4 +1,4 @@
-function [IDX,C,SUMD,K]=kmeans_opt(X,varargin)
+function [IDX,C,SUMD,K,PC]=kmeans_opt(X,varargin)
 %%% [IDX,C,SUMD,K]=kmeans_opt(X,varargin) returns the output of the k-means
 %%% algorithm with the optimal number of clusters, as determined by the ELBOW
 %%% method. this function treats NaNs as missing data, and ignores any rows of X that
@@ -24,6 +24,8 @@ function [IDX,C,SUMD,K]=kmeans_opt(X,varargin)
 %%% point-to-cluster-centroid distances.
 %%% [IDX,C,SUMD,K]=kmeans_opt(X,varargin) returns in addition, the number of
 %%% clusters.
+%%% [IDX,C,SUMD,K,PC]=kmeans_opt(X,varargin) returns in addition, The
+%%% cumulative variance explained PC(1) = 2 groups PC(2) = 3 groups etc.
 
 %%% sebastien.delandtsheer@uni.lu
 %%% sebdelandtsheer@gmail.com

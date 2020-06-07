@@ -17,7 +17,15 @@ tempDF.active = DF.active;
 clean_idx = DF.Clean_idx & ( DF.active{:,2}>0 );
 DF.DFF = DF.DFF(:,:,clean_idx);
 DF.DFF_Z = DF.DFF_Z(:,:,clean_idx);
-cleanNeuronNumber = sum(clean_idx);
+NeuronNumber = size(DF.DFF,3);
+
+
+
+% prealloate common output structure
+
+out_clusters= zeros(NeuronNumber,1);
+
+
 
 %% replace any Nans with 0s - testing
 DF.DFF(isnan(DF.DFF)) = 0;
@@ -48,10 +56,59 @@ for lvl = 1:length(uLevels)
     end
     
     switch  clust_style 
+        
+            case 'paired' % each level has unique clusters
+             %   
+             % note: This usesclusters from prevous to inform next cluster
+             % can only be done if you know the number of clusters
+             % beforehand. it is advised to look at 'seperate' first to
+             % find ideal number of clusters and then once ideal cluster
+             % number is known
+            
+            %preallocate structure with zeros
+            %-- nonresponsive neurons will labeled with a zero
+            out.Clusters{lvl} = out_clusters;
+            
+            % perform k-means classification
+            if lvl == 1
+               [clusters_temp , out.DF{lvl},...
+               out.AvgTraces{lvl},~,...
+               out.ClusterCentroids{lvl}]= Cluster_DF(lvl_DF,'K-means',...
+                                           max_clust);
+               
+            else
+                num_clust = max(clusters_temp);
+                
+               [clusters_temp , out.DF{lvl},...
+               out.AvgTraces{lvl},~,...
+               out.ClusterCentroids{lvl}]= Cluster_DF(lvl_DF,'Paired-K-means',...
+                                           num_clust,'normalized',...
+                                           out.ClusterCentroids{lvl-1});
+                                       
+            end 
+            % add store clusters
+            out.Clusters{lvl}(clean_idx) = clusters_temp;
+       
+       
+            figure
+            title(sprintf('Clusters for level %d', handles.uLevels(lvl)))
+        
+        
         case 'seperate' % each level has unique clusters 
-       [ out.Clusters{lvl}, out.DF{lvl} ]= Cluster_DF(lvl_DF,'K-means',max_clust);
-       figure
-       title(sprintf('Clusters for level %d', handles.uLevels(lvl)))
+            %preallocate structure with zeros
+            %-- nonresponsive neurons will labeled with a zero
+            out.Clusters{lvl} = out_clusters;
+            
+            % perform k-means classification
+            [clusters_temp , out.DF{lvl},...
+               out.AvgTraces{lvl},~,...
+               out.ClusterCentroids{lvl}]= Cluster_DF(lvl_DF,'K-means',max_clust);
+            % add store clusters
+            out.Clusters{lvl}(clean_idx) = clusters_temp;
+       
+       
+            figure
+            title(sprintf('Clusters for level %d', handles.uLevels(lvl)))
         case 'pooled' % finds global clusters and cluster
                       % transisitons across levels
 
@@ -61,7 +118,6 @@ for lvl = 1:length(uLevels)
             error('clust_style must either = pooled or seperate')
     end
     
- 
   
   
     
@@ -69,13 +125,13 @@ end
  
 % pooled analysis
 if strmatch(clust_style,'pooled')
-    [out.Clusters, out.DF] = Cluster_DF(tempDF,'K-means',max_clust);
+    [out.Clusters, out.DF,~,~,out.centroids] = Cluster_DF(tempDF,'K-means',max_clust);
 
         %% pooled
         % permute into level X neuron order
-        out.Clusters = reshape(out.Clusters,length(handles.uLevels),cleanNeuronNumber);
+        out.Clusters = reshape(out.Clusters,length(handles.uLevels),NeuronNumber);
         plot_clusters = out.Clusters;
-elseif strmatch(clust_style,'seperate')
+else
     
     
         plot_clusters = cell2mat(out.Clusters)';
@@ -107,7 +163,7 @@ colormap parula
  % convert notations anything above 90db is inf snr
 uLevels(uLevels>90) = inf;
  
-
+C(:,C(1,:) == 0 ) = [];
 %
 
 for lvl = size(C,1):-1:2
@@ -128,7 +184,7 @@ for lvl = size(C,1):-1:2
         xlabel('End Cluster #')
         ylabel('Starting Cluster #')
         colorbar
-        title(sprintf('Transition matrix between %d db and %d db',uLevels(lvl),uLevels(lvl-1) ));
+        title(sprintf('Transition matrix between %d db SNR and %d db SNR',uLevels(lvl)-50,uLevels(lvl-1)-50 ));
         
         
         
