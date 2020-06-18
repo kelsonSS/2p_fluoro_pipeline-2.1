@@ -3,11 +3,19 @@ function [BD,P,Levels] = BandwidthAnalysis(DF,Type,Classes,Lvl)
 %  DF is a df_by_level (LevelX Freq X neuron) object and returns the bandwidth for each
 %  neuron as a level X neuron object.
 
+% types 
+% BRFS - 'binary receptive field sum'
+%
+% RFS -'receptive field sum'
+%
+%
+
 if ~exist('Lvl', 'var'); Lvl = .75; end
 
 if ~ exist('Type','var'); Type = 'BRFS'; end 
 
 if ~ exist('Classes','var'); Classes = 0; end 
+
 
 Levels = [];
 
@@ -26,16 +34,32 @@ end
         DF_shapes = cell2mat(cellfun(@(x) x(1:2)',DF_shapes,'UniformOutput',0));
         DF_shape = DF_shapes(:);
         DF_shape(DF_shapes == 0) = [];
+        DF_shape = reshape(DF_shape,2,[])';
+        rc = min(DF_shape);  % row column number for extraction
     end
     
-    
-    if length(unique(DF_shape)) <= 2 % if thereis only 1 DF size 
-        df_by_level = DF.df_by_level; 
-    else 
+    try
+        df_by_level = DF.df_by_level;
+        if  iscell(df_by_level)
+            df_by_level = [];
+            for ii = 1:length(DF.df_by_level);
+                try
+                df_by_level = cat(3,df_by_level,DF.df_by_level{ii}(1:rc(1),1:rc(2),:));
+                catch
+                end ;
+            end
+        end
+        
+        
+        
+        
+        
+    catch
+        
         warning('Multiple FRA SHAPES DETECTED Aborting! \n')
         BD = []
         return
-    end 
+    end
   
     
     if Classes
@@ -46,8 +70,7 @@ end
         BD{Class,3} = DF.Classes{Class};
      end
      
-    else 
-      df_by_level = DF.df_by_level;
+    else
       DF = df_by_level(:,:,active>0);
       BD{1,1} = FindBandwidth(DF,Freqs,Lvl,Type);
       BD{1,3} = 'All'
@@ -105,6 +128,7 @@ lvl_idx = DF > Lvl;
 
 switch Type
     case 'interp'
+        Freqs = Freqs(1:size(DF,2));
         Freqs_lg2 = log2(Freqs);
         Freqs_lg2 = Freqs_lg2 - min(Freqs_lg2);
         interp_factor = .1; % interpolate by .X of an octave Ex .1 = 10th octave
@@ -127,7 +151,7 @@ switch Type
                 % indicies
                 % for example: inds = 1 2 3 10 11 12 20 21 22
                 %              diff = 1 1 7 1  1  8  1  1
-                %            breaks = [3 6]
+                %            brea ks = [3 6]
                 %    bands{1} = Freqs_lg2_interp(inds([1,3])
                 %    bands{2} = Freqs_lg2_interp(inds([4,6])
                 %    bands{3} = Freqs_lg2_interp(inds([7,end])
@@ -202,7 +226,11 @@ function PlotBandwidth(BD)
        errorbar([],nanmean(BD{ii,1},2),nanstd(BD{ii,1},[],2) / sqrt(size(BD{ii,1},2)))
        
     end 
+     
      legend(BD(:,3),'Interpreter','none')
+     xticks(0:1:4)
+     xlabel('level')
+     ylabel('Bandwidth (half-octaves) ')
     
     
     
