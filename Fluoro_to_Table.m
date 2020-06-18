@@ -71,6 +71,11 @@ clear dir_t
  
 %% Cell ID handling
 CellID{expt_id} = load(fullfile(Main_path,Cell_file));
+Expected_Neurons = size(CellID{expt_id}.smRoiBoundaries,1);
+
+if length(CellID)> expt_id;
+    pause
+end 
 
 %% Psignal Handling
 load(fullfile(Main_path,Fluo_file))
@@ -85,6 +90,10 @@ Neurons  = size(FCellCorrected,3);
 fprintf('Expt %d of %d: %d frames x %d trials X %d neurons \n',...
           expt_id, num_expts, trialdur,trials, Neurons);
  
+      
+if Expected_Neurons ~= Neurons
+    warning('Neuron mistmatch on expt!')
+end 
 %% Tests 
 % ensure that trials have the expected duration 
  if  (trialdur ~= (handles.PreStimSilence + handles.PrimaryDuration+...
@@ -356,6 +365,7 @@ DFF_normalized = Vec_DFF_all./DFF_ab_max;
 
 % append Expt_list 
 new_ids = ones( 1 + n_end - n_start  ,1)* curr_expt;
+assert(length(new_ids) == Neurons);
  expt_list = [ expt_list ; new_ids];
 
  curr_expt = curr_expt+1;
@@ -364,8 +374,11 @@ new_ids = ones( 1 + n_end - n_start  ,1)* curr_expt;
  if ~exist('good_dirs','var')
      good_dirs = {};
  end 
- 
- good_dirs(1,end+1) = dataDir(expt_id);
+  if  num_expts ~= 1
+    good_dirs(1,end+1) = dataDir(expt_id);
+  else 
+      good_dirs{1} = dataDir;
+  end 
  
 % create class_Idx
 Classes = {'Noise','Tone_on','Tone_off','Noise_off'};
