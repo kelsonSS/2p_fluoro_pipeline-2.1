@@ -1,4 +1,4 @@
-function out = Cluster_DF_by_level(DF,max_clust,clust_style)
+function out = Cluster_DF_by_level(DF,clust_style,max_clust)
 % this function extends Cluster_DF by extending it by level
 % we will break down each level neuron combination and then loop over to
 % find how each neuron changes groups across levels
@@ -17,7 +17,7 @@ tempDF.active = DF.active;
 clean_idx = DF.Clean_idx & ( DF.active{:,2}>0 );
 DF.DFF = DF.DFF(:,:,clean_idx);
 DF.DFF_Z = DF.DFF_Z(:,:,clean_idx);
-NeuronNumber = size(DF.DFF,3);
+NeuronNumber = length(clean_idx);
 
 
 

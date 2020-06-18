@@ -21,6 +21,12 @@ function Results = GCanalTrialsModBalanced_TN(TN,Type,RedChannel)
         Type = 'SNR'
   end
   
+  if isnumeric(Type)
+    TypeName = TN.Classes{Type};
+  else 
+      TypeName = Type;
+  end 
+  
   
   if ~exist('RedChannel','var')
       RedChannel = false; 
@@ -85,7 +91,7 @@ for expt = 1:length(dataDir) %For each file in a directory
          fn = strrep(Datapath,'-','_');
          fn = strrep(Datapath,'/','\');
          fn = strsplit(fn,'\');
-         fileName1 = strcat(fn{6} ,'_',fn{7}, '_' , Type);
+         fileName1 = strcat(fn{6} ,'_',fn{7}, '_' , TypeName);
          if RedChannel
              fileName1 = [fileName1 '_Labeled'];
          end  
@@ -117,7 +123,7 @@ for expt = 1:length(dataDir) %For each file in a directory
      fn = strrep(Datapath,'-','_');
      fn = strrep(Datapath,'/','\');
      fn = strsplit(fn,'\');
-     fileName1 = strcat(fn{6} ,'_',fn{7}, '_' , Type);
+     fileName1 = strcat(fn{6} ,'_',fn{7}, '_' , TypeName);
      
          
      dir_out_all{expt} = dir_out;    
@@ -144,8 +150,6 @@ for expt = 1:length(dataDir) %For each file in a directory
         active_idx = TN.active{expt_idx,2}>0;
         Fluoro = TN.DFF_Z(:,:, expt_idx);
         Fluoro = Fluoro(:,:,clean_idx & active_idx);
-        clusters_temp = TN.Class_idx(expt_idx);
-         clusters = clusters_temp(clean_idx & active_idx) ;
         
        
     catch
@@ -156,7 +160,7 @@ for expt = 1:length(dataDir) %For each file in a directory
         Fluoro = Data.DFF{1}(:,:,active_idx);  
     end 
  
-  
+    
     DFF_Z = squeeze( ( Fluoro - nanmean(nanmean(Fluoro )) ./ nanstd(nanstd(Fluoro))));
     
     % remove artifactual data by testing if the silence frames have
@@ -192,6 +196,37 @@ for expt = 1:length(dataDir) %For each file in a directory
     % Currently must comment out which version you are not using
 
   
+    if  isnumeric(Type)
+               % Use predetermined Clusters  
+               
+            DFF_mu = squeeze(nanmean(Fluoro,2));
+            idx =  TN.Class_idx == Type ; 
+            idx = idx(TN.experiment_list == expt);
+            idx = idx(clean_idx & active_idx);
+            
+            try
+                Fluoro = Fluoro(:,:,idx);
+            catch 
+                Fluoro = Fluoro(:,:,idx(1:size(Fluoro,3)) );
+            end 
+            
+            
+            
+            mode = { ' Tone',' +30db SNR',' +20db SNR',' +10db SNR'};
+            mode = cellfun(@(x) [TypeName ' '  x],mode,'UniformOutput' ,0);  
+    
+            
+            nmode = numel(mode);
+            Levels =table2array(Data.FreqLevelOrder(:,2));
+            uL = unique(Levels);
+            
+              for lvl = 1:length(uL)
+                 resp{lvl} = Fluoro(:,Levels == uL(lvl)  ,:);
+              end    
+        
+        
+        
+    else 
     switch Type
         
       
@@ -388,7 +423,7 @@ for expt = 1:length(dataDir) %For each file in a directory
               
               
     end
-    
+    end 
     
     
     

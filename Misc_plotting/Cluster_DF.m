@@ -78,7 +78,8 @@ switch mode
         [clusters,cluster_centroids,...
          ~,~,var_explained] = kmeans_opt(DF.DFF_norm',max_clust);
     case 'Paired-K-means'
-        [clusters,cluster_centroids] = kmeans(DF.DFF_norm',max_clust,'Start',centroids);
+        [clusters,cluster_centroids] = kmeans(DF.DFF_norm',max_clust,...
+                                       'Start',centroids,'OnlinePhase','on');
      
     case 'H-Clust'
         DFF_corr = corr(DF.DFF_norm);    

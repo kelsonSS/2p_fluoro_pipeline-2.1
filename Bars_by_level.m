@@ -5,7 +5,7 @@ figure
 errorbar(mu,CI, '.')
 hold on
 bar(mu,'k')
-
+set(gca,'ylim',[0 .5]) 
 if exist('sig','var')
     
     sig_idx = sig(:,end)<=.05 ;
@@ -19,5 +19,6 @@ hold off
 title(sprintf('%s Correlations by level',name),'Interpreter','none')
 set(gca,'XTick',[1:4])
 set(gca,'XTickLabel',{'INF','+20','+10','0'})
+
 
 

@@ -55,6 +55,6 @@ PC=cumsum(Var)/(D(1)-D(end));
 
 [r,~]=find(PC>Cutoff); %find the best index
 K=1+r(1,1); %get the optimal number of clusters
-[IDX,C,SUMD]=kmeans(X,K); %now rerun one last time with the optimal number of clusters
+[IDX,C,SUMD]=kmeans(X,K,'OnlinePhase','on'); %now rerun one last time with the optimal number of clusters
 
 end

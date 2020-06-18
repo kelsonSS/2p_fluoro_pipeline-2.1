@@ -44,7 +44,7 @@ end
 cla(handles.axes1)
 title('')
 text(.1,.5,'LOADING IMAGES...','fontsize',20)
-[fname, pthname] = uigetfile('*.raw','Select a RED channel DataFile');
+[fname, pthname] = uigetfile('\\vault3\data\kelson\analyzed\*.raw','Select a RED channel DataFile');
 
     disp('User selected Cancel');
     handles.pthname = 0;
@@ -447,6 +447,11 @@ load(DestPath);
 handles.selectedneurons.Data = ptsIdx(:,2:3);
 function saveselection_Callback(hObject, eventdata, handles)
 try
+    handles.expectedNeuronRadiusPix=round(handles.expectedNeuronDiamMicrons/handles.micronsPerPixelX)/2;
+    [smRoiBoundaries smNpBoundaries] = FindROIs(handles);
+    handles.smRoiBoundaries = smRoiBoundaries;  
+    handles.smNpBoundaries = smNpBoundaries;
+    
     ptsIdx = [[1:size(handles.selectedneurons.Data,1)]' handles.selectedneurons.Data];
     fNameString = ['CellDefinitions.mat'];
     idx = strfind(handles.pthname{1},'\');
