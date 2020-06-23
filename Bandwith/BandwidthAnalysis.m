@@ -49,7 +49,7 @@ end
                 end ;
             end
         end
-        
+    df_by_level = abs(df_by_level);    
         
         
         
@@ -121,7 +121,7 @@ if ~exist('ClassName','var')
     ClassName = 'All'
 end 
 
-m =  max(max(DF));
+m =  max(max(abs(DF)));
 DF = DF./m;
 
 lvl_idx = DF > Lvl;
