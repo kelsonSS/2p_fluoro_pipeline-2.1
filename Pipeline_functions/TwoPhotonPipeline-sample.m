@@ -187,31 +187,33 @@ CellDefinitionGUI(input)
 
 
 
-
-
 %% Extract Fluorescence Traces 
-%for i=1:length(paths)
-for i=1:length(paths)
-    %Select current path
-    input.path = paths{i};
-    input.expname = expnames(~cellfun(@isempty,expnames(:,i)),i);
-    %Select current Psignal file
-    input.psignalfiles = psignalfiles(~cellfun(@isempty,psignalfiles(:,i)),i);
-    fprintf('analyzing %d of %d: %s \n',i,length(paths),input.path) 
-    ExtractFluorescence(input);
-end
 
+[ExtractionPaths, ExtractionPsignalFiles] = CreateCellExtractionList;
 
-%% Quality check extracted Fluorescence
-for i=1:length(paths)
+badfiles = {};
+for i=1:length(ExtractionPaths)
     %Select current path
-    input.path = paths{i};
-    input.expname = expnames(~cellfun(@isempty,expnames(:,i)),i);
+    input.path = ExtractionPaths{i};
     %Select current Psignal file
-    input.psignalfiles = psignalfiles(~cellfun(@isempty,psignalfiles(:,i)),i);
-    fprintf('QC-ing %d of %d: %s \n',i,length(paths),input.path) 
-    CheckExperimentQuality(input);
+    input.psignalfiles = ExtractionPsignalFiles{i};
+    fprintf('analyzing %d of %d: %s \n',i,length(ExtractionPaths),input.path) 
+   out =  ExtractFluorescence(input);
+   if ~isempty(out.Errors)
+       badfiles{end+1} = ExtractionPaths{i};
 end
+end 
+
+ %% Quality check extracted Fluorescence - optional
+% for i=1:length(paths)
+%     %Select current path
+%     input.path = paths{i};
+%     input.expname = expnames(~cellfun(@isempty,expnames(:,i)),i);
+%     %Select current Psignal file
+%     input.psignalfiles = psignalfiles(~cellfun(@isempty,psignalfiles(:,i)),i);
+%     fprintf('QC-ing %d of %d: %s \n',i,length(paths),input.path) 
+%     CheckExperimentQuality(input);
+% end
 
 
 
