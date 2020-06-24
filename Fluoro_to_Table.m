@@ -87,7 +87,7 @@ trialdur = size(FCellCorrected,1);
 trials = size(FCellCorrected,2);
 Neurons  = size(FCellCorrected,3);
 
-fprintf('Expt %d of %d: %d frames x %d trials X %d neurons \n',...
+fprintf('Expt %d of %d: %d frames x %d trials x %d neurons \n',...
           expt_id, num_expts, trialdur,trials, Neurons);
  
       
