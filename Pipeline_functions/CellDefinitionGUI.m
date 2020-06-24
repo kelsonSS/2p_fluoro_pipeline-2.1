@@ -543,8 +543,6 @@ if get(hObject,'Value')
 else
     set(hObject, 'BackgroundColor',[1 0 0])
 end
-
-
 function MovePoints_Callback(hObject, eventdata, handles)
  % plot points in preperation for KeyPressFcn Callback
 xc = handles.selectedneurons.Data(:,1);
@@ -561,12 +559,7 @@ plot(xc, yc,'r.','markersize', ...
     size(handles.RedContAdjfilteredadjMnIMG,1)/32,'Parent',handles.axes1)
 plot(xc, yc,'r.','markersize', ...
     size(handles.GreenContAdjfilteredadjMnIMG,1)/32,'Parent',handles.axes2)
- 
-    
-    
 
-
-% --- Executes on key press with focus on pushbutton17 and none of its controls.
 function MovePoints_KeyPressFcn(hObject, eventdata, handles)
 % hObject    handle to pushbutton17 (see GCBO)
 % eventdata  structure with the following fields (see MATLAB.UI.CONTROL.UICONTROL)

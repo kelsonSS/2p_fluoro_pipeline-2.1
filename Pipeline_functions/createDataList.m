@@ -1,7 +1,7 @@
 function[paths,expname,psignalfiles, matless,animalIDs] = createDataList(file_path)
 
 % this function checks the folder containing every raw file in 
-% \\VAULT2\Vault2Data\Kelson and checks to see if there is a corresponding 
+% \\VAULT3\Data\Kelson and checks to see if there is a corresponding 
 % folder in ..\Kelson\Analyzed. if there is not that indicates that the
 % file needs to be analyed and creates the appropriate Datalist.
 %
