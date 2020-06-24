@@ -1,37 +1,39 @@
 function Output = ExtractFluorescence(input,debug)
 %ExtractFluorescence is a program that load cell coordinates and extract brightness rings for cell
 %membranes and neuropil
-%Nikolas Francis 2016
+% Kelson Shilling-Scrivo 2018 2.0
+%Nikolas Francis 2016 1.0
 tic();
 %Expected frame rate for imaging.
 Output.Errors = {};
 fps = input.expectedFPS;
-bb=strsplit(input.path,'\'); 
-LocalPath = fullfile(input.savepath ,  bb{end}) ;
+
+LocalPath = input.path;
 %Load cell definitions
-for e = 1:length(input.expname)
-    filecheck = char(fullfile(LocalPath, input.expname(e),...
+
+    filecheck = char(fullfile(LocalPath,...
                      'Fluorescence.mat'));
-   if exist (filecheck,'file') && ( ~exist('debug','var')||debug == 0)
-        fprintf('\n file %s already registered',filecheck);
-       continue
+   if exist(filecheck,'file') && ( ~exist('debug','var')||debug == 0)
+        fprintf('\n file %s \n already registered \n',filecheck);
+        return
     end
     
 try
-    load(fullfile(LocalPath , char(input.expname{e}) , 'CellDefinitions.mat'));
+    load(fullfile(LocalPath , 'CellDefinitions.mat'));
 catch 
-    warning(' could not find %s. Analyzing next file',fullfile(bb{end},input.expname{e}));  
-    Output.Errors(end+1,1)={[bb{end} input.expname{e}]};
-    continue
+    warning(' could not find %s. Analyzing next file',LocalPath);  
+    Output.Errors(end+1,1)={LocalPath};
+    return
 end
 
-TimingFile = fullfile(LocalPath, input.expname{e} , 'TimingInfo.mat');
+TimingFile = fullfile(LocalPath , 'TimingInfo.mat');
 if exist(TimingFile,'file')
          
           load(TimingFile);    
        
 else 
-          continue
+    Out.Errors = 1;
+          return
 %           % hotfix- consider rework
 %          temp = input;
 %          temp.expname = temp.expname{e};
@@ -57,9 +59,10 @@ else
         end 
      end 
      catch 
-         warning('TimingFile incorrect for %s. Analyzing next file',fullfile(bb{end},input.expname{e}));  
-    Output.Errors(end+1,1)={[bb{end} input.expname{e}]};
-         continue
+         warning('TimingFile incorrect for %s. Analyzing next file',LocalPath);  
+    Output.Errors(end+1,1)={LocalPath};
+         return
+         
      end 
 
 
@@ -67,7 +70,7 @@ else
 
 
  fprintf(' Extracting %s \n',LocalPath)
- fprintf('               %s \n',input.expname{e} );
+
 try
     xc = ptsIdx(:,2);
     yc = ptsIdx(:,3);
@@ -137,7 +140,7 @@ try
     %Load image sequences
     
      
-    opts = get_options_from_xml(fullfile(LocalPath, input.expname{e}, 'Experiment.xml'));
+    opts = get_options_from_xml(fullfile(LocalPath, 'Experiment.xml'));
     opts.format = {'uint16', [opts.dimX, opts.dimY 1], 'channels'};
    
     %Find fluorescence for each ROI and neuropil. fluoAllRaw: ROI
@@ -147,7 +150,7 @@ try
 %     %NPfluoAll_100pct(1:opts.numframes,length(xc))=0;
 %     %Check if need to process movie in chunks or at once
 %     if opts.numframes < input.maxframechunk
-%      img_path = fopen(fullfile(LocalPath,input.expname{e},'greenchannelregistered.raw'));
+%      img_path = fopen(fullfile(LocalPath,'greenchannelregistered.raw'));
 %      greenChanImg =  fread(img_path,'uint16=>uint16');  
 %      greenChanImg = reshape(greenChanImg,opts.dimX,opts.dimY,[]);
 %      numframes = size(greenChanImg,3)
@@ -179,7 +182,7 @@ try
 %         fluoAllCorr = fluoAllRaw - (input.percNP * NPfluoAll);
 %     else
         
-fullpathIMG = fullfile(LocalPath, input.expname{e}, 'greenchannelregistered.raw');
+fullpathIMG = fullfile(LocalPath, 'greenchannelregistered.raw');
 
 fh = fopen(fullpathIMG); 
 numFrames_total =  FindRawImgSize(fh,[opts.dimX opts.dimY]);
@@ -195,7 +198,7 @@ for chunk_count = 1:chunks
          fh = fopen(fullpathIMG); 
          start_idx = (chunk_count-1) * ItemsPerImage * chunkSize * 2; %bytes  ;
     fseek(fh,start_idx,'bof');
-    fprintf('%s : %d of %d \n', input.expname{1},chunk_count,chunks)
+    fprintf( '%d of %d \n',chunk_count,chunks)
     % check to ensure we don't go over IMG size on last img
     if chunk_count == chunks 
         greenChanImg = fread(fh,inf,'uint16');
@@ -288,15 +291,15 @@ end
             %fluoAllCorr_100pct = fluoAllRaw - (input.percNP * NPfluoAll_100pct);
     %Extract timing parameters
     
-        try 
-        copyfile(fullfile(input.path, input.expname{e}, input.psignalfiles{e}),...
-                 fullfile(LocalPath,   input.expname{e}))
-        catch 
-            warning('could not move %s %s to new Analyzed folder,Skipping expt',...
-                input.path,input.expname)
-          continue
-        end 
- 
+%         try 
+%         copyfile(fullfile(input.path, input.psignalfiles{e}),...
+%                  fullfile(LocalPath))
+%         catch 
+%             warning('could not move %s to new Analyzed folder,Skipping expt',...
+%                 input.path)
+%           return
+%         end 
+%  
        
        
        
@@ -317,7 +320,9 @@ end
     for iii = 1:length(TimingInfo.SeqEndVals)
         for ii = 1:size(fluoAllRaw,2)
             if off_frame(iii) > size(fluoAllRaw,1)
-                continue
+                Out.Errors = 1;
+                return
+                
             end 
       %     try
                 %disp(iii)
@@ -329,7 +334,7 @@ end
                 fluoAllCorr(on_frame(iii):off_frame(iii),ii);
             %  catch
                % if any(TimingInfo.FrameIdx(iii,:)> opts.numframes )
-               %     continue
+               %     return
               %  end 
               
                        
@@ -345,9 +350,9 @@ end
         end
     end
     catch 
-         warning('extraction incorrect for %s. Analyzing next file',fullfile(bb{end},input.expname{e}));  
-    Output.Errors(end+1,1)={[bb{end} input.expname{e}]};
-         continue
+         warning('extraction incorrect for %s. Analyzing next file',input.path);  
+    Output.Errors(end+1,1)={input.path};
+         return
      end  
         
     
@@ -361,7 +366,7 @@ end
     Output.fluoAllCorr = fluoAllCorr;
    % Output.fluoAllCorr_100pct = fluoAllCorr_100pct;
     Output.TimingInfo = TimingInfo;
-    save(fullfile(LocalPath, input.expname{e}, 'Fluorescence.mat'), 'Output')
+    save(fullfile(LocalPath, 'Fluorescence.mat'), 'Output')
     %Plot brightness stats and average segemented cell
     if exist('debug','var')
        figure 
@@ -372,7 +377,7 @@ end
            plot([on_frame(ii) off_frame(ii) ], [ax.YLim(2) ax.YLim(2)])
        end 
        
-       title(fullfile(input.path,input.expname{e}),'Interpreter','none')
+       title(fullfile(input.path),'Interpreter','none')
         
        
        figure;
@@ -449,7 +454,7 @@ end
 
 catch
        warning('Error: unable to extract Cell Fluorescence.Manual inspection needed.')
-      warnpath = fopen(fullfile(input.savepath,bb{end},input.expname{e},'Warnings.txt'),...
+      warnpath = fopen(fullfile(LocalPath,'Warnings.txt'),...
                       'w+');
      fprintf(warnpath,'\n Error: unable to extract Cell Fluorescence.Manual inspection needed.  \n');
     
@@ -458,6 +463,5 @@ catch
 clear NPfluoAll
 clear fluoAllRaw
 clear fluoAllCorr
-end
 fprintf('Elapsed time: %g. minutes\n', toc()/60);
 
