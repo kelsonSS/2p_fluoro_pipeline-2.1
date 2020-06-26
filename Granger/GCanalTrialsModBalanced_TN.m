@@ -16,13 +16,18 @@ function Results = GCanalTrialsModBalanced_TN(TN,Type,RedChannel)
 
 % Red channel is a boolean that, if true, restricts the data to only cells 
 % that were labeled in the Data.RedCellID
-
+tic;
   if ~exist('Type','var')
         Type = 'SNR'
   end
   
   if isnumeric(Type)
-    TypeName = TN.Classes{Type};
+      % the type is stored as the first number in the array and the rest of
+      % the numbers are the index of which cells are of that given type. We
+      % store and seperate that out here. 
+    ClassNum = Type(1);
+    TypeName = TN.Classes{Type(1)};
+    Type = Type(2:end);
   else 
       TypeName = Type;
   end 
@@ -37,7 +42,7 @@ function Results = GCanalTrialsModBalanced_TN(TN,Type,RedChannel)
 % dir_data = '\\vault3\Data\Kelson\Analyzed';
 % 
 % dir_funcs = strcat(dir_main,'Function Directory');
-dir_out_main = strcat('\\Vault3\data\Kelson\GrangerResults\');
+dir_out_main = strcat('D:\Analyzed\GrangerResults\');
 % Add directories to path
 %addpath(dir_data,dir_funcs)
 
@@ -85,7 +90,9 @@ for expt = 1:length(dataDir) %For each file in a directory
     try
      %% data unpacking
      Data = dataDir{expt};
-        
+     cdef = TN.CellID{expt};
+     xy = cdef.ptsIdx(:,2:3);
+     
      if ~isstruct(Data) && ischar(Data)
          Datapath = Data;
          fn = strrep(Datapath,'-','_');
@@ -108,20 +115,18 @@ for expt = 1:length(dataDir) %For each file in a directory
      if ~isempty(dir(fullfile(dir_out,'DataResults*')))
          continue
      end     
-         
-     Data = Fluoro_to_Table(Data);   
+
+      
+ 
   
      end 
      
-     cdef = Data.CellID{1};
-     xy = cdef.ptsIdx(:,2:3);
-     FLO = Data.FreqLevelOrder;
-     active_idx = Data.active{:,2} >= 1; % find all cells active P<.05
-    
+  
+     
      %% name and file path creation
-     Datapath = Data.DataDirs{1};
-     fn = strrep(Datapath,'-','_');
-     fn = strrep(Datapath,'/','\');
+  
+     fn = strrep(Data,'-','_');
+     fn = strrep(Data,'/','\');
      fn = strsplit(fn,'\');
      fileName1 = strcat(fn{6} ,'_',fn{7}, '_' , TypeName);
      
@@ -154,8 +159,17 @@ for expt = 1:length(dataDir) %For each file in a directory
        
     catch
         warning('could not use normal variables, mmanual inspeciton needed')
-    try 
-        Fluoro = Data.DFF(:,:,active_idx);  
+    
+        Data = Fluoro_to_Table(Data);   
+        FLO = Data.FreqLevelOrder;
+           
+        cdef = Data.CellID{1};
+        xy = cdef.ptsIdx(:,2:3);
+        active_idx = Data.active{:,2} >= 1; % find all cells active P<.05
+     try
+        Fluoro = Data.DFF(:,:,active_idx);
+      
+    
     catch 
         Fluoro = Data.DFF{1}(:,:,active_idx);  
     end 
@@ -200,7 +214,7 @@ for expt = 1:length(dataDir) %For each file in a directory
                % Use predetermined Clusters  
                
             DFF_mu = squeeze(nanmean(Fluoro,2));
-            idx =  TN.Class_idx == Type ; 
+            idx =  TN.Class_idx == ClassNum ; 
             idx = idx(TN.experiment_list == expt);
             idx = idx(clean_idx & active_idx);
             
@@ -217,7 +231,7 @@ for expt = 1:length(dataDir) %For each file in a directory
     
             
             nmode = numel(mode);
-            Levels =table2array(Data.FreqLevelOrder(:,2));
+            Levels =table2array(TN.FreqLevelOrder(:,2));
             uL = unique(Levels);
             
               for lvl = 1:length(uL)
@@ -256,7 +270,7 @@ for expt = 1:length(dataDir) %For each file in a directory
             mode = cellfun(@num2str , table2cell(freqs),'UniformOutput',0);
            % mode = {'Tone','+30db SNR','+20db SNR','+10db SNR'};
             nmode = numel(mode);
-            Levels =table2array(Data.FreqLevelOrder(:,2));
+            Levels =table2array(TN.FreqLevelOrder(:,2));
             uL = unique(Levels);
             
             
@@ -275,7 +289,7 @@ for expt = 1:length(dataDir) %For each file in a directory
             mode = cellfun(@num2str , table2cell(freqs),'UniformOutput',0);
            % mode = {'Tone','+30db SNR','+20db SNR','+10db SNR'};
             nmode = numel(mode);
-            Levels =table2array(Data.FreqLevelOrder(:,2));
+            Levels =table2array(TN.FreqLevelOrder(:,2));
             uL = unique(Levels);
             
             for lvl = 1:length(uL)
@@ -285,8 +299,8 @@ for expt = 1:length(dataDir) %For each file in a directory
            
         case 'EachFreqLevel'
             % collect and seperate unique freq/level indicies 
-            Levels =table2array( Data.FreqLevelOrder(:,2) );
-             Freqs =table2array( Data.FreqLevelOrder(:,1) );
+            Levels =table2array( TN.FreqLevelOrder(:,2) );
+             Freqs =table2array( TN.FreqLevelOrder(:,1) );
               uL = unique( Levels );
               uF = unique( Freqs );
               % iterate over them to create groups 
@@ -313,9 +327,9 @@ for expt = 1:length(dataDir) %For each file in a directory
             mode = {'Hit','Miss','Early'}
             nmode = numel(mode);
             
-            hit_idx = logical(Data.handles.Hits);
-            early_idx = logical(Data.handles.Early);
-            miss_idx = logical(Data.handles.Miss);
+            hit_idx = logical(TN.handles.Hits);
+            early_idx = logical(TN.handles.Early);
+            miss_idx = logical(TN.handles.Miss);
             
             resp{1} = Fluoro(:,hit_idx,:);
             resp{2} = Fluoro(:,early_idx,:);
@@ -326,9 +340,9 @@ for expt = 1:length(dataDir) %For each file in a directory
             mode = {'Hit','Miss'}
             nmode = numel(mode);
             
-            hit_idx = logical(Data.handles.Hits);
-            early_idx = logical(Data.handles.Early);
-            miss_idx = logical(Data.handles.Miss) | logical(early_idx) ;
+            hit_idx = logical(TN.handles.Hits);
+            early_idx = logical(TN.handles.Early);
+            miss_idx = logical(TN.handles.Miss) | logical(early_idx) ;
             assert(~any(miss_idx>1))
             
             resp{1} = Fluoro(:,hit_idx,:);
@@ -336,12 +350,12 @@ for expt = 1:length(dataDir) %For each file in a directory
             resp{2} = Fluoro(:,miss_idx,:);
             
         case 'HitLevels'
-            levels = Data.handles.Levels; 
-            uLevels = Data.handles.uLevels;
+            levels = TN.handles.Levels; 
+            uLevels = TN.handles.uLevels;
              
              mode = arrayfun(@num2str,uLevels,'UniformOutput',0);
              nmode = numel(mode);
-             hit_idx = logical(Data.handles.Hits);
+             hit_idx = logical(TN.handles.Hits);
             
              for lvl = 1:length(uLevels)
                  
@@ -361,7 +375,7 @@ for expt = 1:length(dataDir) %For each file in a directory
             
             mode = {'TR- Tone','TR +30db SNR','TR +20db SNR','TR +10db SNR'};
             nmode = numel(mode);
-            Levels =table2array(Data.FreqLevelOrder(:,2));
+            Levels =table2array(TN.FreqLevelOrder(:,2));
             uL = unique(Levels);
             
               for lvl = 1:length(uL)
@@ -379,7 +393,7 @@ for expt = 1:length(dataDir) %For each file in a directory
             
             mode = {'NR- Tone','NR +30db SNR','NR +20db SNR','NR +10db SNR'};
             nmode = numel(mode);
-            Levels =table2array(Data.FreqLevelOrder(:,2));
+            Levels =table2array(TN.FreqLevelOrder(:,2));
             uL = unique(Levels);
             
               for lvl = 1:length(uL)
@@ -397,7 +411,7 @@ for expt = 1:length(dataDir) %For each file in a directory
             
             mode = {'NR- Tone','NR +30db SNR','NR +20db SNR','NR +10db SNR'};
             nmode = numel(mode);
-            Levels =table2array(Data.FreqLevelOrder(:,2));
+            Levels =table2array(TN.FreqLevelOrder(:,2));
             uL = unique(Levels);
             
               for lvl = 1:length(uL)
@@ -414,7 +428,7 @@ for expt = 1:length(dataDir) %For each file in a directory
             
             mode = {'NR- Tone','NR +30db SNR','NR +20db SNR','NR +10db SNR'};
             nmode = numel(mode);
-            Levels =table2array(Data.FreqLevelOrder(:,2));
+            Levels =table2array(TN.FreqLevelOrder(:,2));
             uL = unique(Levels);
             
               for lvl = 1:length(uL)
@@ -571,7 +585,10 @@ for expt = 1:length(dataDir) %For each file in a directory
     cellidstotal = cell(nmode,1);
  
     %% main loop 
-for imd =1:nmode
+
+    
+    
+    for imd =1:nmode
     fprintf('Expt %d/%d mode:%d/%d \n', expt,length(dataDir),imd,nmode)
     Resp = respx{imd}(:,:,cellids);
     [N,R,Ncells] = size(Resp);
