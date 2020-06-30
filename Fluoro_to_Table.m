@@ -126,6 +126,7 @@ Levels  = handles.Levels;
 Levels(Levels>100) = inf;
 uLevels(uLevels>100) = inf;
 FreqLevelOrder = table(Freqs,Levels);
+[FreqLevelOrder, fl_ind]= sortrows(FreqLevelOrder, {'Freqs','Levels'},{'Ascend','Descend'});
 FreqLevels = unique(FreqLevelOrder);
 FreqLevels = sortrows(FreqLevels, {'Freqs','Levels'},{'ascend','descend'});
 
