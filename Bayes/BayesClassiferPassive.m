@@ -116,10 +116,13 @@ for run = 1:num_reps
      disp([' Classes Tones: Run #' num2str(run) '/' num2str(num_reps)  ': ' ...
         num2str(floor( toc / 60  )) ' min elapsed' ])
     
-    for class = 1:length(classes)
+    for class = 1:length(classes) +1
         
         %% indexing
-        class_idx = all_classes == class;
+        class_idx = all_classes == class;                         
+        if class == length(classes)+1       
+            class_idx = ones(size(class_idx));   
+        end             
         
       
         
@@ -172,11 +175,16 @@ for run = 1:num_reps
         num2str(floor( toc / 60  )) ' min elapsed' ])
     
     for neurons = 2:num_neurons
-        for class = 1:length(classes)
+        for class = 1:length(classes)+1
             
             %% indexing
+           
+                   
             class_idx = all_classes == class;
             
+             if class == length(classes)+1
+                 class_idx = ones(size(class_idx));
+             end 
            
             
             in_idx = class_idx & active_idx & ~ bad_idx;
@@ -232,12 +240,15 @@ zData = AllData;
 for run = 1:num_reps
     disp(['Time: Run #' num2str(run) '/' num2str(num_reps)  ': ' ...
         num2str(floor( toc / 60  )) ' min elapsed' ])
-    for class = 1:length(classes)
+    for class = 1:length(classes) +1
         for Time = padsize+1:150+padsize
             
             
             %% indexing
-            class_idx = all_classes == class;
+            class_idx = all_classes == class;         
+            if class == length(classes)+1                
+                class_idx = ones(size(class_idx));         
+            end             
             
           
             
@@ -326,12 +337,15 @@ zData = AllData;
 for run = 1:num_reps
     disp(['Time-Noise: Run #' num2str(run) '/' num2str(num_reps)  ': ' ...
         num2str(floor( toc / 60  )) ' min elapsed' ])
-    for class = 1:length(classes)
+    for class = 1:length(classes) +1
         for Time = padsize+1:150+padsize
             
             
             %% indexing
-            class_idx = all_classes == class;
+            class_idx = all_classes == class;  
+            if class == length(classes)+1      
+                class_idx = ones(size(class_idx));      
+            end             
             
            
         
