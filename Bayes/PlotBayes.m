@@ -66,9 +66,12 @@ ylabel('Fraction Correct')
 title(fig_name)
 if ~isempty(savepath) 
     fig_name =  matlab.lang.makeValidName(fig_name)
-    outpath = fullfile(savepath,[fig_name, '.pdf']);
-    print(outpath,'-dpdf','-bestfit')
-    pause(1)
+   outpath = [savepath '.ps'];
+
+    % outpath = fullfile(savepath,[fig_name, '.pdf']);
+   % print(outpath,'-dpdf','-bestfit')
+    print(outpath, '-dpsc', '-append') 
+   pause(1)
     close(gcf)
 end
 
