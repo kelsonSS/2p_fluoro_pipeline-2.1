@@ -8,64 +8,64 @@ tic();
 for expnum = 1:length(input.expname)
     sprintf( 'registering movie %s , elapsed time: %d minutes',...
             input.expname{expnum},toc()/60)
-bb=strsplit(input.path,'\'); % KA- switced from strsep to strsplit
+    bb=strsplit(input.path, filesep); % KA- switched from strsep to strsplit
 
-newpath = char(strcat(input.savepath, '\', bb{end} , '\' , input.expname{expnum}, '\' )) ;
-disp(newpath)
+    newpath = char(strcat(input.savepath, filesep, bb{end} , filesep, input.expname{expnum}, filesep)) ;
+    disp(newpath)
 
-% check if expt has already been registered
-if ~ isempty(dir([newpath 'greenchannelregistered.raw']))
-    newfile = dir([newpath 'greenchannelregistered.raw']);
-    oldfile = dir([newpath 'greenchannel.raw']);
-    if newfile.bytes == oldfile.bytes
-        continue
+    % check if expt has already been registered
+    if ~ isempty(dir([newpath 'greenchannelregistered.raw']))
+        newfile = dir([newpath 'greenchannelregistered.raw']);
+        oldfile = dir([newpath 'greenchannel.raw']);
+        if newfile.bytes == oldfile.bytes
+            continue
+        end
     end
-end
 
- if isempty(dir([newpath 'greenchannel.raw']))
-    continue
- end 
-
-%Movies are already seperated by channel, so we only need to select 1st channel.
-origpath= char(strcat(input.path, '\', input.expname(expnum), '\Experiment.xml'));
-opts = get_options_from_xml(origpath);
-opts.format = {'uint16', [opts.dimX, opts.dimY 1], 'channels'};
-%Load registration image sequences into memory
-
-
-%% Load the input .raw file into a matrix
-fullpathIMG = [newpath 'greenchannel.raw'];
-
-fh = fopen(fullpathIMG); 
-numFrames_total =  FindRawImgSize(fh,[opts.dimX opts.dimY]);
-ItemsPerImage = opts.dimX* opts.dimY ;
-chunkSize =  input.maxframechunk; % frames 
-chunks = ceil(numFrames_total/chunkSize); 
-fclose(fh);
-
-tstartCorr = tic;
-for chunk_count = 1:chunks
-    %% register data 
-     
-    % open file and move pointer to next chunk
-    fh = fopen(fullpathIMG); 
-    start_idx = (chunk_count-1) * ItemsPerImage * chunkSize * 2 %bytes  ;
-    fseek(fh,start_idx,'bof')
-    % check to ensure we don't go over IMG size on last img
-    if chunk_count == chunks 
-        IMG = fread(fh,inf,'uint16');
-    else 
-        IMG =fread(fh,ItemsPerImage * chunkSize,'uint16');
+    if isempty(dir([newpath 'greenchannel.raw']))
+        continue
     end 
+
+    %Movies are already seperated by channel, so we only need to select 1st channel.
+    origpath= char(strcat(input.path, filesep, input.expname(expnum), filesep, 'Experiment.xml'));
+    opts = get_options_from_xml(origpath);
+    opts.format = {'uint16', [opts.dimX, opts.dimY 1], 'channels'};
+    %Load registration image sequences into memory
+
+
+    %% Load the input .raw file into a matrix
+    fullpathIMG = [newpath 'greenchannel.raw'];
+
+    fh = fopen(fullpathIMG); 
+    numFrames_total =  FindRawImgSize(fh,[opts.dimX opts.dimY]);
+    ItemsPerImage = opts.dimX* opts.dimY ;
+    chunkSize =  input.maxframechunk; % frames 
+    chunks = ceil(numFrames_total / chunkSize); 
     fclose(fh);
 
+    tstartCorr = tic;
+    for chunk_count = 1:chunks
+        %% register data 
 
-    IMG =  permute( reshape(IMG,opts.dimX, opts.dimY, []),[2 1 3]); 
+        % open file and move pointer to next chunk
+        fh = fopen(fullpathIMG); 
+        start_idx = (chunk_count-1) * ItemsPerImage * chunkSize * 2 %bytes  ;
+        fseek(fh,start_idx,'bof')
+        % check to ensure we don't go over IMG size on last img
+        if chunk_count == chunks 
+            IMG = fread(fh,inf,'uint16');
+        else 
+            IMG = fread(fh,ItemsPerImage * chunkSize,'uint16');
+        end 
+        fclose(fh);
+
+
+        IMG =  permute( reshape(IMG,opts.dimX, opts.dimY, []),[2 1 3]);
     
 
 %% Generate motion offsets using DFT
 %% FIND SEGMENT OF MOVIE WITH HIGH CORR VALUES
-winsize = 99; 
+winsize = 99;
 nframes = size(IMG,3);
 sampInd = round(linspace(winsize+1,nframes-winsize,10));
 corrSeq = zeros(length(sampInd),3);

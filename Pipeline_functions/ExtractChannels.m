@@ -9,24 +9,24 @@ function ExtractChannels(input)
 %Kelson Shilling-Scrivo 2018
 tic();
 %Load image sequences into memory
-bb=strsplit(input.path,'\'); %changed from strsep to strsplit
+bb=strsplit(input.path, filesep); %changed from strsep to strsplit
 filePreparation(input)
 %% Extract red and green channels, and store them in the local path
 for i = 1:length(input.expname)
-    disp(['Extracting ' input.path '\' input.expname{i}])
+    disp(['Extracting ' input.path filesep input.expname{i}])
     
     newpath = fullfile(input.savepath, bb{end}, input.expname{i});
-    xmlpath = fullfile(newpath,'Experiment.xml');
+    xmlpath = fullfile(newpath, 'Experiment.xml');
     opts = get_options_from_xml(xmlpath);
     
     
    
-    out_path = fullfile(newpath,'greenchannel.raw');
+    out_path = fullfile(newpath, 'greenchannel.raw');
     
     % chcek to see if the file has already be extracted 
     if ~ isempty(dir(out_path))
         newfile = dir(out_path);
-        oldfile = dir(fullfile(input.path,input.expname{i},'\Image_0001_0001.raw'));         
+        oldfile = dir(fullfile(input.path, input.expname{i}, 'Image_0001_0001.raw'));         
         if newfile.bytes == oldfile.bytes 
             continue
         end
@@ -34,20 +34,20 @@ for i = 1:length(input.expname)
     
     if opts.numchannels == 1
         
-        old_path = fullfile(input.path,input.expname{i},'Image_0001_0001.raw');
+        old_path = fullfile(input.path, input.expname{i}, 'Image_0001_0001.raw');
         try
-        copyfile(old_path,out_path, 'f')
+        copyfile(old_path, out_path, 'f')
         catch
             continue
         end
         
     elseif opts.numchannels == 2
         
-        out_path = fullfile(newpath,'greenchannel');
-        img = fopen(fullfile(input.path,input.expname{i},'Image_0001_0001.raw'));
+        out_path = fullfile(newpath, 'greenchannel');
+        img = fopen(fullfile(input.path, input.expname{i}, 'Image_0001_0001.raw'));
        
         try
-        Green = fread(img,'uint16=>uint16');
+        Green = fread(img, 'uint16=>uint16');
         catch 
             fclose(img);
             continue
@@ -125,14 +125,13 @@ end
         % legacy code from Nik Francis 2016
         
        
-        bb=strsplit(input.path,'\'); 
+        bb=strsplit(input.path, filesep); 
         for i = 1:length(input.expname)
-             
             
             %Local path for data
              localpath = fullfile(input.path,input.expname{i}); 
             newpath = fullfile(input.savepath ,  bb{end}, ...
-                input.expname{i}) ;
+                input.expname{i});
             mkdir(newpath)
             %ThorImage experiment params
             inpath = fullfile(input.path , input.expname{i}, ...

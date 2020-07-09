@@ -45,7 +45,7 @@ function [ s ] = xml2struct( file )
                 file = [file '.xml'];
             end
             
-            if (exist(file,'file') == 0)
+            if (~exist(file,'file'))
                 error(['The file ' file ' could not be found']);
             end
         end

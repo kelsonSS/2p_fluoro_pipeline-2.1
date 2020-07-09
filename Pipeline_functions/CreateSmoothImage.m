@@ -12,9 +12,9 @@ end
 for expnum = 1:length(input.expname)
     sprintf( 'making smooth img \n %s \n elapsed time: %d minutes \n',...
     fullfile(input.path,input.expname{expnum},floor(toc()/60) ))
-    bb=strsplit(input.path,'\'); % KA- switced from strsep to strsplit
+    bb=strsplit(input.path,filesep); % KA- switced from strsep to strsplit
     
-    newpath = char(strcat(input.savepath, '\', bb{end} , '\' , input.expname{expnum}, '\' )) ;
+    newpath = char(strcat(input.savepath, filesep, bb{end} , filesep , input.expname{expnum}, filesep )) ;
     % check if expt has already been registered
  if ~debug
     if ~ isempty(dir([newpath 'AvgImageSmooth.tif']))

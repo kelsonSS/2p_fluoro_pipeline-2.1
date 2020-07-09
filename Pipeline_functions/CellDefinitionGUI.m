@@ -44,7 +44,7 @@ end
 cla(handles.axes1)
 title('')
 text(.1,.5,'LOADING IMAGES...','fontsize',20)
-[fname, pthname] = uigetfile('\\vault3\data\kelson\analyzed\*.raw','Select a RED channel DataFile');
+[fname, pthname] = uigetfile('*.raw','Select a RED channel DataFile');
 
     disp('User selected Cancel');
     handles.pthname = 0;
@@ -54,13 +54,13 @@ text(.1,.5,'LOADING IMAGES...','fontsize',20)
     cla(handles.axes1)
     
 
-    [Gfname, Gpthname] = uigetfile([pthname '\*.raw'], ...
+    [Gfname, Gpthname] = uigetfile([pthname '*.raw'], ...
     'Select a GREEN channel DataFile');
     fullpathIMG = [pthname fname];
     GfullpathIMG = [Gpthname Gfname];
     
     handles.pthname = {pthname};
-    bb=strsplit(pthname,'\');
+    bb=strsplit(pthname,filesep);
     bb = bb{end-1};
     handles.filename = [bb];
     guidata(hObject,handles);
@@ -117,7 +117,7 @@ if iscellstr({pthname})
     handles.GreenfilteredadjMnIMG=avgGreenfilteredImage;
     try
     fNameString = ['AvgGreenImage.mat'];
-    idx = strfind(handles.pthname{1},'\');
+    idx = strfind(handles.pthname{1},filesep);
     pthname = handles.pthname{1}(1:idx(end-1));
     DestPath=fullfile(pthname,handles.filename,fNameString);
     save(DestPath,'avgGreenfilteredImage');
@@ -159,6 +159,7 @@ else
     cla(handles.axes1)
 end
 guidata(hObject,handles)
+
 function contrast_red_Callback(hObject, eventdata, handles)
 handles.numonoff.Value=1;
 contval = get(handles.contrast_red,'Value');
@@ -191,6 +192,7 @@ if isfield(handles,'RedfilteredadjMnIMG')
     end
 end
 guidata(hObject, handles);
+
 function contrast_green_Callback(hObject, eventdata, handles)
 handles.numonoff.Value = 1;
 contval = get(handles.contrast_green,'Value');
@@ -224,6 +226,7 @@ if isfield(handles,'GreenfilteredadjMnIMG')
     end
 end
 guidata(hObject, handles);
+
 function selectneurons_Callback(hObject, eventdata, handles)
 %handles.numonoff.Value=1;
 %Select neuron centers
@@ -288,6 +291,7 @@ if isfield(handles,'RedfilteredadjMnIMG') && iscellstr(handles.pthname)
     end
 end
 guidata(hObject, handles);
+
 function deleteselections_Callback(hObject, eventdata, handles)
 try
     handles.selectedneurons.Data(handles.deleteneuron(:,1),:)=[];
@@ -332,6 +336,7 @@ if isfield(handles,'RedContAdjfilteredadjMnIMG') && iscellstr(handles.pthname)
     end
 end
 guidata(hObject,handles);
+
 function addneurons_Callback(hObject, eventdata, handles)
 try
     if handles.RG.Value
@@ -379,9 +384,11 @@ try
     title([handles.filename ': ' num2str(size(ptsIdx,1)) ' Neuron(s) Selected'], ...
         'Parent',handles.axes2)
 end
+
 function selectedneurons_CellSelectionCallback(hObject, eventdata, handles)
 handles.deleteneuron = eventdata.Indices;
 guidata(hObject,handles);
+
 function numonoff_Callback(hObject, eventdata, handles)
     
     xc = handles.selectedneurons.Data(:,1);
@@ -438,9 +445,10 @@ function numonoff_Callback(hObject, eventdata, handles)
         title([handles.filename ': ' num2str(size(ptsIdx,1)) ' Neuron(s) Selected'], ...
             'Parent',handles.axes2)
 end
+
 function loadselection_Callback(hObject, eventdata, handles)
 fNameString = ['CellDefinitions.mat'];
-idx = strfind(handles.pthname{1},'\');
+idx = strfind(handles.pthname{1},filesep);
 pthname = handles.pthname{1}(1:idx(end-1));
 DestPath=fullfile(pthname, handles.filename,fNameString);
 load(DestPath);
@@ -454,7 +462,7 @@ try
     
     ptsIdx = [[1:size(handles.selectedneurons.Data,1)]' handles.selectedneurons.Data];
     fNameString = ['CellDefinitions.mat'];
-    idx = strfind(handles.pthname{1},'\');
+    idx = strfind(handles.pthname{1}, filesep);
     pthname = handles.pthname{1}(1:idx(end-1));
     DestPath=fullfile(pthname,handles.filename,fNameString);
     Cdef=[];
@@ -479,6 +487,7 @@ catch
     warndlg('NO NEURONS SELECTED')
 
 end
+
 function [avgfilteredImage filteredImages] = hmfilter(I)
 filteredImages=zeros(size(I));
 
@@ -508,6 +517,7 @@ for i = 1:size(I,3)
     end 
 end
 avgfilteredImage = squeeze(mean(filteredImages,3));
+
 function rois_Callback(hObject, eventdata, handles)
 %Read associated XML file for image dimensions
 fullpathXML = [handles.pthname{1} 'Experiment.xml'];
@@ -521,6 +531,7 @@ handles.expectedNeuronRadiusPix=round(handles.expectedNeuronDiamMicrons/handles.
 handles.smRoiBoundaries = smRoiBoundaries;
 handles.smNpBoundaries = smNpBoundaries;
 guidata(hObject,handles);
+
 function info_Callback(hObject, eventdata, handles)
 helpdlg([{['Cell Definition v1.0. Written by Dan Winkowski and Nikolas Francis.']};{' '};
     {['Cell Definition is ',...
@@ -529,20 +540,24 @@ helpdlg([{['Cell Definition v1.0. Written by Dan Winkowski and Nikolas Francis.'
     'mice, the user loads the red and green channels. The user then selects/adds/',...
     'deletes cell locations while dynamically adjusting contrast. The cell definition file is ' ...
     'saved in the same directory as the loaded images.']}],'Cell Definition HELP');
+
 function contrast_red_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
+
 function contrast_green_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
+
 function RG_Callback(hObject, eventdata, handles)
 if get(hObject,'Value')
     set(hObject, 'BackgroundColor',[0 1 0])
 else
     set(hObject, 'BackgroundColor',[1 0 0])
 end
+
 function MovePoints_Callback(hObject, eventdata, handles)
  % plot points in preperation for KeyPressFcn Callback
 xc = handles.selectedneurons.Data(:,1);
@@ -616,7 +631,7 @@ n_neurons = length(handles.selectedneurons.Data(:,1));
 
 %% saving
 fString = 'RedNeuronNumber.mat'
-idx = strfind(handles.pthname{1},'\');
+idx = strfind(handles.pthname{1},filesep);
 pthname = handles.pthname{1}(1:idx(end-1));
 DestPath = fullfile(pthname,handles.filename, fString)
 

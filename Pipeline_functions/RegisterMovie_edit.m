@@ -102,7 +102,7 @@ for i = 1:length(input.expname)
         greenChanImg = padarray(greenChanImg,[64 64]);
         %Get DFT registration coordinates. dftregistration from Mathworks
         %website.
-        s = dftregistration(template,fft2(whiten(greenChanImg)),input.subpixegfact);
+        s = dftregistration(template,fft2(whiten(greenChanImg)),input.subpixregfact);
         ty = s(3);
         tx = s(4);
         [m n]=size(greenChanImg);

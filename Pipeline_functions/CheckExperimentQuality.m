@@ -9,8 +9,8 @@ tic();
 %Path of images used for registration template
 for expnum = 1:length(input.expname)
 
-bb=strsplit(input.path,'\');
-newpath = char(strcat(input.savepath, '\', bb{end} , '\' , input.expname{expnum}, '\' )) ;
+bb=strsplit(input.path,filesep);
+newpath = char(strcat(input.savepath, filesep, bb{end} , filesep , input.expname{expnum}, filesep )) ;
 disp(newpath)
 
 if ~exist(fullfile(newpath,'Fluorescence.mat'),'file')

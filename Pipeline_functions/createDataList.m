@@ -13,23 +13,20 @@ function[paths,expname,psignalfiles, matless,animalIDs] = createDataList(file_pa
 % the second optional output matless gives a list of all files that were
 % not analyzed because there is not a corresponding behavior (ART) file.
 % 
-if ~exist('file_path','var')
-file_path = '\\VAULT3\Data\Kelson\Files to unload' ;
-end 
 
  % find all unique directories 
- allfiles = dir([file_path , '\**\*.raw']);
+ allfiles = dir(fullfile(file_path, '**', '*.raw'));
  allfiles = struct2cell(allfiles);
  allfiles = allfiles(2,:)';
   % make sure not to count any files that are in analyzed folder
- mask_raw = strfind(allfiles,fullfile(file_path,'Analyzed'));
+ mask_raw = strfind(allfiles, fullfile(file_path, 'Analyzed'));
  mask_raw = cellfun(@isempty,mask_raw);
  file_shorten = @(x) x(length(file_path)+1:end);
             
  raw      = allfiles(mask_raw);
  raw      = cellfun(file_shorten,raw,'UniformOutput',0);
  % find analyzed files by looking for Fluorescence traces
- analyzed = dir([file_path , '\**\Fluorescence.mat']);
+ analyzed = dir(fullfile(file_path , '**', 'Fluorescence.mat'));
  analyzed = struct2cell(analyzed);
  analyzed = analyzed(2,:);
  analyzed = cellfun(file_shorten,analyzed,'UniformOutput',0);
@@ -38,15 +35,15 @@ end
   % also need to show which files need behavior (ART) files so we can 
   % add them if they are missing
   
- matfiles = dir([file_path, '\**\ART*.mat']);
- matfiles = [matfiles;dir([file_path,'\**\RND*.mat'])] ; 
+ matfiles = dir([file_path, filesep, '**', filesep, 'ART*.mat']);
+ matfiles = [matfiles;dir([file_path, filesep, '**', filesep, 'RND*.mat'])] ; 
  matfiles = struct2cell(matfiles);
  ARTs     = matfiles(1,:)';
  matfiles = matfiles(2,:)';
  
  matfiles = cellfun(file_shorten,matfiles,'UniformOutput',0);
  % remove all analyzed files
- mask_mat = ~contains(matfiles,'\Analyzed');
+ mask_mat = ~contains(matfiles, filesep, 'Analyzed');
  matfiles = matfiles(mask_mat);
  ARTs     = ARTs(mask_mat);       % we only want to look at the raw files 
  
@@ -73,7 +70,7 @@ pathidx = 0;
 expidx  = 1; 
 psiidx  = 1;
 for ii = 1:length(todo)
-    bb = strsplit(todo{ii},'\'); % parse path 
+    bb = strsplit(todo{ii}, filesep); % parse path 
     temppath = fullfile(file_path,bb{2}); % create path
     
     % if newpath, add it to paths and reset idices 
@@ -86,7 +83,7 @@ for ii = 1:length(todo)
         pathidx = pathidx + 1; 
     end
     % add exp and psigal files 
-    expname{expidx,pathidx} = strjoin(bb(3:end), '\');
+    expname{expidx,pathidx} = strjoin(bb(3:end), filesep);
     psignalfiles{psiidx,pathidx} = ARTs{ii};
     
     % increment indexes
@@ -96,12 +93,3 @@ for ii = 1:length(todo)
 end
 
 [~,animalIDs] = cellfun(@fileparts,paths,'Uni',0);
-        
-    
-    
-   
-    
-    
- 
-     
-

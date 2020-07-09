@@ -8,7 +8,7 @@ tic();
 Output.Errors = {};
 fps = input.expectedFPS;
 
-LocalPath = input.path;
+LocalPath = char(fullfile(input.savepath, input.animalID, input.expname));
 %Load cell definitions
 
     filecheck = char(fullfile(LocalPath,...
@@ -21,7 +21,7 @@ LocalPath = input.path;
 try
     load(fullfile(LocalPath , 'CellDefinitions.mat'));
 catch 
-    warning(' could not find %s. Analyzing next file',LocalPath);  
+    warning(' could not find %s. Analyzing next file',LocalPath);
     Output.Errors(end+1,1)={LocalPath};
     return
 end
