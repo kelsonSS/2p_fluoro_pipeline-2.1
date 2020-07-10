@@ -34,8 +34,12 @@ handles.smoothfact = varargin{1}.smoothfact;
 cla(handles.axes1)
 cla(handles.axes2)
 guidata(hObject,handles);
+
 function varargout = CellDefinitionGUI_OutputFcn(hObject, eventdata, handles)
 guidata(hObject,handles);
+set(handles.figure1, 'Visible', 'on')  % Make the GUI visible when run in BRAIN
+waitfor(handles.figure1)  % Wait for the user to close the GUI before returning
+
 function loadimage_Callback(hObject, eventdata, handles)
 %Select raw image to segement
 if isfield(handles,'filteredadjMnIMG')
