@@ -33,7 +33,11 @@ if pfs == 0
     pfs = 30;
 end 
 handles.pfs= pfs;
-
+try
+    handles.FirstResponse   = exptparams.FirstResponse(:,1);
+catch
+   handles.FirstResponse = nan; 
+end
 try
     PrimaryHandle = get(exptparams.TrialObject,'PrimaryHandle');
     handles.PrimaryDuration = get(PrimaryHandle,'Duration');
@@ -42,7 +46,7 @@ try
     handles.BackgroundNoise = get(PrimaryHandle,'BackgroundNoise');
     handles.OverallDB       = get(exptparams.TrialObject,'OveralldB');
     handles.Class            = get(PrimaryHandle,'type');
-    handles.Trialindicies   = get(exptparams.TrialObject','TrialIndices');
+    handles.Trialindicies   = get(exptparams.TrialObject','TrialIndices'); 
 catch
     
    
@@ -101,15 +105,14 @@ handles.framespertrial = handles.pfs*(handles.PreStimSilence +...
         
                     handles.Hits = handles.Hits(1:end-1);
                     handles.Early = handles.Early(1:end-1);
-                    handles.Miss = handles.Miss(1:end-1);
-                    if length(handles.uLevels)>1 
+                    handles.Miss = handles.Miss(1:end-1); 
                     for lvl = 1:length(handles.uLevels)
                         idx = handles.Levels == handles.uLevels(lvl);
                         handles.HitsLevels{lvl} = handles.Hits(idx);
                         handles.EarlyLevels{lvl} =  handles.Early(idx); 
                         handles.MissLevels{lvl} =  handles.Miss(idx);
                     end 
-                    end 
+                
                     
                  end 
                  
