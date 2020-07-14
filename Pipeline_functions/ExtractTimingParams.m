@@ -16,14 +16,18 @@ function TimingInfo =  ExtractTimingParams(input,debug)
     %% path prep
 
     PsignalPath = input.psignalfiles;
-    SavePath = input.path;
+    SavePath = input.savepath;
     LocalPath = input.path;
     ExpName = input.expname;
+    AnimalID = input.animalID;
 
-    TimingFile = char(fullfile(LocalPath, ExpName, 'TimingInfo.mat'));
+    TimingFile = char(fullfile(SavePath, AnimalID, ExpName, 'TimingInfo.mat'));
     xmlfile = char(fullfile(LocalPath, ExpName, 'Experiment.xml'));
-    PsignalFile = char(PsignalPath);
-    fps = input.expectedFPS ;
+    PsignalFile = char(fullfile(LocalPath, ExpName, PsignalPath));
+    registeredImageFile = char(fullfile(SavePath, AnimalID, ExpName, 'greenchannelregistered.raw'))
+    ThorFile = char(fullfile(LocalPath, ExpName, 'Episode001.h5'));
+
+    fps = input.expectedFPS;
     if exist(char(fullfile(SavePath,ExpName,'redchannel.mat')),'file')
         fps = fps/2;
     end 
@@ -43,7 +47,7 @@ function TimingInfo =  ExtractTimingParams(input,debug)
         return
     end 
 
-    fh = fopen( fullfile(SavePath,ExpName,'greenchannelregistered.raw'));
+    fh = fopen(registeredImageFile);
     if fh == -1
         return
     end 
@@ -56,19 +60,18 @@ function TimingInfo =  ExtractTimingParams(input,debug)
     %% extraction    
 
 
-    ThorFile = fullfile(LocalPath, 'Episode001.h5');
     if exist(ThorFile,'file')
         % ThorImage >3.1
-        if  ~exist(fullfile(SavePath,ExpName, 'Episode001.h5'),'file')
-            copyfile(ThorFile, fullfile(SavePath,ExpName))
+        if  ~exist(char(fullfile(SavePath, AnimalID, ExpName, 'Episode001.h5')),'file')
+            copyfile(ThorFile, char(fullfile(SavePath, AnimalID, ExpName)))
         end
         TimingInfo = getTimingInfo_H5(ThorFile, PsignalFile, fps,xml,num_frames_actual);
     else
-        ThorFile = fullfile(LocalPath ,'timing.txt' );
+        ThorFile = char(fullfile(LocalPath ,'timing.txt'));
         % Thorimage 2.1 
         if exist(ThorFile,'file')
-            if ~exist(fullfile(SavePath,ExpName, 'timing.txt'),'file')
-                copyfile(ThorFile, fullfile(SavePath,ExpName))
+            if ~exist(char(fullfile(SavePath, AnimalID, ExpName, 'timing.txt')),'file')
+                copyfile(ThorFile, char(fullfile(SavePath, AnimalID, ExpName)))
             end
             TimingInfo = getTimingInfo(ThorFile, PsignalFile, fps);
         end
