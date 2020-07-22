@@ -18,24 +18,21 @@ end
 % this will currently break if you put in a nonexistant animalID
  ActiveFolders = dir( [AnimalPath, '\**\TonesNoiseActive\Fluorescence.mat']);
 
- if ~isempty(ActiveFolders) % if running on vault data
+ if isempty(ActiveFolders) 
+    % if running on data on the source psignalfiles on google drive 
+    PsignalFiles = PsignalFileCheck(AnimalPath,true);    
+    [ActiveFolders{1:length(PsignalFiles)}] = deal(AnimalPath);
+ else
+     % if running on vault data
      ActiveFolders = struct2cell(ActiveFolders);
      ActiveFolders = ActiveFolders(2,:)';
-
-
+   
      ActiveFolders2 = dir( [AnimalPath, '\**\ToneNoiseActive\Fluorescence.mat']);
      ActiveFolders2 = struct2cell(ActiveFolders2);
      ActiveFolders2 = ActiveFolders2(2,:)';
-
-    ActiveFolders = cat(1,ActiveFolders,ActiveFolders2);
-
-
-
- 
-    PsignalFiles = cellfun(@PsignalFileCheck,ActiveFolders,'UniformOutput',0);
-else % if running on data on the source psignalfiles on google drive 
-    PsignalFiles = PsignalFileCheck(AnimalPath,true);    
-    [ActiveFolders{1:length(PsignalFiles)}] = deal(AnimalPath);
+     
+     ActiveFolders = cat(1,ActiveFolders,ActiveFolders2);
+     PsignalFiles = cellfun(@PsignalFileCheck,ActiveFolders,'UniformOutput',0);
 end 
 
 
