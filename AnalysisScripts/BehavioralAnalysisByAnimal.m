@@ -14,55 +14,136 @@ function  [resultsAll] =  BehavioralAnalysisByAnimal(animal_ID,toPlot)
 
 %
 % TODO : extend to be able to graph data generated from training box
+Main_Psignal_Folder = 'C:\Users\KanoldLab\Google Drive\PsignalData\KSS';
+
 daily_plot_flag = 1;
 weekly_plot_flag = 1;
 resultsAll ={};
-
+%% input
 if ~exist('toPlot','var');toPlot = 'All';end
-if strmatch(toPlot,'Totals');daily_plot_flag = 0; end 
+if strcmp(toPlot,'Totals');daily_plot_flag = 0; end 
 
 if ~exist('animal_ID','var')|| isempty(animal_ID)
-    folder_path = uigetdir('C:\Users\KanoldLab\Google Drive\PsignalData\KSS');
+    folder_path = uigetdir(Main_Psignal_Folder);
     [save_path, animal_ID] = fileparts(folder_path);
     
     [ActiveFolders, PsignalFiles] = CreateAnimalActiveList(animal_ID,save_path);
 else 
- [ActiveFolders, PsignalFiles] = CreateAnimalActiveList(animal_ID);
+ [ActiveFolders, PsignalFiles] = CreateAnimalActiveList(animal_ID,Main_Psignal_Folder);
 end 
 
-psigAll ={};
+fprintf('Analyzing %s \n', animal_ID);
 
+if ischar(PsignalFiles) || isempty(PsignalFiles)
+    return
+end 
+%% Daily processing 
+psigAll ={};
 dailyResults = {};
 for psig_file_idx = 1:length(ActiveFolders)  
+    % get psignal info
     psig_file = fullfile(ActiveFolders(psig_file_idx),...
                          PsignalFiles(psig_file_idx));
+       
+     
     psigDay = WF_getPsignalInfo(char(psig_file) );
-    
+   
+    % check for correct sound class
     if  ~contains(psigDay.Class,'Tone')
         continue
     end 
-    
+    % plot 
     if daily_plot_flag
         figure
         title(PsignalFiles(psig_file_idx), 'Interpreter','None')
     end 
-    dailyResults{end+1} = PlotAnimalBehaviorDaily(psigDay,daily_plot_flag);
+    if isfield(psigDay,'Performance') % only look at behavior expts.
+        dailyResults{end+1} = PlotAnimalBehaviorDaily(psigDay,daily_plot_flag);
      
-    psigAll{end+1} = psigDay; 
+        psigAll{end+1} = psigDay; 
+    end 
 end 
 
+% run combined stats
 figure 
 title(sprintf( '%s Combined Stats',animal_ID))
 
+if length(psigAll) == 0 
+    return
+end
+%% Combined Results
 combinedResults =  PlotAnimalBehaviorCombined(dailyResults,psigAll);
 
+numTrainingDays = length(dailyResults);
+if numTrainingDays >= 10  % if there were at least 2 weeks of training  
+    LastFiveResults =  PlotAnimalBehaviorCombined(dailyResults(end-4:end),psigAll(end-4:end));
+else 
+     LastFiveResults = [];
+end 
+%% animal Info Parsing
+% Attempt to grab AnimalInfoFile Which will load a struct called AnimalInfo
+ animal_info_file = fullfile(ActiveFolders(1),'AnimalInfo.mat');
+    try
+       load(char(animal_info_file));
+       
+       load('\\vault3\data\kelson\AgeTable.mat')
+          
+       try
+           % if animal age is in table add it 
+           assert(~isnat(AgeTable{animal_ID,'DOB'}))
+           AnimalInfo.DOB = AgeTable{animal_ID,'DOB'};
+           
+       catch
+           
+           
+           if ~isempty(AnimalInfo.DOB) %if there is a DOB
+               month_DOB = str2num(AnimalInfo.DOB(1:2));
+           else
+               month_DOB = -1; % bad DOB file 
+           end
+           if month_DOB <1 % if bad DOB
+               AnimalInfo = [];
+               warning('Animal info DOB incorrect for %s',animal_ID)
+           elseif month_DOB < 13 % if month  presented first 
+               AnimalInfo.DOB = datetime(AnimalInfo.DOB,'InputFormat', 'MM/dd/yy');
+           else % day presented first 
+               AnimalInfo.DOB = datetime(AnimalInfo.DOB,'InputFormat', 'dd/MM/yy');
+           end
+           
+            % add to AgeTable 
+            
+            
+            AgeTable{animal_ID,1} = AnimalInfo.DOB;
+            
+            save('//vault3/data/kelson/AgeTable.mat','AgeTable')
+                 
+           
+           
+       end  
+          
+           
+       catch
+           
+           warning('AnimalInfoFile not found')
+           AnimalInfo = [];
+    end
+       
+    
+           if ~isempty(AnimalInfo) 
+               AnimalInfo = AnimalAgeAnalysis(AnimalInfo,psigAll{1}.ExperimentStart,...
+                   psigAll{end}.ExperimentStart);
+           end
+    
 
-% packing 
+    
+    
+%% packing 
 resultsAll.Daily = dailyResults;
 resultsAll.Combined = combinedResults;
 resultsAll.PsignalData = psigAll;
-
-out_folder = '//vault3/data/kelson/TNDetectionAnalysis';
+resultsAll.AnimalInfo = AnimalInfo;
+resultsAll.LastWeekPerformance = LastFiveResults; 
+out_folder = 'Z:/TNDetectionAnalysis';
 
 out_path = fullfile(out_folder,animal_ID);
 
@@ -155,7 +236,7 @@ SEM_early = sqrt( early_rate_total .* (1-early_rate_total) ./ ...
  
  % munge data into vectors x and g corresponding to lick times and lick group 
  x =[];
- g = []
+ g = [];
  for ii = 1:length(lick_latency_total)
      x = cat(1,x, lick_latency_total{ii});
      L = length(lick_latency_total{ii});
@@ -217,13 +298,14 @@ SEM_early = sqrt( early_rate_total .* (1-early_rate_total) ./ ...
 % make function to get earlyRate by Level 
 
 
-
+resultsAll.SNR = ulevels_SNR;
 resultsAll.DPrime = dprime;
 resultsAll.HitRateMean = percent_correct_total;
 resultsAll.HitsRateSEM = SEM_hits;
 resultsAll.EarlyRateMean = early_rate_total;
 resultsAll.EarlyRateSEM = SEM_early;
 resultsAll.NumTrials =trials_lvl_total;
+resultsAll.LickLatency = lick_latency_total;
 
 
 
@@ -234,31 +316,20 @@ end
 %% plot 1: hit rate graph 
 hitrate =  [psi.Performance.HitRate];
 hitrate = hitrate(1:end-1);
-h1= figure; hold on
-plot(hitrate)
-
 
 missrate = [psi.Performance.MissRate];
 missrate = missrate(1:end-1);
-plot(missrate)
+
 
 earlyrate = [psi.Performance.EarlyRate];
 earlyrate = earlyrate(1:end-1);
-plot(earlyrate)
-title('hitrate, missrate, and falsealarm rate');
-legend({'hitrate','missrate','falsealarmrate'})
-hold off;
+
 
 %% Plot 2 lick histogram
 
 TrialDurSeconds = psi.PrimaryDuration + psi.PreStimSilence + psi.PostStimSilence ;
 
 LickLatency = [psi.FirstResponse];
-h2 = figure; histogram(LickLatency,'BinWidth',.1)
-xlim([0 TrialDurSeconds])
-title('Lick Rate over Trial Duration')
-xlabel('Time in Seconds')
-ylabel('Licks')
 
 %% Plot 3 Performance by level 
 
@@ -275,19 +346,32 @@ for lvl = 1:length(uLevels)
     
 end 
 % plot
-h3 = figure; hold  on; bar(percent_correct)
-xticks(1:length(uLevels))
-xticklabels( num2str(uLevelsSNR) ); %change to SNR noise = 50db
-title('Trial Correctness vs. SNR')
-ylim([0 1])
-xlabel(' dB SNR')
-ylabel('Fraction Correct')
+if daily_plot_flag
+     % fig 1     
+    h1= figure; hold on
+    plot(hitrate)
+    plot(missrate)
+    plot(earlyrate)
+    title('hitrate, missrate, and falsealarm rate');
+    legend({'hitrate','missrate','falsealarmrate'})
+    hold off;
+    % fig 2
+    h2 = figure; histogram(LickLatency,'BinWidth',.1)
+    xlim([0 TrialDurSeconds])
+    title('Lick Rate over Trial Duration')
+    xlabel('Time in Seconds')
+    ylabel('Licks')
 
-% title(animal info name)
+    % fig 3 
+    h3 = figure; hold  on; bar(percent_correct)
+    xticks(1:length(uLevels))
+    xticklabels( num2str(uLevelsSNR) ); %change to SNR noise = 50db
+    title('Trial Correctness vs. SNR')
+    ylim([0 1])
+    xlabel(' dB SNR')
+    ylabel('Fraction Correct')
 
-% close figures if not wanted to display
-if ~daily_plot_flag 
-    close(h1,h2,h3)
+
 end 
 
 results.HitRate = hitrate;
