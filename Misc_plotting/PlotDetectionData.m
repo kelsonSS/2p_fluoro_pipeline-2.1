@@ -5,7 +5,7 @@ function PlotDetectionData(GroupData,SavePath)
 % 
 % If SavePath is provided it will save plots in that folder 
 if ~exist('SavePath','var')
-    SavePath ='';
+    SavePath ='/home/kelsonss/Documents/GitHub/2p_fluoro_pipeline-2.1/LocalData';
 end 
 
 snr = GroupData.SNR;
@@ -18,6 +18,12 @@ boxplot(hit_rate_normalized')
 title('Normalized Hit Rate by level')
 FormatFigure(gcf,snr)
 
+figure
+hit_rate = GroupData.LastWeekPerformance.HitRateMean;
+                 
+boxplot(hit_rate')
+title('Hit Rate by level')
+FormatFigure(gcf,snr)
 
 
 figure
@@ -26,7 +32,17 @@ early_rate_normalized = GroupData.LastWeekPerformance.EarlyRateMean./...
 boxplot(early_rate_normalized')
 title('Normalized Early Rate by Level')
 FormatFigure(gcf,snr)
-SaveFigure(SavePath)
+
+figure
+early_rate = GroupData.LastWeekPerformance.EarlyRateMean;
+boxplot(early_rate')
+title('Early Rate by Level')
+FormatFigure(gcf,snr)
+savefig(SavePath)
+
+
+
+
 
 
 figure 
