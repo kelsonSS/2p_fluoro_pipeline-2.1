@@ -9,13 +9,10 @@ function ExtractChannels(input)
 %Kelson Shilling-Scrivo 2018
 tic();
 %Load image sequences into memory
-bb=strsplit(input.path,'\'); %changed from strsep to strsplit
-filePreparation(input)
-%% Extract red and green channels, and store them in the local path
-for i = 1:length(input.expname)
-    disp(['Extracting ' input.path '\' input.expname{i}])
+
+    disp(['Extracting ' input.path '\' input.expname])
     
-    newpath = fullfile(input.savepath, bb{end}, input.expname{i});
+    newpath = fullfile(input.savepath, input.expname);
     xmlpath = fullfile(newpath,'Experiment.xml');
     opts = get_options_from_xml(xmlpath);
     
@@ -31,7 +28,7 @@ for i = 1:length(input.expname)
     % chcek to see if the file has already be extracted 
     if ~ isempty(dir(out_path))
         newfile = dir(out_path);
-        oldfile = dir(fullfile(input.path,input.expname{i},img_name));         
+        oldfile = dir(fullfile(input.path,input.expname,img_name));         
         if newfile.bytes == oldfile.bytes 
             continue
         end
@@ -39,7 +36,7 @@ for i = 1:length(input.expname)
     
     if opts.numchannels == 1
         
-        old_path = fullfile(input.path,input.expname{i},img_name);
+        old_path = fullfile(input.path,input.expname,img_name);
         try
         copyfile(old_path,out_path, 'f')
         catch
@@ -49,7 +46,7 @@ for i = 1:length(input.expname)
     elseif opts.numchannels == 2
         
         out_path = fullfile(newpath,'greenchannel');
-        img = fopen(fullfile(input.path,input.expname{i},img_name));
+        img = fopen(fullfile(input.path,input.expname,img_name));
        
         try
         Green = fread(img,'uint16=>uint16');
@@ -115,71 +112,11 @@ for i = 1:length(input.expname)
         fclose(green_out);
         
     else
-        warning('There were more channels than expected in %s',input.expname{i})
+        warning('There were more channels than expected in %s',input.expname)
         
     end
    
-    
-end    
+      
     fprintf('Elapsed time: %g. minutes \n', toc()/60);
 
 end 
-%%
-    function filePreparation(input,i)
-        % this is legacy code designed to create a new path for the extracted data
-        % and move the appropriate
-        % legacy code from Nik Francis 2016
-        
-       
-        bb=strsplit(input.path,'\'); 
-        for i = 1:length(input.expname)
-             
-            
-            %Local path for data
-             localpath = fullfile(input.path,input.expname{i}); 
-            newpath = fullfile(input.savepath ,  bb{end}, ...
-                input.expname{i}) ;
-            if ~exist(newpath,'file')
-            mkdir(newpath)
-            end 
-            %ThorImage experiment params
-            inpath = fullfile(input.path , input.expname{i}, ...
-                'Experiment.xml');
-            
-            % Copy psignalfile 
-            copyfile(fullfile(input.path,input.expname{i},input.psignalfiles{e}),...
-                     fullfile(input.savepath,input.expname{i},input.psignalfiles{e}));
-            
-            
-            %Move relevant ThorImage files to local path
-            Thor_path= fullfile(input.path ,...
-                input.expname{i},...
-                'Experiment.xml');
-            
-            copyfile(Thor_path,fullfile(newpath,'Experiment.xml'));
- 
-            % there should be either a thor timing file or H5 file depending on
-            % using 2.1 or 3.0 respestively we move either one over here
-            try
-                Timing_path =fullfile(input.path,...
-                    input.expname{i},...
-                    'timing.txt');
-                if ~exist( fullfile(newpath, 'timing.txt'),'file')
-                    copyfile(Timing_path, fullfile(newpath,'timing.txt'));
-                end
-            catch
-              H5 =   dir(fullfile(localpath, '**/*/Episode001.h5') );
-                if ~isempty(H5)
-                    h5file_path = fullfile(H5.folder,H5.name);
-                    try
-                    movefile(h5file_path,fullfile(newpath, 'Episode001.h5'));
-                    catch
-                    warning('H5 File Not moved')    
-                    end 
-                end
-            end
-        end
-        
-    end
-
-

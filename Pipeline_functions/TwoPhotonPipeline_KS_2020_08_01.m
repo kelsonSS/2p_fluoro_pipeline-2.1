@@ -37,7 +37,7 @@ clear all; close all;
 % 
 % end 
 %Path to Data
-inpath = '\\vault3\Data\Kelson\Files to upload';
+input.inpath = '\\vault3\Data\Kelson\Files to upload';
 %Input variables
 input=[];
 %Expected frame rate form experiment. According to Thorlabs, the frame rate is
@@ -103,11 +103,17 @@ strsep = @strsplit;
 % psignalfiles. matless is a logical check to ensure that all expts have
 % corresponding psignalfile. NOTE: it is up to the user to determine that
 % they inserted the correct psignalfile into the correct folder
-[paths,expnames,psignalfiles,matless,animalID] = createDataList('\\vault3\data\kelson\analyzed');
-input.regexp = 'Image_0001_0001';
+
+input.regexp = 'Image_0001_0001.raw';
+
+[expt_paths,psignalfiles,animalIDS] = createDataList('\\VAULT3\Data\Kelson\Files to unload',input);
+
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+for expt = 1:length(expt_paths)
+    filePreparation(exp_paths(expt),inpath,input.savepath,psignalfiles(expt)
+    
+end 
 
 
 % start of data processing code
@@ -118,11 +124,11 @@ input.regexp = 'Image_0001_0001';
 %input.savepath subfolder.
 
 %%
-for i=1:length(paths)
+ input.path = inpath;
+for expt=1:length(expt_paths)
     %Select current path
-    input.path = paths{i};
-    input.expname = expnames(~cellfun(@isempty,expnames(:,i)),i);
-    input.animalID = animalID(i);
+    input.expname = expt_paths(expt);
+    input.animalID = animalID(expt);
     %Seperate red and green channels
     %ExtractRedGreenChannels(input)
      ExtractChannels(input)
