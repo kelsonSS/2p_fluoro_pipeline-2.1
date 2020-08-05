@@ -36,7 +36,7 @@ tic();
     
     if opts.numchannels == 1
         
-        old_path = fullfile(input.path,input.expname,img_name);
+        old_path = fullfile(input.inpath,input.expname,img_name);
         try
         copyfile(old_path,out_path, 'f')
         catch
@@ -46,7 +46,7 @@ tic();
     elseif opts.numchannels == 2
         
         out_path = fullfile(newpath,'greenchannel');
-        img = fopen(fullfile(input.path,input.expname,img_name));
+        img = fopen(fullfile(input.inpath,input.expname,img_name));
        
         try
         Green = fread(img,'uint16=>uint16');
