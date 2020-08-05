@@ -19,14 +19,19 @@ for i = 1:length(input.expname)
     xmlpath = fullfile(newpath,'Experiment.xml');
     opts = get_options_from_xml(xmlpath);
     
-    
+    if strcmp(opts.version(1:3),'4.0')
+        img_name = 'Image_001_001.raw';
+    else 
+        img_name = 'Image_0001_0001.raw';
+    end 
+        
    
     out_path = fullfile(newpath,'greenchannel.raw');
     
     % chcek to see if the file has already be extracted 
     if ~ isempty(dir(out_path))
         newfile = dir(out_path);
-        oldfile = dir(fullfile(input.path,input.expname{i},'\Image_0001_0001.raw'));         
+        oldfile = dir(fullfile(input.path,input.expname{i},img_name));         
         if newfile.bytes == oldfile.bytes 
             continue
         end
@@ -34,7 +39,7 @@ for i = 1:length(input.expname)
     
     if opts.numchannels == 1
         
-        old_path = fullfile(input.path,input.expname{i},'Image_0001_0001.raw');
+        old_path = fullfile(input.path,input.expname{i},img_name);
         try
         copyfile(old_path,out_path, 'f')
         catch
@@ -44,7 +49,7 @@ for i = 1:length(input.expname)
     elseif opts.numchannels == 2
         
         out_path = fullfile(newpath,'greenchannel');
-        img = fopen(fullfile(input.path,input.expname{i},'Image_0001_0001.raw'));
+        img = fopen(fullfile(input.path,input.expname{i},img_name));
        
         try
         Green = fread(img,'uint16=>uint16');
@@ -74,7 +79,7 @@ for i = 1:length(input.expname)
             
             
             
-        elseif strmatch('3.1',version) || strmatch(version,'3.0')
+        else
 
             nchannels = 2 ;
             
@@ -90,14 +95,15 @@ for i = 1:length(input.expname)
   
         outpathRed  = fullfile(newpath,'redchannel.raw');
         outpathGreen= fullfile(newpath,'greenchannel.raw');
+       
         
-        if exist(outpathRed,'file')
-            delete(outpathRed)
-        end
-        
-        if exist(outpathGreen,'file')
-            delete(outpathGreen)
-        end 
+%         if exist(outpathRed,'file')
+%             delete(outpathRed)
+%         end
+%         
+%         if exist(outpathGreen,'file')
+%             delete(outpathGreen)
+%         end 
         
         
         red_out = fopen(outpathRed,'w');
@@ -133,7 +139,9 @@ end
              localpath = fullfile(input.path,input.expname{i}); 
             newpath = fullfile(input.savepath ,  bb{end}, ...
                 input.expname{i}) ;
+            if ~exist(newpath,'file')
             mkdir(newpath)
+            end 
             %ThorImage experiment params
             inpath = fullfile(input.path , input.expname{i}, ...
                 'Experiment.xml');
