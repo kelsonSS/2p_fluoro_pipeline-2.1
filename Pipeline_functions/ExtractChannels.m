@@ -10,10 +10,10 @@ function ExtractChannels(input)
 tic();
 %Load image sequences into memory
 
-    disp(['Extracting ' input.path '\' input.expname])
+    disp(['Extracting ' char(input.expname) ])
     
-    newpath = fullfile(input.savepath, input.expname);
-    xmlpath = fullfile(newpath,'Experiment.xml');
+    newpath = char(fullfile(input.savepath, input.expname));
+    xmlpath = char(fullfile(newpath,'Experiment.xml'));
     opts = get_options_from_xml(xmlpath);
     
     if strcmp(opts.version(1:3),'4.0')
@@ -23,14 +23,14 @@ tic();
     end 
         
    
-    out_path = fullfile(newpath,'greenchannel.raw');
+    out_path = char(fullfile(newpath,'greenchannel.raw'));
     
     % chcek to see if the file has already be extracted 
     if ~ isempty(dir(out_path))
         newfile = dir(out_path);
-        oldfile = dir(fullfile(input.path,input.expname,img_name));         
+        oldfile = dir(out_path);         
         if newfile.bytes == oldfile.bytes 
-            continue
+            return
         end
     end 
     
@@ -40,7 +40,7 @@ tic();
         try
         copyfile(old_path,out_path, 'f')
         catch
-            continue
+            return
         end
         
     elseif opts.numchannels == 2
@@ -52,7 +52,7 @@ tic();
         Green = fread(img,'uint16=>uint16');
         catch 
             fclose(img);
-            continue
+            return
         end
         fclose(img);
        
