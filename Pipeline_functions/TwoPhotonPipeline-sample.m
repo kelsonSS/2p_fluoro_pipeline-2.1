@@ -106,8 +106,7 @@ strsep = @strsplit;
 
 input.regexp = 'Image_0001_0001.raw';
 
-[expt_paths,psignalfiles,animalIDS] = createDataList('\\VAULT3\Data\Kelson\Files to unload',input);
-
+[expt_paths,psignalfiles,animalIDS] = createDataList(input)
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for expt = 1:length(expt_paths)
