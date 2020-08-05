@@ -186,10 +186,6 @@ Vec_DFF = imfilter(Vec_DFF,gausfilt);
 if  numtrials> total_trials
     if size(Vec_DFF_all) ~= 0
         nt = size(Vec_DFF_all,2);
-        Vec_DFF = Vec_DFF(:,1:nt,:);
-        FreqLevelOrder = FreqLevelOrder(1:nt,:);
-        Freqs = Freqs(1:nt);
-        Levels = Levels(1:nt);
     else 
         nt = total_trials;
         Vec_DFF  = Vec_DFF(:,1:total_trials,:); 
@@ -225,89 +221,92 @@ end
    active(active <=.05) = 1;  
    active(active < 1  ) = 0;     
      
-   %% anova based activity
-   % use the fact that we presorted vec_DFF to reshape by condition
-   % ex. 10 repeats per trials 32 conditions (4 levels, 8 freqs)
-   
-   
-  
-   FLO =  table2array(FreqLevelOrder);
-   FLO = sum(FLO,2);
-   counts =histcounts(FLO,unique(FLO));
-   
-       DFF_conditions = [];
-      rep_mode = mode(counts);
-      condition = 1;
-    for freq = 1:uF
-        for lvl = 1:uL
-         %  fprintf('Level %d Freq %d \n', uLevels(lvl),uFreqs(freq))
-           FL_idx=  FreqLevelOrder{:,1} == uFreqs(freq) &... 
-           FreqLevelOrder{:,2} == uLevels(lvl);
-           
-            Vec_DFF_Temp = Vec_DFF(:,FL_idx,:);
-            % in case trials have different reps
-            try
-            Vec_DFF_Temp = Vec_DFF_Temp(:,1:rep_mode,:);
-            catch
-            end
-          %  plot(Vec_DFF_Temp(:,:,1))
-            baseline = squeeze(nanmean(Vec_DFF_Temp(1:30,:,:),2));
-            after_onset = squeeze(nanmean(Vec_DFF_Temp(soundon:soundoff+10,:,:),2));
-            
-            for nn = size(Vec_DFF_Temp,3)
-                df_by_level_sig_temp(lvl,freq,nn) = ttest2(baseline(:,nn),after_onset(:,nn));
-            end
-            
-             df_by_level_temp(lvl,freq,:) = ...
-             max(after_onset);
-         
-            df_by_level_offset_temp(lvl,freq,:) =...
-                 nanmean(nanmean(...
-                 Vec_DFF_Temp(soundoff:soundoff+1*handles.pfs ,:,:),2));
-             
-            DFF_conditions(:,:,condition,:) = Vec_DFF_Temp;
-            
-             clear Vec_DFF_Temp 
-             condition = condition+1;
-        
-        end
-    end 
-   
-   if ~exist('df_by_level','var')
-       df_by_level = [];
-       df_by_level_sig = [];
-       df_by_level_offset= [];
-       
-   end 
-   
-   
- 
-   df_by_level{expt_id} = df_by_level_temp;
-   df_by_level_sig{expt_id} = df_by_level_sig_temp;
-   df_by_level_offset{expt_id} = df_by_level_offset_temp;
-   clear df_by_level_temp
-   clear df_by_level_sig_temp
-   clear df_by_level_offset_temp
-   
-   
-DFF_conditions_mu = squeeze(mean(DFF_conditions(soundon:soundoff,:,:,:)));
-DFF_conditions_mu_offset = squeeze(mean(DFF_conditions(soundoff:end,:,:,:)));
-%    % initialize anova based signifiance list 
-    active2 = zeros(1,Neurons);
-    for ii = 1:Neurons 
-        active2(1,ii) = anova1(DFF_conditions_mu(:,:,ii)',[],'off');
-        active_offset(1,ii)= anova1(DFF_conditions_mu_offset(:,:,ii)',[],'off');
-    end 
-    
-    active2_idx = active2<.01;
-    offset_idx = active_offset <.01;
-if ~(exist('anova_idx','var'))
-    anova_idx = [];
-    anova_offset_idx = [];
-end
-    anova_idx = cat(2,anova_idx,active2_idx) ;
-    anova_offset_idx = cat(2,anova_offset_idx,offset_idx); 
-%    DFF_cleaned = Vec_DFF(:,:,active2_idx);
+%    %% anova based activity
+%    % use the fact that we presorted vec_DFF to reshape by condition
+%    % ex. 10 repeats per trials 32 conditions (4 levels, 8 freqs)
+%    
+%    
+%   
+%    FLO =  table2array(FreqLevelOrder);
+%    FLO = sum(FLO,2);
+%    counts =histcounts(FLO,unique(FLO));
+%    
+%        DFF_conditions = [];
+%       rep_mode = mode(counts);
+%       if rep_mode > 10
+%           rep_mode = 10;
+%       end 
+%       condition = 1;
+%     for freq = 1:uF
+%         for lvl = 1:uL
+%          %  fprintf('Level %d Freq %d \n', uLevels(lvl),uFreqs(freq))
+%            FL_idx=  FreqLevelOrder{:,1} == uFreqs(freq) &... 
+%            FreqLevelOrder{:,2} == uLevels(lvl);
+%            
+%             Vec_DFF_Temp = Vec_DFF(:,FL_idx,:);
+%             % in case trials have different reps
+%             try
+%             Vec_DFF_Temp = Vec_DFF_Temp(:,1:rep_mode,:);
+%             catch
+%             end
+%           %  plot(Vec_DFF_Temp(:,:,1))
+%             baseline = squeeze(nanmean(Vec_DFF_Temp(1:30,:,:),2));
+%             after_onset = squeeze(nanmean(Vec_DFF_Temp(soundon:soundoff+10,:,:),2));
+%             
+%             for nn = size(Vec_DFF_Temp,3)
+%                 df_by_level_sig_temp(lvl,freq,nn) = ttest2(baseline(:,nn),after_onset(:,nn));
+%             end
+%             
+%              df_by_level_temp(lvl,freq,:) = ...
+%              max(after_onset);
+%          
+%             df_by_level_offset_temp(lvl,freq,:) =...
+%                  nanmean(nanmean(...
+%                  Vec_DFF_Temp(soundoff:soundoff+1*handles.pfs ,:,:),2));
+%              
+%             DFF_conditions(:,:,condition,:) = Vec_DFF_Temp;
+%             
+%              clear Vec_DFF_Temp 
+%              condition = condition+1;
+%         
+%         end
+%     end 
+%    
+%    if ~exist('df_by_level','var')
+%        df_by_level = [];
+%        df_by_level_sig = [];
+%        df_by_level_offset= [];
+%        
+%    end 
+%    
+%    
+%  
+%    df_by_level{expt_id} = df_by_level_temp;
+%    df_by_level_sig{expt_id} = df_by_level_sig_temp;
+%    df_by_level_offset{expt_id} = df_by_level_offset_temp;
+%    clear df_by_level_temp
+%    clear df_by_level_sig_temp
+%    clear df_by_level_offset_temp
+%    
+%    
+% DFF_conditions_mu = squeeze(mean(DFF_conditions(soundon:soundoff,:,:,:)));
+% DFF_conditions_mu_offset = squeeze(mean(DFF_conditions(soundoff:end,:,:,:)));
+% %    % initialize anova based signifiance list 
+%     active2 = zeros(1,Neurons);
+%     for ii = 1:Neurons 
+%         active2(1,ii) = anova1(DFF_conditions_mu(:,:,ii)',[],'off');
+%         active_offset(1,ii)= anova1(DFF_conditions_mu_offset(:,:,ii)',[],'off');
+%     end 
+%     
+%     active2_idx = active2<.01;
+%     offset_idx = active_offset <.01;
+% if ~(exist('anova_idx','var'))
+%     anova_idx = [];
+%     anova_offset_idx = [];
+% end
+%     anova_idx = cat(2,anova_idx,active2_idx) ;
+%     anova_offset_idx = cat(2,anova_offset_idx,offset_idx); 
+% %    DFF_cleaned = Vec_DFF(:,:,active2_idx);
    
 %% Clean-up 
 
@@ -382,17 +381,17 @@ assert(length(new_ids) == Neurons);
   end 
  
 % create class_Idx
-Classes = {'Noise','Tone_on','Tone_off','Noise_off'};
-[~,onsets]  = max(squeeze(DFF2));
-
-
-Noise_idx = (onsets > 30 & onsets <= 60) * 1;
-Tone_idx  = (onsets > 60 & onsets <= 90) * 2;
-Offset_idx = (onsets > 90 & onsets<= 120) * 3;
-Off_idx = (onsets > 120) * 4 ;
-
-Class_idx = Noise_idx + Tone_idx + Offset_idx + Off_idx;
-Class_idx = Class_idx'; 
+% Classes = {'Noise','Tone_on','Tone_off','Noise_off'};
+% [~,onsets]  = max(squeeze(DFF2));
+% 
+% 
+% Noise_idx = (onsets > 30 & onsets <= 60) * 1;
+% Tone_idx  = (onsets > 60 & onsets <= 90) * 2;
+% Offset_idx = (onsets > 90 & onsets<= 120) * 3;
+% Off_idx = (onsets > 120) * 4 ;
+% 
+% Class_idx = Noise_idx + Tone_idx + Offset_idx + Off_idx;
+% Class_idx = Class_idx'; 
 
  
 
@@ -413,14 +412,14 @@ Out.FreqLevelOrder = FreqLevelOrder;
 Out.experiment_list = expt_list;
 Out.RedCellID = RedCellID;
 Out.df_by_level = df_by_level;
-Out.df_by_level_sig = df_by_level_sig;
-Out.df_by_level_offset = df_by_level_offset;
+%Out.df_by_level_sig = df_by_level_sig;
+%Out.df_by_level_offset = df_by_level_offset;
 Out.CellID = CellID;
 Out.DataDirs = good_dirs;
-Out.Class_idx = Class_idx;
-Out.Classes = Classes;
-Out.anova = anova_idx;
-Out.Offset = anova_offset_idx;
+% Out.Class_idx = Class_idx;
+% Out.Classes = Classes;
+%Out.anova = anova_idx;
+%Out.Offset = anova_offset_idx;
 Out.handles =handles_all;
 catch
    Out = []
