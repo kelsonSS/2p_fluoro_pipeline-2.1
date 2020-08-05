@@ -37,7 +37,7 @@ clear all; close all;
 % 
 % end 
 %Path to Data
-inpath = '\\vault3\Data\Kelson\Files to upload';
+input.inpath = '\\vault3\Data\Kelson\Files to upload';
 %Input variables
 input=[];
 %Expected frame rate form experiment. According to Thorlabs, the frame rate is
@@ -103,11 +103,17 @@ strsep = @strsplit;
 % psignalfiles. matless is a logical check to ensure that all expts have
 % corresponding psignalfile. NOTE: it is up to the user to determine that
 % they inserted the correct psignalfile into the correct folder
-[paths,expnames,psignalfiles,matless,animalID] = createDataList();
-input.regexp = 'Image_0001_0001';
+
+input.regexp = 'Image_0001_0001.raw';
+
+[expt_paths,psignalfiles,animalIDS] = createDataList('\\VAULT3\Data\Kelson\Files to unload',input);
+
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+for expt = 1:length(expt_paths)
+    filePreparation(exp_paths(expt),input.inpath,input.savepath,psignalfiles(expt)
+    
+end 
 
 
 % start of data processing code
@@ -118,11 +124,11 @@ input.regexp = 'Image_0001_0001';
 %input.savepath subfolder.
 
 %%
-for i=1:length(paths)
+ input.path = inpath;
+for expt=1:length(expt_paths)
     %Select current path
-    input.path = paths{i};
-    input.expname = expnames(~cellfun(@isempty,expnames(:,i)),i);
-    input.animalID = animalID(i)
+    input.expname = expt_paths(expt);
+    input.animalID = animalID(expt);
     %Seperate red and green channels
     %ExtractRedGreenChannels(input)
      ExtractChannels(input)
@@ -154,16 +160,19 @@ end
 
 
 %% Extract Timing Params
-for i=1:length(paths)
+
+[TimingPaths TimingPsignalFiles] = CreateCellExtractionList; % This should change to TimingExtractionList
+
+%% Extract Timing Params
+for expt=1:length(TimingPaths)
     %Select current path
-    input.path = paths{i};
-    input.expname = expnames(~cellfun(@isempty,expnames(:,i)),i);
+    input.path = TimingPaths{expt};
     %Select current Psignal file
-    input.psignalfiles = psignalfiles(~cellfun(@isempty,psignalfiles(:,i)),i);
-    input.animalID = animalID{i};
-    fprintf('analyzing %d of %d: %s \n',i,length(paths),input.animalID) 
+    input.psignalfiles = TimingPsignalFiles(expt);
+    fprintf('analyzing %d of %d: \n',expt,length(TimingPaths)) 
     ExtractTimingParams(input,1);
 end
+
 
 CreateCellDefinitionList(input) 
 %%
@@ -172,24 +181,6 @@ CreateCellDefinitionList(input)
 %to select the images in input.savepath.
 CellDefinitionGUI(input)
 %%
-% 
-% %% Extract Timing Params
-% for i=1:length(paths)
-%     %Select current path
-%     input.path = paths{i};
-%     input.expname = expnames(~cellfun(@isempty,expnames(:,i)),i);
-%     %Select current Psignal file
-%     input.psignalfiles = psignalfiles(~cellfun(@isempty,psignalfiles(:,i)),i);
-%     fprintf('analyzing %d of %d: %s \n',i,length(paths),input.path) 
-%     ExtractTimingParams(input);
-% end
-% 
-
-
-
-%% Extract Fluorescence Traces 
-
-[ExtractionPaths, ExtractionPsignalFiles] = CreateCellExtractionList;
 
 badfiles = {};
 for i=1:length(ExtractionPaths)
@@ -199,21 +190,43 @@ for i=1:length(ExtractionPaths)
     input.psignalfiles = ExtractionPsignalFiles{i};
     fprintf('analyzing %d of %d: %s \n',i,length(ExtractionPaths),input.path) 
    out =  ExtractFluorescence(input);
+ %  if ~isempty(out.Errors)
+  %     badfiles{end+1} = ExtractionPaths{i};
+%end
+end 
+% end
+% 
+
+
+
+
+%% Extract Fluorescence Traces 
+
+[ExtractionPaths, ExtractionPsignalFiles] = CreateCellExtractionList();
+
+badfiles = {};
+for expt=1:length(ExtractionPaths)
+    %Select current path
+    input.path = ExtractionPaths{expt};
+    %Select current Psignal file
+    input.psignalfiles = ExtractionPsignalFiles{expt};
+    fprintf('analyzing %d of %d: %s \n',expt,length(ExtractionPaths),input.path) 
+   out =  ExtractFluorescence(input,1);
    if ~isempty(out.Errors)
-       badfiles{end+1} = ExtractionPaths{i};
+       badfiles{end+1} = ExtractionPaths{expt};
 end
 end 
 
- %% Quality check extracted Fluorescence - optional
-% for i=1:length(paths)
-%     %Select current path
-%     input.path = paths{i};
-%     input.expname = expnames(~cellfun(@isempty,expnames(:,i)),i);
-%     %Select current Psignal file
-%     input.psignalfiles = psignalfiles(~cellfun(@isempty,psignalfiles(:,i)),i);
-%     fprintf('QC-ing %d of %d: %s \n',i,length(paths),input.path) 
-%     CheckExperimentQuality(input);
-% end
+%% Quality check extracted Fluorescence
+for i=1:length(paths)
+    %Select current path
+    input.path = paths{i};
+    input.expname = expnames(~cellfun(@isempty,expnames(:,i)),i);
+    %Select current Psignal file
+    input.psignalfiles = psignalfiles(~cellfun(@isempty,psignalfiles(:,i)),i);
+    fprintf('QC-ing %d of %d: %s \n',i,length(paths),input.path) 
+    CheckExperimentQuality(input);
+end
 
 
 
