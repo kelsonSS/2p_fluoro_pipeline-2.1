@@ -146,6 +146,9 @@ end
             inpath = fullfile(input.path , input.expname{i}, ...
                 'Experiment.xml');
             
+            % Copy psignalfile 
+            copyfile(fullfile(input.path,input.expname{i},input.psignalfiles{e}),...
+                     fullfile(input.savepath,input.expname{i},input.psignalfiles{e}));
             
             
             %Move relevant ThorImage files to local path
