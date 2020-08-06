@@ -106,11 +106,12 @@ strsep = @strsplit;
 
 input.regexp = 'Image_0001_0001.raw';
 
-[expt_paths,psignalfiles,animalIDS] = createDataList(input)
+[expt_paths,psignalfiles,animalID] = createDataList(input);
+
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for expt = 1:length(expt_paths)
-    filePreparation(exp_paths(expt),input.inpath,input.savepath,psignalfiles(expt)
+    filePreparation(expt_paths{expt},input.inpath,input.savepath,psignalfiles{expt})
     
 end 
 
@@ -122,12 +123,11 @@ end
 %selection and fluourescence extraction will be done on data from within the
 %input.savepath subfolder.
 
-%%
- input.path = inpath;
+%
 for expt=1:length(expt_paths)
     %Select current path
-    input.expname = expt_paths(expt);
-    input.animalID = animalID(expt);
+    input.expname = expt_paths{expt};
+    input.animalID = animalID{expt};
     %Seperate red and green channels
     %ExtractRedGreenChannels(input)
      ExtractChannels(input)
@@ -137,30 +137,29 @@ end
 %Register movies
 
 
-for i=1:length(paths)
+for expt=1:length(paths)
     %Select current path
-    input.path = paths{i};
-    input.expname = expnames(~cellfun(@isempty,expnames(:,i)),i);
-   
-    input.animalID = animalID(i);
+    input.path = input.inpath;
+    input.expname = expt_paths(expt);
+    input.animalID = animalID(expt);
     %Register combined movies
     %RegisterMovie(input)
      RegisterMovie_SingleChannel(input)
 end
 
 
-for i=1:length(paths)
+for expt=1:length(paths)
     %Select current path
-    input.path = paths{i};
-    input.expname = expnames(~cellfun(@isempty,expnames(:,i)),i);
-    input.animalID = animalID(i);
+    input.path = input.inpath;
+    input.expname = expt_paths(expt);
+    input.animalID = animalID(expt);
     CreateSmoothImage(input,1)
 end
 
 
 %% Extract Timing Params
 
-[TimingPaths TimingPsignalFiles] = CreateCellExtractionList; % This should change to TimingExtractionList
+[TimingPaths TimingPsignalFiles] = CreateCellExtractionList(input.savepath); % This should change to TimingExtractionList
 
 %% Extract Timing Params
 for expt=1:length(TimingPaths)
@@ -201,7 +200,7 @@ end
 
 %% Extract Fluorescence Traces 
 
-[ExtractionPaths, ExtractionPsignalFiles] = CreateCellExtractionList();
+[ExtractionPaths, ExtractionPsignalFiles] = CreateCellExtractionList(input.savepath);
 
 badfiles = {};
 for expt=1:length(ExtractionPaths)
@@ -215,7 +214,6 @@ for expt=1:length(ExtractionPaths)
        badfiles{end+1} = ExtractionPaths{expt};
 end
 end 
-
 %% Quality check extracted Fluorescence
 for i=1:length(paths)
     %Select current path
