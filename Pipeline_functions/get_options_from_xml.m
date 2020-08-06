@@ -26,9 +26,18 @@ opts.format ={'uint16',...
              [opts.dimX,opts.dimY,opts.numchannels],...
              'channels'};
          
- opts.version = xml.Software.Attributes.version;
+opts.version = xml.Software.Attributes.version;
+opts.StepSizeUM = xml.ZStage.Attributes.stepSizeUM;
+opts.numZsteps = xml.ZStage.Attributes.steps;
+opts.flybackframes = xml.Streaming.Attributes.flybackFrames;
 
+if opts.numZsteps == 1
+    opts.totalZplanes =1;
+else
+    opts.totalZplanes = exptVars.numZSteps+exptVars.flybackFrames;
+end 
 
+ 
 %The green channel will be either the first or second
 %channel. Whether or not the channel is enabled depends on
 %whether the corresponding gain is positive. This section of
