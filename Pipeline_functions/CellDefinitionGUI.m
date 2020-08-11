@@ -86,7 +86,7 @@ if iscellstr({pthname})
     
     numImages = min(numImages,numImagesActual);
     IMG = reshape(array, [dimX, dimY, numImages]);
-    red_rotate_flag = questdlg('Rotate Red IMG?') 
+   
     fclose(fh);
     IMG = permute(IMG, [2 1 3]);
 
@@ -123,7 +123,21 @@ if iscellstr({pthname})
     save(DestPath,'avgGreenfilteredImage');
     catch
         warning('unable to save green image' ) 
+    end
+    
+    %3D_processing
+    Z_flag = questdlg('Is this a 3d IMG?');
+    Z_flag = strcmp(Z_flag,'Yes');
+    
+    
+    if Z_flag
+        plane_ID = inputdlg('Input Plane ID  (ex: Z01)','3D-Plane',1);
+    else 
+        plane_ID = '';
     end 
+    
+    handles.Z_flag =Z_flag;
+    handles.plane_ID =plane_ID;
     
     
     %Plot images
@@ -453,8 +467,13 @@ try
     handles.smNpBoundaries = smNpBoundaries;
     
     ptsIdx = [[1:size(handles.selectedneurons.Data,1)]' handles.selectedneurons.Data];
-    fNameString = ['CellDefinitions.mat'];
-    idx = strfind(handles.pthname{1},'\');
+    if handles.Z_flag
+        fNameString = ['CellDefinitions', handles.plane_ID{1},'.mat']
+        
+    else
+        fNameString = ['CellDefinitions.mat'];
+    end 
+        idx = strfind(handles.pthname{1},'\');
     pthname = handles.pthname{1}(1:idx(end-1));
     DestPath=fullfile(pthname,handles.filename,fNameString);
     Cdef=[];
