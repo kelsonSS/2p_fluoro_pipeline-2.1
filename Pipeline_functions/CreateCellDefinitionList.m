@@ -5,7 +5,7 @@ if ~exist('savepath','var')
 end 
 
 
- registered = dir( [savepath, '\**\Greenchannelregistered.raw']);
+ registered = dir( fullfile(savepath, '\**\Greenchannelregistered*.raw'));
  registered = struct2cell(registered);
  registered = registered(2,:)';
  
