@@ -7,7 +7,7 @@
             % To-do start fixing below
             %Local path for data
             old_path = fullfile(load_path,expt_path) ;
-            new_path = fullfile(save_path,exp_path) ;
+            new_path = fullfile(save_path,expt_path) ;
             
             if ~exist(new_path,'file')
                 mkdir(new_path)
@@ -46,5 +46,5 @@
             end
         end
         
-    end
+  
 
