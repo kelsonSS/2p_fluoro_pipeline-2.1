@@ -1,4 +1,4 @@
-function[NeedsExtraction,PsignalFiles,animalIDs] = createDataList(file_path,input)
+function[NeedsExtraction,PsignalFiles,animalIDs] = createDataList(input)
 
 % this function checks the folder containing every raw file in 
 % \\VAULT3\Data\Kelson and checks to see if there is a corresponding 
