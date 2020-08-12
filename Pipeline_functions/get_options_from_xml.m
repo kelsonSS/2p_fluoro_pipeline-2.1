@@ -27,14 +27,14 @@ opts.format ={'uint16',...
              'channels'};
          
 opts.version = xml.Software.Attributes.version;
-opts.StepSizeUM = xml.ZStage.Attributes.stepSizeUM;
-opts.numZsteps = xml.ZStage.Attributes.steps;
-opts.flybackframes = xml.Streaming.Attributes.flybackFrames;
+opts.StepSizeUM = str2double(xml.ZStage.Attributes.stepSizeUM);
+opts.numZSteps = str2double(xml.ZStage.Attributes.steps);
+opts.flybackFrames = str2double(xml.Streaming.Attributes.flybackFrames);
 
-if opts.numZsteps == 1
+if opts.numZSteps == 1
     opts.totalZplanes =1;
 else
-    opts.totalZplanes = exptVars.numZSteps+exptVars.flybackFrames;
+    opts.totalZplanes = opts.numZSteps + opts.flybackFrames;
 end 
 
  
