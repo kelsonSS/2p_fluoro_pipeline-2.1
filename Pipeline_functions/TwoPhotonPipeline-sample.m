@@ -36,10 +36,12 @@ clear all; close all;
 % end
 % 
 % end 
-%Path to Data
-input.inpath = '\\vault3\Data\Kelson\Files to upload';
 %Input variables
 input=[];
+
+%Path to Data
+input.inpath = 'Z:\\Kelson\Files to upload';
+
 %Expected frame rate form experiment. According to Thorlabs, the frame rate is
 %effectivly fixed. ThorImage usually shows a frame rate + <1 Hz, which is
 %why there is sometimes an extra frame at the end of a trial. However, if we
@@ -90,7 +92,7 @@ input.plotbrightness = 0;
 %registration zero-pading
 input.border = 1;
 %path to local data storage for processed data
-input.savepath = '\\Vault3\Data\Kelson\Analyzed';
+input.savepath = 'Z:\\Kelson\Analyzed';
 %largest movie to load based on number of frames. Beyond this # the movie
 %is processed in chunks for extracting fluorescence.
 input.maxframechunk = 7500;
