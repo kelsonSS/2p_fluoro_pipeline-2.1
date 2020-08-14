@@ -123,7 +123,7 @@ end
 %selection and fluourescence extraction will be done on data from within the
 %input.savepath subfolder.
 
-%
+%%
 for expt=1:length(expt_paths)
     %Select current path
     input.expname = expt_paths{expt};
@@ -156,18 +156,14 @@ for expt=1:length(paths)
     CreateSmoothImage(input,1)
 end
 
-
-%% Extract Timing Params
-
-[TimingPaths TimingPsignalFiles] = CreateCellExtractionList(input.savepath); % This should change to TimingExtractionList
-
-%% Extract Timing Params
-for expt=1:length(TimingPaths)
+% Extract Timing Params
+for expt=1:length(paths)
     %Select current path
-    input.path = TimingPaths{expt};
-    %Select current Psignal file
-    input.psignalfiles = TimingPsignalFiles(expt);
-    fprintf('analyzing %d of %d: \n',expt,length(TimingPaths)) 
+    input.path = input.inpath;
+    input.expname = expt_paths(expt);
+    input.animalID = animalID(expt);
+    input.psignalfiles = psignalfiles(expt);
+    fprintf('analyzing %d of %d: \n',expt,length(paths)) 
     ExtractTimingParams(input,1);
 end
 
