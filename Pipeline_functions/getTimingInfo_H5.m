@@ -1,17 +1,16 @@
-function TimingInfo = getTimingInfo_H5(ThorSyncFile, PsignalTimingFile, fps,xml,num_frames_actual)
+function TimingInfo = getTimingInfo_H5(ThorSyncFile, PsignalTimingFile, fps,xml,num_frames_actual,debug)
 %This function finds the frames that correspond to trials by looking
 % comparing the ThorSync and Psignal Files)
 % 
 
-if ~exist('fps','var')
-    fps = 30 ; 
- 
-end
+if ~exist('debug','var'); debug = 0;end 
+if ~exist('fps','var');fps = 30 ; end
      
-
+TimingInfo = struct()
 %% Load Psignal timing file and Relevant Info
 PsignalData = load(PsignalTimingFile);
 
+TrialObjectClass = PsignalData.exptparams.TrialObjectClass;
 try
     Primary = get(PsignalData.exptparams.TrialObject,'PrimaryHandle');
     SoundObject=get(Primary,'SoundObject');
@@ -22,11 +21,13 @@ end
 
 %% Trial Parameters
 try
+    
     Prestim = get(SoundObject,'PreStimSilence');
     Duration = get(Primary,'Duration');
     Poststim = get(SoundObject,'PostStimSilence');
     TrialDur =  Prestim+Duration+Poststim;
     TimingInfo.tarFnums = (TrialDur*fps);
+    
 
     %ITI = get(PsignalData.exptparams.BehaveObject,'ITI');
 catch
@@ -63,7 +64,9 @@ catch
         try
         gate=h5read(ThorSyncFile,'/AI/ai4');
         catch
-             fprintf('%s is bad /n', ThorSyncFile)
+             fprintf('\n %s is bad \n', ThorSyncFile)
+             TimingInfo.Errors =  sprintf('\n %s is bad \n', ThorSyncFile);
+             return
         end
         
     end
@@ -99,13 +102,59 @@ if length(on) ~=TotalTrials || length(on) ~= length(off)
     pv_lower_flag= 0;  % if the last trial was too small
     pv_higher_flag = 0; % if last trial was too large
 end 
+
 while length(on) ~= TotalTrials || length(on) ~= length(off)
     m = length(on);
     n = length(off);
     g = length(gate);
-    if m > 5000 || peak_val < 0.001 || peak_val > 2 || delta_peak < 5e-2
+    if m > 5000 || peak_val < 0.001 || peak_val > 2.5 || delta_peak < 5e-2
         warning('trial error manual inspection needed \n %s \n',ThorSyncFile)
-        return
+        figure; plot(gate); hold on ; plot(fo);
+        title(ThorSyncFile,'Interpreter','None')
+        drawnow()
+ %       if debug
+           data_quality= questdlg('Is Data Usable if shortened?')
+           if strmatch(data_quality,'Yes')  
+              continue_plotting = 'Yes';
+               while strmatch(continue_plotting, 'Yes'); 
+               prompt = {'Enter expected peak size'};
+               dlgtitle = 'Input';
+               dims= [1 35];
+               definput = {'.5'};
+               prompt_peak_val = str2num(char(...
+                             inputdlg(prompt,dlgtitle,dims,definput)));
+               on =  findpeaks(diff(gate),prompt_peak_val);
+               off = findpeaks(diff(gate * -1),prompt_peak_val);
+               on = on.loc;
+               off = off.loc;
+               off = off(off > 3000); % ensure the first off trigger happens at least .1 sec after trial start
+               m = length(on);
+               figure; plot(diff(gate)); hold on ; %plot(diff(fo));
+               x_lims = xlim;
+               y_lims = ylim;
+               plot([x_lims(1) x_lims(2)], [prompt_peak_val prompt_peak_val])
+               scatter(on,repmat(y_lims(2),length(on),1)./2,'ko')
+               scatter(off,repmat(y_lims(2),length(off),1)./2,'kx')
+               fprintf('estimated trials:%d actual: %d peak val: %.2f  \n',...
+            m,TotalTrials,prompt_peak_val)
+               pause
+               continue_plotting = questdlg('Try another value?');
+               end 
+               break
+
+                         
+               
+           else 
+               TimingInfo.Errors = 'Experiment was performed improperly'
+               return
+           end 
+%        end 
+          %  [SyncPath SyncName] = fileparts(ThorSyncFile);
+          % SyncName = strcat(SyncName,'.h5');
+          % LoadSyncEpisodeEdit(SyncPath, SyncName );
+       %     pause 
+      %  end 
+       
     end
         
     
@@ -130,6 +179,7 @@ while length(on) ~= TotalTrials || length(on) ~= length(off)
         fprintf('too many estimated trials \n')   
         fprintf('estimated trials:%d actual: %d peak val: %.2f Delta: %.2f \n',...
             m,TotalTrials,peak_val,delta_peak)
+        
       end
     
       
@@ -235,6 +285,7 @@ end
  % sanity check
  if bad_timing_flag || bad_frame_flag
      warning(sprintf('%s may be wrong file! manual inspection needed',ThorSyncFile))
+     TimingInfo.Error('Suspected File Mismatch')
  end 
 
 
