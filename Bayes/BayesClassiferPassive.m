@@ -75,10 +75,10 @@ for expt = 1:size(Passive.DataDirs)
         
         AllData = Passive.DFF_Z(:,:,in_idx);
         
-        if size(AllData,3) < 20
-            continue
-            end
-        
+%         if size(AllData,3) < 20
+%             continue
+%             end
+%         
         for neurons = 2:num_neurons
             
             
