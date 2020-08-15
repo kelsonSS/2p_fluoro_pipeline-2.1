@@ -1,33 +1,67 @@
-function Out = Correlations(TN)
+function Out = Correlations(TN,normalized)
+
+if ~exist('normalized','var')
+    normalized = 0
+end 
 
 %Cells = TN.CellID; 
+if normalized 
+    DFF = TN.DFF_Z;
+else 
 DFF   = TN.DFF;
+end 
 active = TN.active.Activity;
-FLO = TN.FreqLevelOrder;
-L_num = unique(FLO.Levels);
-F_num = unique(FLO.Freqs);
-e_ls = TN.experiment_list;
+FreqLevelOrder = TN.FreqLevelOrder;
 
-frames = size(DFF,1);
+L_num = length(unique(FreqLevelOrder.Levels));
+F_num = length(unique(FreqLevelOrder.Freqs));
+e_ls = TN.experiment_list;
+rep_mode = 10; % trials per unique condition
+n_frames = size(DFF,1);
 trials =size(DFF,2);
 neurons = size(DFF,3);
+handles = TN.handles{1};
+soundon = handles.PreStimSilence * 30; % everything is 30FPS 
+soundoff = soundon + handles.PrimaryDuration * 30; 
  % rehape Frame X Repeat X Level X Frequency X Neuron 
 
 
-
-for Expt = 1:length(TN.DataDirs)
+Expt_num = length(TN.DataDirs);
+for Expt = 1:Expt_num
     % unpack cells for this experiment and filter to only responsive cells      
    %  cells = TN.CellID{Expt}; could be used for spatial locations of each
    %  cell
+   if exist('L','var')
+       fprintf(repmat('\b',1,progress_text_length)) % clear previous line
+   end 
+   
+   % print progress 
+   progress_text= sprintf('analyzing expt %d of %d',Expt, Expt_num);
+    progress_text_length = length(progress_text);
+    fprintf(progress_text);
+   
     DFF_t = DFF(:,:,e_ls == Expt);
-    a_t  = (active(e_ls == Expt) > 2); % <= P.01 significance value 
+    a_t  = (active(e_ls == Expt) >= 1); % <= P.05 significance value 
    DFF_T = DFF_t(:,:,a_t);
     N_t = size(DFF_t,3);
-   
+%   if isfield( TN,'handles')
+%         FLO{:,1} = TN.handles{Expt}.Freqs;
+%         FLO{:,2} = TN.handles{Expt}.Levels;
+%         uFreqs = unique(FLO{:,1});
+%         uLevels = unique(FLO{:,2});
+%         L = length(uLevels);
+        
+%   else 
+       FLO = FreqLevelOrder;
+        uLevels = unique(FreqLevelOrder.Levels);
+        L = length(uLevels);
+        uFreqs = unique(FreqLevelOrder.Freqs);
+%   end 
+  
     % continue if  size  = 1 
     if N_t <= 1 
          Corr{Expt} = nan;
-    for Lvl = 1:4
+    for Lvl = 1:L
     LCorr{Expt,Lvl} = nan;
     NCorr{Expt,Lvl}  = nan;
     end 
@@ -36,48 +70,76 @@ for Expt = 1:length(TN.DataDirs)
         
    
     
+    
      % rehape Frame X Repeat X Level X Frequency X Neuron 
-    DFF_c =  reshape(DFF_t, [frames,10,L_num,F_num,N_t]);
-    DFF_mu = squeeze(nanmean(nanmean(DFF_c(60:120,:,:,:,:),2))); % average over stim frames and repeats
+      for freq = 1:F_num
+        for lvl = 1:L_num
+         
+            %  fprintf('Level %d Freq %d \n', uLevels(lvl),uFreqs(freq))
+           FL_idx=  FLO{:,1} == uFreqs(freq) &... 
+           FLO{:,2} == uLevels(lvl);
+            
+            Vec_DFF_Temp = DFF_t(:,FL_idx,:);
+            % in case trials have different reps
+            try
+            Vec_DFF_Temp = Vec_DFF_Temp(:,1:rep_mode,:);
+            catch
+            end
+          %  plot(Vec_DFF_Temp(:,:,1))
+            % baseline = squeeze(nanmean(Vec_DFF_Temp(1:30,:,:),2));
+           
+            DFF_mu(lvl,freq,:) = squeeze(nanmean(nanmean(Vec_DFF_Temp(soundon:soundoff,:,:),2)));
+            DFF_n_temp = squeeze(nanmean(Vec_DFF_Temp,1)) - squeeze(repmat(DFF_mu(lvl,freq,:),[rep_mode,1]));
+            DFF_n2(lvl,freq,:,:) = DFF_n_temp;
+            DFF_c (:,:,freq,lvl,:) = Vec_DFF_Temp;
+              
+              clear Vec_DFF_Temp
+      
+        end
+    end 
+     
+     
+   % DFF_c =  reshape(DFF_t, [frames,[],L_num,F_num,N_t]);
+    %DFF_mu = squeeze(nanmean(nanmean(DFF_c(60:120,:,:,:,:),2))); % average over stim frames and repeats
     % change to column major form 
-    DF_flat = reshape(DFF_mu,[32,size(DFF_mu,3)]); 
+    DF_flat = reshape(DFF_mu,[L_num *F_num ,size(DFF_mu,3)]); 
     
-    % arrange data for Noise Correlations 
-    DFF_n = permute(DFF_c,[1,2,4,3,5]);
-    DFF_n = reshape(DFF_n,[(150 * 10 * 8) , 4 , N_t]);
-    
-    % standard form of noise corr where we subtract residuals from tone
-    % period 
-    DFF_n2 = squeeze(nanmean(DFF_c(60:120,:,:,:,:)));
-    DFF_n2 = permute(DFF_n2,[1,3,2,4]);
-    
+ 
     
     
     % subtract the mean for each sound/level to find residuals
-    DFF_n2 = DFF_n2 - permute(repmat(DFF_mu,1,1,1,10),...
-                                     [4 2 1 3 ]);
+   % DFF_n2 = DFF_n2 - permute(repmat(DFF_mu,1,1,1,10),...
+   %                                  [4 2 1 3 ]);
                                  
-    DFF_n2 = reshape(DFF_n2, 10 * 8 , 4, [] );           
+   % DFF_n2 = reshape(DFF_n2, 10 * 8 , 4, [] );           
     
-
+  
     
     
     
     
     Corr{Expt} = getCorrFromCov(cov(DF_flat));
-    for Lvl = 1:4
+    clear DF_flat
+    for Lvl = 1:size(DFF_mu,1);
     LCorr{Expt,Lvl} = getCorrFromCov(cov(squeeze(DFF_mu(Lvl,:,:))));
-    NCorr{Expt,Lvl}  = getCorrFromCov(cov(squeeze(DFF_n(:,Lvl,:))));
+   % NCorr{Expt,Lvl}  = getCorrFromCov(cov(squeeze(DFF_n(:,Lvl,:))));
     NCorr2{Expt,Lvl} = getCorrFromCov(cov(squeeze(DFF_n2(:,Lvl,:))));
     end 
  
-end 
+ 
+      clear DFF_mu
+      clear DFF_n2
+      clear DFF_c
       
+end 
 %% Correlation analysis
 %analysis
-[N_mu,N_std,N_CI,N_sig] = getCorrStatistics(NCorr,'Signal');
-[N_mu2,N_std2,N_CI2,N_sig2] = getCorrStatistics(NCorr2,'Noise'); 
-[L_mu,L_std,L_CI,L_sig] = getCorrStatistics(LCorr,'Noise2'); 
+
+disp('Analyzing Noise Statistics')
+%[N_mu,N_std,N_CI,N_sig] = getCorrStatistics(NCorr,'Noise');
+[N_mu,N_std,N_CI,N_sig] = getCorrStatistics(NCorr2,'Noise2'); 
+disp('Analyzing Signal Statistics')
+[L_mu,L_std,L_CI,L_sig] = getCorrStatistics(LCorr,'Signal'); 
 %  Older version - Delete if above is running fine 
 %  LCorr_flat = cell2mat(cellfun(@(x)x(:),LCorr,'UniformOutput',0));
 %  NCorr_flat = cell2mat(cellfun(@(x)x(:),NCorr,'UniformOutput',0));
@@ -110,11 +172,11 @@ end
 % plotting- Ncorr Bars
 Bars_by_level(L_mu,L_CI,'Signal')
 Bars_by_level(N_mu,N_CI,'Noise')
-Bars_by_level(N_mu2,N_CI2,'Noise2')
+%Bars_by_level(N_mu2,N_CI2,'Noise2')
 %% packaging
     Out.Corr = Corr;
     Out.LCorr = LCorr;
-    Out.NCorr = NCorr;
+    Out.NCorr = NCorr2;
     Out.Signal_Sig = L_sig;
     Out.Noise_Sig  = N_sig;
     Out.Signal_Stats.mean = L_mu;
