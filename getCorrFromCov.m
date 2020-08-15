@@ -12,16 +12,20 @@ function Output = getCorrFromCov(CovMatrix)
  
  L = length(CovMatrix);
  
- pairs = nchoosek(1:L,2); 
-
-Output = nan(L);
-for ii = 1:length(pairs)
-   xtemp = pairs(ii,1);
-   ytemp = pairs(ii,2);
+ %pairs = nchoosek(1:L,2)
+ 
+Output = nan(L,L);
+for xtemp = 1:L
+    for ytemp = xtemp+1:L % this will create a triangular matrix an ignore duplicates
+    try
+  % xtemp = pairs(ii,1);
+  % ytemp = pairs(ii,2);
    % signal correlation equation
    Output(xtemp,ytemp) = CovMatrix(xtemp,ytemp) /...
        sqrt( CovMatrix(xtemp,xtemp) *  CovMatrix(ytemp,ytemp) );
- 
+    catch % experiments will be skipped and answer will be nan 
+    end 
+   end
 end 
  
  
