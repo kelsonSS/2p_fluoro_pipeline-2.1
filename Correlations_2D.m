@@ -13,7 +13,7 @@ if use_clusters
     num_clust = length(names);
     
     for C = 1:num_clust
-        indices{C} = Passive.class_idx == C
+        indices{C} = Passive.Class_idx == C;
     end 
     
     
@@ -81,6 +81,7 @@ for index_num =  1:length(idx);
         
         % subset list of all corrs to just look at corrs between two
         % classes
+      
         LCorr(expt,:) = cellfun(@(x)  x(idx1,idx2),Lcorr_expt,...
                         'UniformOutput',0);
         NCorr(expt,:) = cellfun(@(x)  x(idx1,idx2),Ncorr_expt,...
@@ -103,7 +104,7 @@ for index_num =  1:length(idx);
   
    % plot and save signal 
     fig_name_signal =[names_text ': Signal']   ;               
-    Bars_by_level(L_mu,L_CI, [names_text ': Signal'],L_sig)
+    Bars_by_level(L_mu,L_CI,fig_name_signal,L_sig);
     if ~isempty(savepath) 
         saveCorrFig(fig_name_signal,savepath)
     end
