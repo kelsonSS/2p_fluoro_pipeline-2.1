@@ -5,6 +5,7 @@ function Output = ExtractFluorescence(input,debug)
 %Nikolas Francis 2016 1.0
 tic();
 %Expected frame rate for imaging.
+if ~exist('debug','var');debug = 0 ; end 
 Output.Errors = {};
 fps = input.expectedFPS;
 
@@ -285,7 +286,7 @@ for chunk_count = 1:chunks
             end
   fluoAllRaw = cat(1,fluoAllRaw,fluoAllRaw_temp);
   NPfluoAll = cat(1,NPfluoAll,NPfluoAll_temp);
-  
+  disp('Chunk Done')
 end
             fluoAllCorr = fluoAllRaw - (input.percNP * NPfluoAll);
             %fluoAllCorr_100pct = fluoAllRaw - (input.percNP * NPfluoAll_100pct);
@@ -302,18 +303,30 @@ end
 %  
        
        
-       
+
       
+
+    if debug 
+        % allow to shorten files such that we don't try to find frames that
+        % dont exist
+        out_of_image_idx = any(TimingInfo.FrameIdx > size(fluoAllRaw,1),2);
+       
+        TimingInfo.FrameIdx = TimingInfo.FrameIdx(~out_of_image_idx);
+        TimingInfo.SeqEndVals = TimingInfo.SeqEndVals(~out_of_image_idx);
+       
+        
+    end 
+       
       
     %Parse flouresence into sample X trial X cell. sample values are
     %initialized with nan, and # samples is determined by the expected
     %trial length from TimingInfo. If trial data were shorter than the
     %expected amount, then the remaining samples will be nan.
   
-   
+    
+
      
-     
-    try 
+   % try 
     FCell=nan(TimingInfo.tarFnums,length(TimingInfo.SeqEndVals),size(fluoAllRaw,2));
     FNeuropil=nan(TimingInfo.tarFnums,length(TimingInfo.SeqEndVals),size(fluoAllRaw,2));
     FCellCorrected=nan(TimingInfo.tarFnums,length(TimingInfo.SeqEndVals),size(fluoAllRaw,2));
@@ -349,11 +362,11 @@ end
            %  end
         end
     end
-    catch 
-         warning('extraction incorrect for %s. Analyzing next file',input.path);  
-    Output.Errors(end+1,1)={input.path};
-         return
-     end  
+ %   catch 
+ %       warning('extraction incorrect for %s. Analyzing next file',input.path);  
+ %   Output.Errors(end+1,1)={input.path};
+ %        return
+ %    end  
         
     
     %Save traces
