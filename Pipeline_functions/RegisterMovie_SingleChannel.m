@@ -270,8 +270,8 @@ for p = 1:totalZplanes
     fclose(fh);
     
     %% Generate motion offsets using DFT
-    dftResolution = 10
-    offsets = calcDftOffsets(IMG,dftResolution,99); % IMG should be MxNxFrames double
+    dftResolution = 10;
+   offsets = calcDftOffsets(IMG,dftResolution); % IMG should be MxNxFrames double
     ty = round(offsets(:,1));
     tx = round(offsets(:,2));
     
@@ -296,7 +296,11 @@ for p = 1:totalZplanes
     disp(['Saving Registered file in ', RegFullPath]);
     fileID = fopen(RegFullPath,'w');
     fwrite(fileID,RegIMG,'uint16','ieee-le');
-    fclose(fileID);
+    try 
+        fclose(fileID);
+    catch
+        fclose all
+    end
     
     meanIMG = mean(RegIMG,3);
     save(fullfile(newpath,['RegisteredImgZ' num2str(p) '.mat']),'meanIMG','offsets','-v7.3')
