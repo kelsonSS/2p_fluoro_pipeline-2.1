@@ -82,7 +82,7 @@ if iscellstr({pthname})
 
     array = fread(fh,[dimX*dimY*numImages],'uint16=>uint16');
     
-    numImagesActual = length(array) / dimX /dimY;
+    numImagesActual = floor(length(array) / dimX /dimY);
     
     numImages = min(numImages,numImagesActual);
     IMG = reshape(array, [dimX, dimY, numImages]);
