@@ -455,7 +455,7 @@ end
 function loadselection_Callback(hObject, eventdata, handles)
 [CellDefName, CellDefPath]= uigetfile(handles.pthname , 'Select Cell Definition File')
 DestPath=fullfile(CellDefPath,CellDefName);
-load(DestPath{1});
+load(DestPath);
 handles.selectedneurons.Data = ptsIdx(:,2:3);
 function saveselection_Callback(hObject, eventdata, handles)
 try
