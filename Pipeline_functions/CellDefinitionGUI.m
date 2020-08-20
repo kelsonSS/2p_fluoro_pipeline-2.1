@@ -453,8 +453,8 @@ function numonoff_Callback(hObject, eventdata, handles)
             'Parent',handles.axes2)
 end
 function loadselection_Callback(hObject, eventdata, handles)
-CellDefName= uigetfile(handles.pthname , 'Select Cell Definition File')
-DestPath=fullfile(handles.pthname,CellDefName);
+[CellDefName, CellDefPath]= uigetfile(handles.pthname , 'Select Cell Definition File')
+DestPath=fullfile(CellDefPath,CellDefName);
 load(DestPath{1});
 handles.selectedneurons.Data = ptsIdx(:,2:3);
 function saveselection_Callback(hObject, eventdata, handles)
