@@ -453,11 +453,9 @@ function numonoff_Callback(hObject, eventdata, handles)
             'Parent',handles.axes2)
 end
 function loadselection_Callback(hObject, eventdata, handles)
-fNameString = ['CellDefinitions.mat'];
-idx = strfind(handles.pthname{1},'\');
-pthname = handles.pthname{1}(1:idx(end-1));
-DestPath=fullfile(pthname, handles.filename,fNameString);
-load(DestPath);
+CellDefName= uigetfile(handles.pthname , 'Select Cell Definition File')
+DestPath=fullfile(handles.pthname,CellDefName);
+load(DestPath{1});
 handles.selectedneurons.Data = ptsIdx(:,2:3);
 function saveselection_Callback(hObject, eventdata, handles)
 try
