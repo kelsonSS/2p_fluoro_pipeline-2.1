@@ -5,11 +5,11 @@ if ~exist('savepath','var')
 end 
 
 
- registered = dir( fullfile(savepath, '\**\Greenchannelregistered*.raw'));
+ registered = dir( fullfile(savepath, '\**\GreenChannelRegistered*.raw'));
  registered = struct2cell(registered);
  registered = registered(2,:)';
  
- CellDefinitions = dir( [savepath, '\**\CellDefinitions.mat']);
+ CellDefinitions = dir( [savepath, '\**\CellDefinitions*.mat']);
  CellDefinitions = struct2cell(CellDefinitions);
  CellDefinitions = CellDefinitions(2,:)';
  
