@@ -21,7 +21,7 @@ function RegImagetoH5(image_folder)
 fh = fopen(FullPathIMG); 
 numFrames_total =  FindRawImgSize(fh,[opts.dimX opts.dimY]);
 ItemsPerImage = opts.dimX* opts.dimY ;
-IMG = fread(fh,inf,'uint16');
+IMG = fread(fh,inf,'uint16=>uint16','l');
 IMG =  permute( reshape(IMG,opts.dimX, opts.dimY, []),[2 1 3]); 
 
 %% create h5 file

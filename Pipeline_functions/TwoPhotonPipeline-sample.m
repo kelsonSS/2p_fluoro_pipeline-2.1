@@ -139,24 +139,24 @@ end
 %Register movies
 
 
-for expt=1:length(paths)
+for expt=1:length(expt_paths)
     %Select current path
     input.path = input.inpath;
-    input.expname = expt_paths(expt);
-    input.animalID = animalID(expt);
+    input.expname = expt_paths{expt};
+    input.animalID = animalID{expt};
     %Register combined movies
     %RegisterMovie(input)
      RegisterMovie_SingleChannel(input)
 end
 
-
-for expt=1:length(paths)
-    %Select current path
-    input.path = input.inpath;
-    input.expname = expt_paths(expt);
-    input.animalID = animalID(expt);
-    CreateSmoothImage(input,1)
-end
+% 
+% for expt=1:length(expt_paths)
+%     %Select current path
+%     input.path = input.inpath;
+%     input.expname = expt_paths{expt};
+%     input.animalID = animalID(expt);
+%     CreateSmoothImage(input,1)
+% end
 
 % Extract Timing Params
 for expt=1:length(paths)
@@ -177,7 +177,7 @@ CreateCellDefinitionList(input)
 %to select the images in input.savepath.
 CellDefinitionGUI(input)
 %%
-
+% 
 badfiles = {};
 for i=1:length(ExtractionPaths)
     %Select current path
