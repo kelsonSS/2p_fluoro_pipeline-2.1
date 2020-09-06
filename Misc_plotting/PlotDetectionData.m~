@@ -1,0 +1,63 @@
+function PlotDetectionData(GroupData,SavePath)
+% This function Takes in the GroupData Structure output from
+% BehavioralAnalysisByGroup and plots all the current plots for the
+% behavior 
+% 
+% If SavePath is provided it will save plots in that folder 
+if ~exist('SavePath','var')
+    SavePath ='/home/kelsonss/Documents/GitHub/2p_fluoro_pipeline-2.1/LocalData';
+end 
+
+snr = GroupData.SNR;
+snr_len = length(snr);
+
+figure
+hit_rate_normalized = GroupData.LastWeekPerformance.HitRateMean./...
+                  max(GroupData.LastWeekPerformance.HitRateMean);
+boxplot(hit_rate_normalized')
+title('Normalized Hit Rate by level')
+FormatFigure(gcf,snr)
+
+figure
+hit_rate = GroupData.LastWeekPerformance.HitRateMean;
+                 
+boxplot(hit_rate')
+title('Hit Rate by level')
+FormatFigure(gcf,snr)
+
+
+figure
+early_rate_normalized = GroupData.LastWeekPerformance.EarlyRateMean./...
+                  max(GroupData.LastWeekPerformance.EarlyRateMean);
+boxplot(early_rate_normalized')
+title('Normalized Early Rate by Level')
+FormatFigure(gcf,snr)
+
+% savefig(SavePath)
+
+
+
+
+figure 
+for ii =1:snr_len
+    subplot(snr_len,1,ii)
+    histogram(cell2mat(GroupData.AllResults.LickLatency(ii,:)'),0:.1:5)
+    title(sprintf('Lick Histogram at %d SNR',snr(ii)) )
+    
+end 
+
+
+
+  
+
+
+
+
+
+
+function FormatFigure(ax,snr)
+
+ xticklabels(snr)
+ xlabel('dB SNR')
+ axis square 
+
