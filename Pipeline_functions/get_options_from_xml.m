@@ -30,8 +30,8 @@ opts.version = xml.Software.Attributes.version;
 opts.StepSizeUM = str2double(xml.ZStage.Attributes.stepSizeUM);
 opts.numZSteps = str2double(xml.ZStage.Attributes.steps);
 opts.flybackFrames = str2double(xml.Streaming.Attributes.flybackFrames);
-
-if opts.numZSteps == 1
+opts.zEnabled = str2double(xml.Streaming.Attributes.zFastEnable);
+if (~opts.zEnabled) || (opts.numZSteps == 1) 
     opts.totalZplanes =1;
 else
     opts.totalZplanes = opts.numZSteps + opts.flybackFrames;
