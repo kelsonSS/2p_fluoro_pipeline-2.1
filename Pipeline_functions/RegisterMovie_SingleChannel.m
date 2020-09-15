@@ -177,7 +177,7 @@ fprintf('Registration took %d seconds \n',ceil(telapsedRegistration))
     
     %% Save registered .raw file
     RegFname = 'greenchannelregistered.raw';
-    RegFullPath = [newpath RegFname]; 
+    RegFullPath = fullfile(newpath, RegFname); 
     %RegFullPath = fullfile('C:\Users\KanoldLab\Desktop\Kelson\registration_temp', RegFname);
     fprintf('Saving Registered file %d of %d in %s \n',chunk_count,chunks, RegFullPath);
     if chunk_count == 1
