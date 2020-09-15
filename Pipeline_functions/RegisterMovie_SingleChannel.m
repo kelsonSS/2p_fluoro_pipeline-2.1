@@ -5,21 +5,33 @@ tic();
 %Find index of experiment to be used for registration template
 %regidx=find(strcmpi(input.expname,input.regexp));
 %Path of images used for registration template
-    sprintf( 'registering movie %s , elapsed time: %d minutes',...
+   
+        
+        if  isstruct(input)
+            newpath = fullfile(input.savepath,input.expname) ;
+              sprintf( 'registering movie %s , elapsed time: %d minutes',...
             input.expname,toc()/60)
-
-
-        newpath = fullfile(input.savepath,input.expname) ;
+        
+        else
+            newpath = input;
+            input = struct('maxframechunk', 5000,'subpixegfact', 10);
+        end 
+        
+       
 disp(newpath)
 
 % check if expt has already been registered
-if ~ isempty(dir(fullfile(newpath, 'greenchannelregistered.raw')))
-    newfile = dir(fullfile(newpath, 'greenchannelregistered.raw'));
-    oldfile = dir(fullfile(newpath, 'greenchannel.raw'));
-    if newfile.bytes == oldfile.bytes
-        return
-    end
-end
+if ~isempty(dir(fullfile(newpath, 'greenchannelregistered*')))
+    return
+end 
+
+% if ~ isempty(dir(fullfile(newpath, 'greenchannelregistered.raw')))
+%     newfile = dir(fullfile(newpath, 'greenchannelregistered.raw'));
+%     oldfile = dir(fullfile(newpath, 'greenchannel.raw'));
+%     if newfile.bytes == oldfile.bytes
+%         return
+%     end
+% end
 
  if isempty(dir(fullfile(newpath, 'greenchannel.raw')))
     return
@@ -44,10 +56,10 @@ fclose(fh);
 tstartCorr = tic;
 
 
-if opts.totalZplanes > 1
-    Register3dMovie(FullPathIMG,opts,newpath)
-    return
-end 
+%if opts.totalZplanes > 1
+%    Register3dMovie(FullPathIMG,opts,newpath)
+%    return
+%end 
 
 % 2d Data registration
 for chunk_count = 1:chunks
@@ -283,10 +295,17 @@ for p = 1:totalZplanes
     pd = pdTmp + mod(pdTmp,2); % Make padding amount an even number
     RegIMG = zeros( dimY , dimX , nframes);
     for t = 1:nframes
+        
+   try
         tmpRegIMG = zeros(dimY+pd,dimX+pd);
         tmpRegIMG( pd/2+ty(t):pd/2+ty(t)+dimY-1 , pd/2+tx(t):pd/2+tx(t)+dimX-1) = IMG(:,:,t);
         RegIMG( : , : , t) =  tmpRegIMG(pd/2:pd/2+dimY-1 , pd/2:pd/2+dimX-1);
+   catch
+        RegIMG(:,:,t) = IMG(:,:,t);
+        warning('Problem registering frame %d',t)
     end
+         
+   end
     
     clear IMG
     
