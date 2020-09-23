@@ -1,4 +1,4 @@
-x = dir('C:\Users\KanoldLab\Google Drive\PsignalData\KSS\');
+x = dir('C:\Users\KanoldLab\Google Drive\PsignalData\KSS\Analyzed');
 
 x = {x.name}';
 

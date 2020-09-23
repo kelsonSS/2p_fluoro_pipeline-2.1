@@ -14,13 +14,13 @@ function  [resultsAll] =  BehavioralAnalysisByAnimal(animal_ID,toPlot)
 
 %
 % TODO : extend to be able to graph data generated from training box
-Main_Psignal_Folder = 'C:\Users\KanoldLab\Google Drive\PsignalData\KSS';
+Main_Psignal_Folder = 'C:\Users\Kelson\Google Drive\PsignalData\KSS';
 
 daily_plot_flag = 1;
 weekly_plot_flag = 1;
 resultsAll ={};
 %% input
-if ~exist('toPlot','var');toPlot = 'All';end
+if ~exist('toPlot','var');toPlot = 'Totals';end
 if strcmp(toPlot,'Totals');daily_plot_flag = 0; end 
 
 if ~exist('animal_ID','var')|| isempty(animal_ID)
@@ -143,7 +143,7 @@ resultsAll.Combined = combinedResults;
 resultsAll.PsignalData = psigAll;
 resultsAll.AnimalInfo = AnimalInfo;
 resultsAll.LastWeekPerformance = LastFiveResults; 
-out_folder = 'Z:/TNDetectionAnalysis';
+out_folder = 'Z:/Kelson/TNDetectionAnalysis';
 
 out_path = fullfile(out_folder,animal_ID);
 

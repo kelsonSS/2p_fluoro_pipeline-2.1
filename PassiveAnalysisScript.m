@@ -7,7 +7,7 @@
     '\\Vault3\Data\Kelson\Analyzed\n242\18-07-06\ToneNoiseNaive'};
 
 
-All_FRA_list =dir('//vault3/data/Kelson/analyzed/**/fra*/Fluorescence.mat')
+All_FRA_list =dir('//vault3/data/Kelson/analyzed/**/*fra*/Fluorescence.mat')
 All_FRA_list = unique({All_FRA_list.folder})';
 
 FRA_list_noise = All_FRA_list(cellfun(@(X) ~isempty(X),...
