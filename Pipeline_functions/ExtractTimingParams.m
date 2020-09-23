@@ -67,10 +67,11 @@ end
         
         
         ThorFile = fullfile(LocalPath, 'Episode001.h5');
-        if exist(ThorFile,'file')
+        if ~exist(ThorFile,'file')
             % ThorImage >3.1
-            if  ~exist(fullfile(LocalPath, 'Episode001.h5'),'file')
-                copyfile( ThorFile , fullfile(LocalPath) )
+            ThorOrigPath = fullfile(input.inpath,input.expname, 'Episode001.h5');
+            if  exist(ThorOrigPath,'file')
+                copyfile(fullfile(input.inpath,input.expname), ThorFile )
                 
             end
             

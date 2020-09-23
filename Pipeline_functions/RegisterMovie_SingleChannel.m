@@ -84,7 +84,7 @@ for chunk_count = 1:chunks
 %% Generate motion offsets using DFT
 %% FIND SEGMENT OF MOVIE WITH HIGH CORR VALUES
 
-txty = calcDftOffsets(IMG,input.subpixegfact,99);
+txty = calcDftOffsets(IMG,input.subpixegfact);
 txty= round(txty);
 
 % winsize = 99; 

@@ -13,6 +13,12 @@
                 mkdir(new_path)
             end 
             
+            % move pupil Data
+            
+            if exist(fullfile(old_path,'pupil'),'dir')
+                     copyfile(fullfile(old_path,'pupil'),...
+                     fullfile(new_path,'pupil'))
+            end 
             % Copy psignalfile 
             
             copyfile(fullfile(old_path,psignalfile_name),...

@@ -427,7 +427,7 @@ end
             nanmean(cellbrightness(cellbrightness<0))],'b')
         plot([aa(1) aa(2)],[3 3],'k--')
         ylabel([{'Cell brightness'};{'(% re. neuropil background)'}])
-        title([input.path input.expname{e}],'Interpreter','none')
+        title([input.path],'Interpreter','none')
         xlabel('Cell #')
         muIMG = squeeze(nanmean(greenChanImg,3))';
         AllPosCells=0;
