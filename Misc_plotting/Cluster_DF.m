@@ -1,5 +1,4 @@
-function [out_clusters,neuron_id,avg_trace,...
-          var_explained,cluster_centroids] = Cluster_DF(DF,varargin) 
+function [Out] = Cluster_DF(DF,varargin) 
 %%% [clusters,DF] = Cluster_DF(DF,varargin) returns the cluster identity
 %%% [clusters] and average cluster Fluorescence (avg_trace) for each cluster.
 %%% Specifically, avg_trace is a cell containing the mean and STD of each cluster
@@ -28,32 +27,10 @@ if nargin>2, max_clust = varargin{2}; else, max_clust = 20;end
 if nargin>3, norm_mode = varargin{3};else, norm_mode = 'normalized';end    
 if nargin>4, centroids = varargin{4};end ;
 
-if isstruct(DF)
-    DF.DFF2 = squeeze(nanmean(DF.DFF,2));
-else
-    temp = DF;
-    clear DF
-    DF = struct('DFF',temp, 'DFF2', squeeze(nanmean(temp,2)) )
-    clear temp
-end
-
- %%  normalizing to absolute max 
-switch norm_mode
-    case 'normalized'
-        DFF_ab_max = max(abs(DF.DFF2));
-         DF.DFF_norm = DF.DFF2./DFF_ab_max;
-
-%% normalizing to baseline corrected z-score (decide which one)
-    case 'Z-score'
-        DF.DFF_norm = squeeze(nanmean(DF.DFF_Z,2));
-      
-    otherwise
-        error('norm_mode must be set to normalized or Z-score')
-end 
-
-  neuron_id =1:size(DF.DFF_norm,2);
-
+DF = Munge_DF(DF,norm_mode);
+DF.DFF_norm = DF.DFF_norm(1:end-2,:);
 % prealloate output structure
+neuron_id =1:size(DF.DFF_norm,2)
 out_clusters = [1:length(neuron_id)]';
 out_clusters(:,2) = 0;
 
@@ -153,6 +130,14 @@ clear C
 
 %%  plotting
 figure
+
+
+if size(test_DFF,1) > 120
+    style = 'noise';
+else
+    style = 'tones';
+end
+
 for clust_num = 1:m 
     
 
@@ -165,11 +150,6 @@ for clust_num = 1:m
     hold on
     
     
-    if size(test_DFF,1) > 90
-        style = 'noise';
-    else 
-        style = 'tones';
-    end 
     
     style_cluster_plot(aa,style)
 end 
@@ -185,19 +165,66 @@ for clust_num = 1:m
     aa = axis;
     hold on
     
-    
-    if size(test_DFF,1) > 90
-        style = 'noise';
-    else 
-        style = 'tones';
-    end 
-    
     style_cluster_plot(aa,style)
+end
+% outputs = 
+Out.Clusters = out_clusters;
+Out.Neuron = neuron_id;
+Out.ClusterAvg = avg_trace;
+Out.VarExplained = var_explained;
+Out.Centroids = cluster_centroids;    
+
+
+function DF =  Munge_DF(DF,norm_mode)
+
+if iscell(DF) % if Cell iterate over cells to get full index 
+    temp = DF;
+    clear  DF
+    DF = struct()
+    DF.DFF_norm = []; 
+    DF.Clean_idx = [];
+    DF.active = [];
+    for ii =1:length(temp)
+        expt = Munge_DF(temp{ii},norm_mode );
+        % append fields to master list 
+        DF.DFF_norm = cat(2,DF.DFF_norm, expt.DFF_norm  );
+        DF.Clean_idx = cat(1,DF.Clean_idx,temp{ii}.Clean_idx);
+        DF.active = cat(1,DF.active,temp{ii}.active);
+    end 
+ clear temp 
+
+else 
+if isstruct(DF)
+    DF.DFF2 = squeeze(nanmean(DF.DFF,2));
+else
+    temp = DF;
+    clear DF
+    DF = struct('DFF',temp, 'DFF2', squeeze(nanmean(temp,2)) )
+    clear temp
+end
+
+ %%  normalizing to absolute max 
+
+ switch norm_mode
+    case 'normalized'
+        DFF_ab_max = max(abs(DF.DFF2));
+         DF.DFF_norm = DF.DFF2./DFF_ab_max;
+
+%% normalizing to baseline corrected z-score (decide which one)
+    case 'Z-score'
+        DF.DFF_norm = squeeze(nanmean(DF.DFF_Z,2));
+      
+    otherwise
+        error('norm_mode must be set to normalized or Z-score')
+ end 
 end 
+
+
+
+
+
     
-
-
-
+    
 
 
 
@@ -216,7 +243,7 @@ function style_cluster_plot(aa,style)
         plot([30 30], [aa(3) aa(4)],'g--')
         plot([60 60], [aa(3) aa(4)],'g--')
         axis tight
-        xlim([0 90])
+        % xlim([0 90])
     end 
 
     
