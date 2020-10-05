@@ -54,7 +54,7 @@ end
     end 
     %% get actual number of frames in registered file 
     
-    fh = fopen( fullfile(LocalPath,'greenchannelregistered.raw'));
+    fh = fopen( fullfile(LocalPath,'greenchannel.raw'));
     if fh == -1
         return
     end 
@@ -64,20 +64,26 @@ end
         
         
         %% extraction    
-        
-        
-        ThorFile = fullfile(LocalPath, 'Episode001.h5');
+         ThorFile = fullfile(LocalPath, 'Episode001.h5');
+      
+       
         if ~exist(ThorFile,'file')
-            % ThorImage >3.1
+           
             ThorOrigPath = fullfile(input.inpath,input.expname, 'Episode001.h5');
-            if  exist(ThorOrigPath,'file')
-                copyfile(fullfile(input.inpath,input.expname), ThorFile )
-                
+        
+            if exist(ThorOrigPath,'file')
+                 
+                filePreparation(input.expname,input.inpath,input.savepath)
+               
             end
             
-            TimingInfo = getTimingInfo_H5(ThorFile, PsignalFile, fps,xml,num_frames_actual,debug)
-     
             
+        end
+        
+        if exist(ThorFile,'file')
+             % ThorImage >3.1
+            TimingInfo = getTimingInfo_H5(ThorFile, PsignalFile, fps,xml,num_frames_actual,debug);
+  
         else
             
             ThorFile = fullfile(LocalPath ,'timing.txt' );
@@ -131,10 +137,53 @@ if debug
     end 
 end 
 
-% save the timing file 
 
-%save(TimingFile,'TimingInfo')
+
+% save the timing file 
+%% check if 3d Movie
+if xml.totalZplanes > 1
+    Extract3DTimingInfo(TimingInfo,xml,num_frames_actual,TimingFile)
+else
+save(TimingFile,'TimingInfo')
 %clear TimingInfo
 end
 
+end 
+
+
+
+
+
+function Extract3DTimingInfo(TimingInfoAll,xml,num_frames,out_path)
+
+% initialize variables
+num_planes = xml.totalZplanes;
+volumes = ceil(num_frames/ num_planes) ;
+PlaneID = repmat([1:num_planes]',volumes,1);
+PlaneID = PlaneID(1:num_frames);
+num_trials = size(TimingInfoAll.FrameIdx,1);
+
+%%
+for plane_idx = 1:num_planes
+   % initialize plane timing info
+   TimingInfo = struct();
+   TimingInfo.tarFnums = ceil(TimingInfoAll.tarFnums/ num_planes) ;
+   
+   %% extract plane timing info
+   PlaneTimes = find(PlaneID == plane_idx);
+    for trial_idx = 1:num_trials
+        
+        % find the plane that the trial starts on
+        trial_frames = TimingInfoAll.FrameIdx(trial_idx,:);
+        
+        start_idx = find(PlaneTimes >= trial_frames(1),1 );
+        end_idx = start_idx + TimingInfo.tarFnums;
+        TimingInfo.FrameIdx(trial_idx,:) = [start_idx, end_idx];
+        TimingInfo.SeqEndVals(trial_idx) = end_idx;
+        
+        
+    end 
+      %% save 
+    plane_out_path = [out_path(1:end-4),num2str(plane_idx),'.mat'];
+    save(plane_out_path,'TimingInfo')
 end 
