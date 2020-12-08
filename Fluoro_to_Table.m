@@ -14,7 +14,6 @@ function Out = Fluoro_to_Table(dataDir,Behavior)
 %
 % if dataDir is needed try get_paths_interactive
 
-
 % init
 
 if ~exist('Behavior','var')
@@ -23,9 +22,6 @@ end
 
 Vec_DFF_all = [];           % main data structure 
 ActiveTable = table();      % activity data structure 
-total_trials = 320;         % used for automated checking
-    
-noise_settings = [-20 1 4];   % used for automated checking 
 expt_list = [];
 curr_expt = 1;
 
@@ -35,22 +31,34 @@ else
     num_expts = length(dataDir);
 end 
 
+if isstruct(dataDir)
+  for ii = 1:length(dataDir)
+      dataDirtemp{ii} = fullfile(dataDir(ii).folder,dataDir(ii).name);
+  end
+  dataDir = dataDirtemp;
+  clear dataDirtemp
+    
+end 
 
+handles_all ={};
+planeID = [];
 for expt_id = 1:num_expts
 
 
+    
 %[Cells_path,Main_path]  = uigetfile(Main_path,'Select Cell Definitions');
 if class(dataDir) == 'char'
     Main_path = dataDir;
-else
+elseif iscell(dataDir)
     Main_path = dataDir{expt_id};
-end 
+end
 
 if isempty(Main_path)
     continue
-end 
+end
+
 % Paths creation
-Cell_file = 'CellDefinitions.mat';
+
 Fluo_file = 'Fluorescence.mat';
 
 dir_t = dir([Main_path] );
@@ -68,46 +76,85 @@ else
 Psignal_file =   [PsigPath,PsigName];
 end 
 clear dir_t
- 
-%% Cell ID handling
-CellID{expt_id} = load(fullfile(Main_path,Cell_file));
-Expected_Neurons = size(CellID{expt_id}.smRoiBoundaries,1);
 
-if length(CellID)> expt_id;
-    pause
+%% XML handling 
+XML = get_options_from_xml(fullfile(Main_path,'Experiment.xml'));
+if ~isfield(XML, 'totalZplanes')
+    XML.totalZplanes = 1;
 end 
 
 %% Psignal Handling
-load(fullfile(Main_path,Fluo_file))
 handles = WF_getPsignalInfo(fullfile(Main_path,Psignal_file));
+total_trials =  size(handles.Trialindicies,1);
+
+%% Fluorescence Handling & Cell ID handling
 
 
-FCellCorrected = Output.FCellCorrected;
+
+fluoro_files = dir(fullfile(Main_path,'Fluorescence*'));
+fluoro_names = {fluoro_files.name};
+
+celldef_files = dir(fullfile(Main_path,'CellDefinitions*'));
+celldef_names = {celldef_files.name};
+FCellCorrected = [];
+
+for plane_idx = 1:length(fluoro_names)
+    
+    load(fullfile(Main_path,fluoro_names{plane_idx}))
+    % get plane number
+     plane_number = strrep(fluoro_names{plane_idx}, 'FluorescenceZ','');
+     plane_number = str2num(plane_number(1));
+     if isempty(plane_number)
+         plane_number = 1;
+     end 
+     
+     %Process planes 
+    curr_plane = Output.FCellCorrected;
+    curr_plane_ID = ones(size(curr_plane,3),1) * plane_number ;
+    
+    
+    
+    planeID = cat(1,planeID, curr_plane_ID);
+    FCellCorrected = cat(3,FCellCorrected,curr_plane);
+    % proccess celldef 
+    CellDefinitions{expt_id}(plane_idx) = load(fullfile(...
+                              Main_path,celldef_names{plane_idx}));
+   
+    
+
+end 
+
 trialdur = size(FCellCorrected,1);
 trials = size(FCellCorrected,2);
 Neurons  = size(FCellCorrected,3);
 
+% if trials ~= total_trials
+%     continue
+% end 
+
 fprintf('Expt %d of %d: %d frames x %d trials x %d neurons \n',...
-          expt_id, num_expts, trialdur,trials, Neurons);
- 
+          expt_id, num_expts, trialdur,trials, Neurons); 
       
-if Expected_Neurons ~= Neurons
-    warning('Neuron mistmatch on expt!')
-end 
+
 %% Tests 
 % ensure that trials have the expected duration 
- if  (trialdur ~= (handles.PreStimSilence + handles.PrimaryDuration+...
-           handles.PostStimSilence) * handles.pfs);
-       continue 
-       
- end 
-     
-%   if  trials ~= total_trials
-%       continue
-%   end 
+%  if  trialdur ~= floor( (handles.PreStimSilence + handles.PrimaryDuration+...
+%            handles.PostStimSilence) * handles.pfs/ XML.totalZplanes) ;
+%        continue 
+%        
+%  end 
+
+if any(size(FCellCorrected) == 0)
+    continue
+end
+
+
+   if  trials < total_trials
+       total_trials = trials;
+   end 
 %        
 
-handles_all{expt_id} = handles; 
+handles_all{end+1} = handles; 
           
       
       
@@ -121,8 +168,8 @@ uLevels = handles.uLevels;
   % strip non-numeric and convert to num
 % uLevels = cellfun(@(x) str2double(x([regexp(x,'[-0-9]')])),uLevels);
 uLevels = sort(uLevels,'descend');
-Freqs   = handles.Freqs  ;
-Levels  = handles.Levels;
+Freqs   = handles.Freqs(1:total_trials);
+Levels  = handles.Levels(1:total_trials);
 Levels(Levels>100) = inf;
 uLevels(uLevels>100) = inf;
 FreqLevelOrder = table(Freqs,Levels);
@@ -130,28 +177,32 @@ FreqLevelOrder = table(Freqs,Levels);
 FreqLevels = unique(FreqLevelOrder);
 FreqLevels = sortrows(FreqLevels, {'Freqs','Levels'},{'ascend','descend'});
 
-
-
+if ~ isfield(handles,'BackgroundNoise') || handles.BackgroundNoise(1) == -99
+    first_sound = handles.PreStimSilence;
+else 
+    first_sound  = min( handles.PreStimSilence,handles.BackgroundNoise(2) );
+end 
 numtrials = size(FreqLevelOrder,1);
 numreps = floor(numtrials / uL / uF);
-
+first_sound_time = min(handles.PreStimSilence, handles.BackgroundNoise(2));
+baseline_frames = floor(first_sound* handles.pfs / XML.totalZplanes);
     
 %% red channel handling 
-RedCells_file = 'RedNeuronNumber.mat';
-if exist(fullfile(Main_path,RedCells_file),'file')
-  RedCells = load(fullfile(Main_path,RedCells_file));
-  RedCells = RedCells.n_neurons;
-else 
-    RedCells  = 0;
-end 
-
-if ~exist('Vec_DFF','var')
-    RedCellID = [1:RedCells];
-else 
-     TotalNeurons = size(Vec_DFF,3) ;
-    RedCellID = [RedCellID, (1:RedCells)+TotalNeurons];
-end
- 
+% RedCells_file = 'RedNeuronNumber.mat';
+% if exist(fullfile(Main_path,RedCells_file),'file')
+%   RedCells = load(fullfile(Main_path,RedCells_file));
+%   RedCells = RedCells.n_neurons;
+% else 
+%     RedCells  = 0;
+% end 
+% 
+% if ~exist('Vec_DFF','var')
+%     RedCellID = [1:RedCells];
+% else 
+%      TotalNeurons = size(Vec_DFF,3) ;
+%     RedCellID = [RedCellID, (1:RedCells)+TotalNeurons];
+% end
+%  
  
 
 
@@ -162,8 +213,8 @@ end
   % during the stimulus will it be significant 
 
   % define behaviorally relevant timepoints
-  soundon = handles.PreStimSilence*handles.pfs;
-  soundoff = soundon + handles.PrimaryDuration * handles.pfs;
+  soundon = floor(handles.PreStimSilence*handles.pfs/ XML.totalZplanes);
+  soundoff = floor(soundon + handles.PrimaryDuration * XML.totalZplanes);
   
   
   
@@ -171,11 +222,13 @@ end
 %% calulate DF/F for each Freq/Level pair for all neurons
 
 
-
 % baseline correction
 
-B_Vec = repmat(nanmean(FCellCorrected(1:30,:,:)),[trialdur,1,1]);
+B_Vec = repmat(nanmean(FCellCorrected(1:baseline_frames,:,:)),[trialdur,1,1]);
 Vec_DFF = (FCellCorrected -B_Vec)./B_Vec * 100;
+%
+%Sort DFF by Freq/Level Combination, shorten if necessary
+Vec_DFF = Vec_DFF(:,fl_ind,:);
 
 % smoothing
 
@@ -183,33 +236,31 @@ gausfilt = fspecial('gaussian',[5,1],4);
 Vec_DFF = imfilter(Vec_DFF,gausfilt);
 
 % cut trials if too many trials occured
-if  numtrials> total_trials
-    if size(Vec_DFF_all) ~= 0
-        nt = size(Vec_DFF_all,2);
-    else 
-        nt = total_trials;
-        Vec_DFF  = Vec_DFF(:,1:total_trials,:); 
-        FreqLevelOrder = FreqLevelOrder(1:nt,:);
-        Freqs = Freqs(1:nt);
-        Levels = Levels(1:nt);
-end 
-end  
-%sorting 
+% if  numtrials > total_trials
+%     if size(Vec_DFF_all) ~= 0
+%         nt = size(Vec_DFF_all,2);
+%     else 
+%         nt = total_trials;
+%         Vec_DFF  = Vec_DFF(:,1:total_trials,:); 
+%         FreqLevelOrder = FreqLevelOrder(1:nt,:);
+%         Freqs = Freqs(1:nt);
+%         Levels = Levels(1:nt);
+% end 
+% end  
 
-[FreqLevelOrder, fl_ind]= sortrows(FreqLevelOrder, {'Freqs','Levels'},{'Ascend','Descend'});
-try
-Vec_DFF = Vec_DFF(:,fl_ind,:);
-catch
-   continue
-end 
-  
+
+%fl_idx2 = FreqLevelOrder.Levels < 99;
+%Vec_DFF = Vec_DFF(:,fl_idx2,:);
+%FreqLevelOrder = FreqLevelOrder(fl_idx2,:);
+
+
   active = zeros(Neurons,1);
    for ii = 1:Neurons
   N = Vec_DFF(:,:,ii);
   N=N';
   
   
-  [~,p]=ttest2(nanmean(N(:,1:soundon),2),nanmean(N(:,soundon+1:soundoff),2));
+  [~,p]=ttest2(nanmean(N(:,1:baseline_frames),2),nanmean(N(:,soundon+1:end),2));
   active(ii,1) = p;
    end 
    % find significantly active neurons  number indicates the number of
@@ -221,93 +272,93 @@ end
    active(active <=.05) = 1;  
    active(active < 1  ) = 0;     
      
-%    %% anova based activity
+%    %% old based activity
 %    % use the fact that we presorted vec_DFF to reshape by condition
 %    % ex. 10 repeats per trials 32 conditions (4 levels, 8 freqs)
 %    
-%    
-%   
-%    FLO =  table2array(FreqLevelOrder);
-%    FLO = sum(FLO,2);
-%    counts =histcounts(FLO,unique(FLO));
-%    
-%        DFF_conditions = [];
-%       rep_mode = mode(counts);
-%       if rep_mode > 10
-%           rep_mode = 10;
-%       end 
-%       condition = 1;
-%     for freq = 1:uF
-%         for lvl = 1:uL
-%          %  fprintf('Level %d Freq %d \n', uLevels(lvl),uFreqs(freq))
-%            FL_idx=  FreqLevelOrder{:,1} == uFreqs(freq) &... 
-%            FreqLevelOrder{:,2} == uLevels(lvl);
-%            
-%             Vec_DFF_Temp = Vec_DFF(:,FL_idx,:);
-%             % in case trials have different reps
-%             try
-%             Vec_DFF_Temp = Vec_DFF_Temp(:,1:rep_mode,:);
-%             catch
-%             end
-%           %  plot(Vec_DFF_Temp(:,:,1))
-%             baseline = squeeze(nanmean(Vec_DFF_Temp(1:30,:,:),2));
-%             after_onset = squeeze(nanmean(Vec_DFF_Temp(soundon:soundoff+10,:,:),2));
-%             
-%             for nn = size(Vec_DFF_Temp,3)
-%                 df_by_level_sig_temp(lvl,freq,nn) = ttest2(baseline(:,nn),after_onset(:,nn));
-%             end
-%             
-%              df_by_level_temp(lvl,freq,:) = ...
-%              max(after_onset);
-%          
-%             df_by_level_offset_temp(lvl,freq,:) =...
-%                  nanmean(nanmean(...
-%                  Vec_DFF_Temp(soundoff:soundoff+1*handles.pfs ,:,:),2));
-%              
-%             DFF_conditions(:,:,condition,:) = Vec_DFF_Temp;
-%             
-%              clear Vec_DFF_Temp 
-%              condition = condition+1;
-%         
-%         end
-%     end 
-%    
-%    if ~exist('df_by_level','var')
-%        df_by_level = [];
-%        df_by_level_sig = [];
-%        df_by_level_offset= [];
-%        
-%    end 
-%    
-%    
-%  
-%    df_by_level{expt_id} = df_by_level_temp;
-%    df_by_level_sig{expt_id} = df_by_level_sig_temp;
-%    df_by_level_offset{expt_id} = df_by_level_offset_temp;
-%    clear df_by_level_temp
-%    clear df_by_level_sig_temp
-%    clear df_by_level_offset_temp
-%    
-%    
-% DFF_conditions_mu = squeeze(mean(DFF_conditions(soundon:soundoff,:,:,:)));
-% DFF_conditions_mu_offset = squeeze(mean(DFF_conditions(soundoff:end,:,:,:)));
-% %    % initialize anova based signifiance list 
-%     active2 = zeros(1,Neurons);
-%     for ii = 1:Neurons 
-%         active2(1,ii) = anova1(DFF_conditions_mu(:,:,ii)',[],'off');
-%         active_offset(1,ii)= anova1(DFF_conditions_mu_offset(:,:,ii)',[],'off');
-%     end 
-%     
-%     active2_idx = active2<.01;
-%     offset_idx = active_offset <.01;
-% if ~(exist('anova_idx','var'))
-%     anova_idx = [];
-%     anova_offset_idx = [];
-% end
-%     anova_idx = cat(2,anova_idx,active2_idx) ;
-%     anova_offset_idx = cat(2,anova_offset_idx,offset_idx); 
-% %    DFF_cleaned = Vec_DFF(:,:,active2_idx);
    
+  
+   FLO =  table2array(FreqLevelOrder);
+   FLO = sum(FLO,2);
+   counts =histcounts(FLO,unique(FLO)); % known bug, last bin will have twice the data
+   
+       DFF_conditions = [];
+      rep_mode = mode(counts);
+      if rep_mode > 10
+          rep_mode = 10;
+      end 
+      condition = 1;
+    for lvl = 1:uL
+        for freq = 1:uF
+         print_len = fprintf('Level %d Freq %d \n', uLevels(lvl),uFreqs(freq));
+           FL_idx=  FreqLevelOrder{:,1} == uFreqs(freq) &... 
+           FreqLevelOrder{:,2} == uLevels(lvl);
+           
+            Vec_DFF_Temp = Vec_DFF(:,FL_idx,:);
+            % in case trials have different reps
+            try
+            Vec_DFF_Temp = Vec_DFF_Temp(:,1:rep_mode,:);
+            catch
+            end
+          %  plot(Vec_DFF_Temp(:,:,1))
+            baseline = squeeze(nanmean(Vec_DFF_Temp(1:baseline_frames,:,:),2));
+            after_onset = squeeze(nanmean(Vec_DFF_Temp(soundon:soundoff,:,:),2));
+            
+            for nn = size(Vec_DFF_Temp,3)
+                df_by_level_sig_temp(lvl,freq,nn) = ttest2(baseline(:,nn),after_onset(:,nn));
+            end
+            
+             df_by_level_temp(lvl,freq,:) = ...
+             nanmean(after_onset);
+         
+             df_by_level_offset_temp(lvl,freq,:) =...
+                  nanmean(nanmean(...
+                  Vec_DFF_Temp(soundoff:soundoff+1*handles.pfs ,:,:),2));
+              
+             DFF_conditions(:,:,condition,:) = Vec_DFF_Temp;  
+            condition = condition+1;
+            fprintf(repmat('\b',1,print_len))
+         clear Vec_DFF_Temp 
+        end
+    end 
+   
+   if ~exist('df_by_level','var')
+       df_by_level = [];
+       df_by_level_sig = [];
+       df_by_level_offset= [];
+       
+   end 
+   
+   
+  
+    df_by_level{expt_id} = df_by_level_temp;
+    df_by_level_sig{expt_id} = df_by_level_sig_temp;
+    df_by_level_offset{expt_id} = df_by_level_offset_temp;
+    clear df_by_level_temp
+    clear df_by_level_sig_temp
+   clear df_by_level_offset_temp
+%    
+%    
+ DFF_conditions_mu = squeeze(mean(DFF_conditions(soundon:soundoff,:,:,:)));
+ DFF_conditions_mu_offset = squeeze(mean(DFF_conditions(soundoff:end,:,:,:)));
+ %    % initialize old based signifiance list 
+     active2 = zeros(1,Neurons);
+     active_offset = zeros(1,Neurons);
+     for ii = 1:Neurons 
+         active2(1,ii) = anova1(DFF_conditions_mu(:,:,ii)',[],'off');
+         active_offset(1,ii)= anova1(DFF_conditions_mu_offset(:,:,ii)',[],'off');
+     end 
+     
+     active2_idx = active2<.01;
+     offset_idx = active_offset <.01;
+ if ~(exist('anova_idx','var'))
+     anova_idx = [];
+     anova_offset_idx = [];
+ end
+     anova_idx = cat(2,anova_idx,active2_idx) ;
+     anova_offset_idx = cat(2,anova_offset_idx,offset_idx); 
+    DFF_cleaned = Vec_DFF(:,:,active2_idx);
+  
 %% Clean-up 
 
  % create activetable 
@@ -334,7 +385,7 @@ else  % passive condition
 try
 Vec_DFF_all = cat(3,Vec_DFF_all,Vec_DFF);
 catch
-    
+    continue
 end 
 
 end 
@@ -345,7 +396,7 @@ end
                   ./ nanstd(nanstd(Vec_DFF_all)));
  % baseline correction
  try
- B_DFF_Z = repmat(nanmean(DFF_Z(1:30,:,:)),[trialdur,1,1]);  
+ B_DFF_Z = repmat(nanmean(DFF_Z(1:baseline_frames,:,:)),[trialdur,1,1]);  
  DFF_Z =  DFF_Z - B_DFF_Z ;       
  catch 
      continue
@@ -356,7 +407,7 @@ end
  % silence is less than 1. a noisy trial often has 10-100times the variance
  % of a normal trial which makes it easy to spot in standard deviation
  % before sound onset
- Clean_idx = squeeze(max(abs(nanstd(Vec_DFF_all(1:25,:,:),[],2))) < 25 ); 
+ Clean_idx = squeeze(max(abs(nanstd(Vec_DFF_all(1:baseline_frames-1,:,:),[],2))) < 25 ); 
  
  DFF2 = nanmean(Vec_DFF_all,2);
 
@@ -366,9 +417,9 @@ DFF_normalized = Vec_DFF_all./DFF_ab_max;
 % append Expt_list 
 new_ids = ones( 1 + n_end - n_start  ,1)* curr_expt;
 assert(length(new_ids) == Neurons);
- expt_list = [ expt_list ; new_ids];
+expt_list = [ expt_list ; new_ids];
 
- curr_expt = curr_expt+1;
+curr_expt = curr_expt+1;
  
  % append datapaths 
  if ~exist('good_dirs','var')
@@ -381,21 +432,21 @@ assert(length(new_ids) == Neurons);
   end 
  
 % create class_Idx
-% Classes = {'Noise','Tone_on','Tone_off','Noise_off'};
-% [~,onsets]  = max(squeeze(DFF2));
+ Classes = {'Inhbited','Noise','Tone_on','Tone_off','Noise_off'};
+ [~,onsets]  = max(squeeze(DFF2));
 % 
+ Inhibited_idx = onsets <=30;
+ Noise_idx = (onsets > 30 & onsets <= 60) * 2;
+ Tone_idx  = (onsets > 60 & onsets <= 90) * 3;
+ Offset_idx = (onsets > 90 & onsets<= 120) * 4;
+ Off_idx = (onsets > 120) * 5 ;
 % 
-% Noise_idx = (onsets > 30 & onsets <= 60) * 1;
-% Tone_idx  = (onsets > 60 & onsets <= 90) * 2;
-% Offset_idx = (onsets > 90 & onsets<= 120) * 3;
-% Off_idx = (onsets > 120) * 4 ;
-% 
-% Class_idx = Noise_idx + Tone_idx + Offset_idx + Off_idx;
-% Class_idx = Class_idx'; 
+ Class_idx =  Inhibited_idx + Noise_idx + Tone_idx + Offset_idx + Off_idx;
+ Class_idx = Class_idx'; 
 
  
 
- 
+ fprintf('%d neurons, %d expt-list,\n', length(expt_list),size(Vec_DFF_all,3))
 
 end 
 
@@ -410,16 +461,18 @@ Out.DFF_norm = DFF_normalized;
 Out.active = ActiveTable;
 Out.FreqLevelOrder = FreqLevelOrder;
 Out.experiment_list = expt_list;
-Out.RedCellID = RedCellID;
+Out.PlaneID = planeID;
+%Out.RedCellID = RedCellID;
 Out.df_by_level = df_by_level;
-%Out.df_by_level_sig = df_by_level_sig;
-%Out.df_by_level_offset = df_by_level_offset;
-Out.CellID = CellID;
+Out.df_by_level_sig = df_by_level_sig;
+Out.df_by_level_offset = df_by_level_offset;
+Out.CellID = CellDefinitions;
 Out.DataDirs = good_dirs;
-% Out.Class_idx = Class_idx;
-% Out.Classes = Classes;
-%Out.anova = anova_idx;
-%Out.Offset = anova_offset_idx;
+Out.nplanes = XML.totalZplanes;
+Out.Class_idx = Class_idx;
+Out.Classes = Classes;
+Out.anova = anova_idx;
+Out.Offset = anova_offset_idx;
 Out.handles =handles_all;
 catch
    Out = []
