@@ -1,16 +1,23 @@
-function [BD,P,Levels] = BandwidthAnalysis(DF,Type,Classes,Lvl)
+function [BD,P,Levels] = BandwidthAnalysis(DF,Type,Classes,Sig,Lvl)
 
-%  DF is a df_by_level (LevelX Freq X neuron) object and returns the bandwidth for each
+%  DF is data structure created by  Fluoro_to_table a 
+%  containing DF.df_by_level (LevelX Freq X neuron) object
+%  and returns the bandwidth for each
 %  neuron as a level X neuron object.
 
 % types 
+% Significant- get sum of all sifnificantly responding responses ( note
+% significance should be calculated in DF.df_by_level_sig
 % BRFS - 'binary receptive field sum'
 %
 % RFS -'receptive field sum'
 %
-%
 
-if ~exist('Lvl', 'var'); Lvl = .75; end
+% Sig = 'Pos'- look at excitatory responses(default)
+% Sig = 'Neg'- look at Inhibitory responses
+if ~exist('Sig','var');Sig = 'Pos';end  % 
+
+if ~exist('Lvl', 'var'); Lvl = .5; end
 
 if ~ exist('Type','var'); Type = 'BRFS'; end 
 
@@ -40,18 +47,25 @@ end
     
     try
         df_by_level = DF.df_by_level;
+        df_by_level_sig = DF.df_by_level_sig;
         if  iscell(df_by_level)
             df_by_level = [];
+            df_by_level_sig = []
             for ii = 1:length(DF.df_by_level);
                 try
                 df_by_level = cat(3,df_by_level,DF.df_by_level{ii}(1:rc(1),1:rc(2),:));
+                df_by_level_sig = cat(3,df_by_level_sig,DF.df_by_level_sig{ii}(1:rc(1),1:rc(2),:));
                 catch
-                end ;
+                end 
             end
-        end
-    df_by_level = abs(df_by_level);    
+        end   
         
-        
+        df_by_level = df_by_level.* df_by_level_sig;
+        if strcmp(Type, 'Significant')
+            df_by_level = df_by_level_sig;
+            Type = 'BRFS'
+        end 
+            
         
         
     catch
@@ -66,18 +80,18 @@ end
       for Class = 1:length(DF.Classes)
         Class_idx = DF.Class_idx == Class;
         final_idx = (active>0) & Class_idx;
-        BD{Class,1} = FindBandwidth(df_by_level(:,:,final_idx),Freqs,Lvl,Type,DF.Classes{Class});
+        BD{Class,1} = FindBandwidth(df_by_level(:,:,final_idx),Freqs,Lvl,Type,Sig,DF.Classes{Class});
         BD{Class,3} = DF.Classes{Class};
      end
      
     else
       DF = df_by_level(:,:,active>0);
-      BD{1,1} = FindBandwidth(DF,Freqs,Lvl,Type);
+      BD{1,1} = FindBandwidth(DF,Freqs,Lvl,Type,Sig);
       BD{1,3} = 'All'
     end 
   
    
-    if  strmatch(Type, 'interp')
+    if  strcmp(Type, 'interp')
         for class_idx = 1:size(BD,1)
             BD2{class_idx,1} = cellfun(@(X) max(X(:,2)-X(:,1)) , BD{class_idx,1});
             BD3{class_idx,1} = cellfun(@(X) sum(X(:,2)-X(:,1)) , BD{class_idx,1});
@@ -110,23 +124,58 @@ function BD = AnalyzeBandwidth(BD)
 end 
 
 
+function [DF,lvl_idx]= FindSigLevels(DF,Sig,Lvl)
+
+
+if ~strcmp(Sig,'Neg')
+    
+    if strcmp(Sig,'Pos')
+        DF(DF<0) = 0;
+    end 
+    m =  max(max(DF));
+    DF = DF./m;
+     lvl_idx = DF >= Lvl;
+elseif strcmp(Sig,'Neg')
+    DF(DF>0) =0 
+    m = min(min(abs(DF)))
+    DF = DF./m
+    % DF is in range -1 =0 
+    lvl_idx = abs(DF) >= Lvl;  
+end
+
+end 
 
 
 
 
-function BD = FindBandwidth(DF,Freqs,Lvl,Type,ClassName)
+function BD = FindBandwidth(DF,Freqs,Lvl,Type,Sig,ClassName)
 
 
 if ~exist('ClassName','var')
     ClassName = 'All'
 end 
 
-m =  max(max(abs(DF)));
-DF = DF./m;
+[DF, lvl_idx] = FindSigLevels(DF,Sig,Lvl);
 
-lvl_idx = DF > Lvl;
 
 switch Type
+    
+    case 'RFS'
+       BD =  squeeze(sum( DF .* lvl_idx,2));
+       figure   
+       imagesc(squeeze(mean(DF.* lvl_idx,3)))
+     title( sprintf('%s Average FRA',ClassName),'Interpreter','none')
+     if strcmp(Sig,'Neg') colormap('bone'); else colormap('hot'); end 
+    case 'BRFS'
+       BD = squeeze(sum(lvl_idx,2)); 
+       figure
+       imagesc(sum(lvl_idx,3) / sum(lvl_idx(:)) ) % normalized values
+       title( sprintf('%s Average FRA',ClassName),'Interpreter','none')
+       if strcmp(Sig,'Neg') colormap('bone'); else colormap('hot'); end 
+    
+    
+    
+    
     case 'interp'
         Freqs = Freqs(1:size(DF,2));
         Freqs_lg2 = log2(Freqs);
@@ -193,14 +242,7 @@ switch Type
         
         
         
-        
-    case 'RFS'
-       BD =  squeeze(sum( DF .* lvl_idx,2)); 
-    case 'BRFS'
-       BD = squeeze(sum(lvl_idx,2)); 
-       figure
-       imagesc(sum(lvl_idx,3))
-       title( sprintf('%s Average FRA',ClassName),'Interpreter','none')
+   
     otherwise
         errordlg('Illegal Type Keyword')
         return

@@ -43,17 +43,5 @@ BayesClassifierPassive(Passive2)
 
 
 %Passive GC
-GCanalTrialsModBalanced_TN(Passive2,'SNR')
-GCanalTrialsModBalanced_TN(Passive2,'Tones')
-GCanalTrialsModBalanced_TN(Passive2,'Noise')
-GCanalTrialsModBalanced_TN(Passive2,'Offset')
-GCanalTrialsModBalanced_TN(Passive2.datadir,'Off')
-
-GCanalTrialsModBalanced_TN(Aging2.DataDirs,'SNR')
-GCanalTrialsModBalanced_TN(Aging2.DataDirs,'Tones')
-GCanalTrialsModBalanced_TNzzzz(Aging2.DataDirs,'Noise')
-GCanalTrialsModBalanced_TN(Aging2.DataDirs,'Offset')
-GCanalTrialsModBalanced_TN(Aging2.DataDirs,'Off')
 
 % bayes 
-BayesClassiferPassive(Aging2,'Aging2')
