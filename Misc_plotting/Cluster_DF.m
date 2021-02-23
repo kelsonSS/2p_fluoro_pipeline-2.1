@@ -233,15 +233,20 @@ function style_cluster_plot(aa,style)
     
     plot([aa(1) aa(2)], [0 0 ] ,'k--')
     if style == 'noise'
-        plot([30 30], [aa(3) aa(4)],'r--')
-         plot([60 60], [aa(3) aa(4)],'g--')
-        plot([90 90], [aa(3) aa(4)],'g--')
-        plot([120 120], [aa(3) aa(4)],'r--')
+        plot([30 30], [aa(3) aa(4)],'k--')
+         plot([60 60], [aa(3) aa(4)],'b--')
+        plot([90 90], [aa(3) aa(4)],'b--')
+        plot([120 120], [aa(3) aa(4)],'k--')
+        plot([30 120], [aa(4) aa(4)],'k','LineWidth',5)
+        plot([60 90], [aa(4) aa(4)],'b','LineWidth',5)
         axis tight
         xlim([0 150])
+        
+        xticks([30,60,90,120])
+       %xticklabels({'Noise On','Tone On','Tone Off','Noise Off'})
     else 
-        plot([30 30], [aa(3) aa(4)],'g--')
-        plot([60 60], [aa(3) aa(4)],'g--')
+        plot([30 30], [aa(3) aa(4)],'b--')
+        plot([60 60], [aa(3) aa(4)],'b--')
         axis tight
         % xlim([0 90])
     end 

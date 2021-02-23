@@ -214,7 +214,7 @@ baseline_frames = floor(first_sound* handles.pfs / XML.totalZplanes);
 
   % define behaviorally relevant timepoints
   soundon = floor(handles.PreStimSilence*handles.pfs/ XML.totalZplanes);
-  soundoff = floor(soundon + handles.PrimaryDuration * XML.totalZplanes);
+  soundoff = floor(soundon + handles.PrimaryDuration*handles.pfs/ XML.totalZplanes);
   
   
   

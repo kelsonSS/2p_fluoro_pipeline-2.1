@@ -18,11 +18,18 @@ F_num = length(unique(FreqLevelOrder.Freqs));
 e_ls = TN.experiment_list;
 rep_mode = 10; % trials per unique condition
 n_frames = size(DFF,1);
-trials =size(DFF,2);
-neurons = size(DFF,3);
+n_trials =size(DFF,2);
 handles = TN.handles{1};
+
 soundon = handles.PreStimSilence * 30; % everything is 30FPS 
 soundoff = soundon + handles.PrimaryDuration * 30; 
+
+% if there is noise
+if handles.BackgroundNoise(1) ~= -99
+    soundon = min(soundon,handles.BackgroundNoise(2) * 30);
+    soundoff = max(soundoff,handles.BackgroundNoise(3) * 30);
+end 
+
  % rehape Frame X Repeat X Level X Frequency X Neuron 
 
 
@@ -42,8 +49,8 @@ for Expt = 1:Expt_num
    
     DFF_t = DFF(:,:,e_ls == Expt);
     a_t  = (active(e_ls == Expt) >= 1); % <= P.05 significance value 
-   DFF_T = DFF_t(:,:,a_t);
-    N_t = size(DFF_t,3);
+   DFF_t = DFF_t(:,:,a_t);
+    n_neurons = size(DFF_t,3);
 %   if isfield( TN,'handles')
 %         FLO{:,1} = TN.handles{Expt}.Freqs;
 %         FLO{:,2} = TN.handles{Expt}.Levels;
@@ -59,7 +66,7 @@ for Expt = 1:Expt_num
 %   end 
   
     % continue if  size  = 1 
-    if N_t <= 1 
+    if n_neurons <= 1 
          Corr{Expt} = nan;
     for Lvl = 1:L
     LCorr{Expt,Lvl} = nan;
@@ -87,9 +94,15 @@ for Expt = 1:Expt_num
             end
           %  plot(Vec_DFF_Temp(:,:,1))
             % baseline = squeeze(nanmean(Vec_DFF_Temp(1:30,:,:),2));
-           
-            DFF_mu(lvl,freq,:) = squeeze(nanmean(nanmean(Vec_DFF_Temp(soundon:soundoff,:,:),2)));
-            DFF_n_temp = squeeze(nanmean(Vec_DFF_Temp,1)) - squeeze(repmat(DFF_mu(lvl,freq,:),[rep_mode,1]));
+            % get mean response to this freq/Level to tones 
+            temp_mu =  squeeze(nanmean(nanmean(Vec_DFF_Temp(soundon:soundoff,:,:),2)));
+            DFF_mu(lvl,freq,:) =temp_mu;
+            DFF_n_temp = squeeze(...
+                       nanmean( Vec_DFF_Temp(soundon:soundoff,:,:),1));
+                    
+            DFF_n_temp = DFF_n_temp - squeeze(...
+                                               repmat( DFF_mu(lvl,freq,:),...
+                                                    [rep_mode,1] ) );      
             DFF_n2(lvl,freq,:,:) = DFF_n_temp;
             DFF_c (:,:,freq,lvl,:) = Vec_DFF_Temp;
               
@@ -108,10 +121,10 @@ for Expt = 1:Expt_num
     
     
     % subtract the mean for each sound/level to find residuals
-   % DFF_n2 = DFF_n2 - permute(repmat(DFF_mu,1,1,1,10),...
+   % DFF_n = DFF_n2 - permute(repmat(DFF_mu,1,1,1,10),...
    %                                  [4 2 1 3 ]);
                                  
-   % DFF_n2 = reshape(DFF_n2, 10 * 8 , 4, [] );           
+   % DFF_n2 = reshape(DFF_n2, 10 * 7 , 4, [] );           
     
   
     
@@ -122,8 +135,11 @@ for Expt = 1:Expt_num
     clear DF_flat
     for Lvl = 1:size(DFF_mu,1);
     LCorr{Expt,Lvl} = getCorrFromCov(cov(squeeze(DFF_mu(Lvl,:,:))));
-   % NCorr{Expt,Lvl}  = getCorrFromCov(cov(squeeze(DFF_n(:,Lvl,:))));
-    NCorr2{Expt,Lvl} = getCorrFromCov(cov(squeeze(DFF_n2(:,Lvl,:))));
+    %NCorr{Expt,Lvl}  = getCorrFromCov(cov(squeeze(DFF_n(:,Lvl,:))));
+    
+    NCorr2{Expt,Lvl} = getCorrFromCov( cov(...
+                reshape( DFF_n2(Lvl,:,:,:),...
+                         [] , n_neurons) ) );
     end 
  
  
@@ -137,9 +153,9 @@ end
 
 disp('Analyzing Noise Statistics')
 %[N_mu,N_std,N_CI,N_sig] = getCorrStatistics(NCorr,'Noise');
-[N_mu,N_std,N_CI,N_sig] = getCorrStatistics(NCorr2,'Noise2'); 
+[N_mu,N_std,N_CI,N_sig,N_corr_flat] = getCorrStatistics(NCorr2,'Noise2'); 
 disp('Analyzing Signal Statistics')
-[L_mu,L_std,L_CI,L_sig] = getCorrStatistics(LCorr,'Signal'); 
+[L_mu,L_std,L_CI,L_sig,L_corr_flat] = getCorrStatistics(LCorr,'Signal'); 
 %  Older version - Delete if above is running fine 
 %  LCorr_flat = cell2mat(cellfun(@(x)x(:),LCorr,'UniformOutput',0));
 %  NCorr_flat = cell2mat(cellfun(@(x)x(:),NCorr,'UniformOutput',0));
@@ -200,7 +216,7 @@ set(gca,'XTick',[1:4])
 set(gca,'XTickLabel',{'INF','+20','+10','0'})
 
 
-function [corr_mu,corr_std,corr_CI,corr_sig] =...
+function [corr_mu,corr_std,corr_CI,corr_sig,corr_flat] =...
                  getCorrStatistics(corrs,name)
     % this function takes the correlations and flattens them and extracts
     % the relevant statistics 
@@ -223,4 +239,4 @@ corr_sig = multcompare(stats,[],'off')
 
 
 
-            
+

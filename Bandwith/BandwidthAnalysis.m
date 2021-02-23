@@ -9,7 +9,7 @@ function [BD,P,Levels] = BandwidthAnalysis(DF,Type,Classes,Sig,Lvl)
 % Significant- get sum of all sifnificantly responding responses ( note
 % significance should be calculated in DF.df_by_level_sig
 % BRFS - 'binary receptive field sum'
-%
+
 % RFS -'receptive field sum'
 %
 
@@ -116,10 +116,12 @@ end
 
 
 function BD = AnalyzeBandwidth(BD)
-     for ii =  1:size(BD,1)
+        
+    if size(BD,1) > 1
+    for ii =  1:size(BD,1)
         BD{ii,2} = findSignficance(BD{ii,1});
-     end 
-
+    end 
+    end 
 
 end 
 
