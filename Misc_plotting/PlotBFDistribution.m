@@ -15,7 +15,7 @@ function freqs_prop = PlotBFDistribution(DF,lvl)
                 end 
             end
             
-   %df_by_level = df_by_level .* df_by_level_sig;
+   df_by_level = df_by_level .* df_by_level_sig;
    
    if size(df_by_level,1) > 1 % if there are multiple levels 
    

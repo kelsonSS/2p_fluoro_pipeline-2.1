@@ -1,10 +1,10 @@
-function Out = Fluoro_to_Table(dataDir,Behavior)
+function Out = Fluoro_to_Table(dataDir,Behavior_flag)
 % takes a cell of filepaths containing both an output file and a
 % psignal_file and creates two tables from them: a table cotaining all
 % neurons from that experiment sorted by freqeuency and level and a list 
 % statistically significant neurons
 
-% Behavior - If animals are actively performing we need to change the output
+% Behavior_flag - If animals are actively performing we need to change the output
 % structure of Vec_DFF to be Cells instead of a 3d Vector since there will
 % be a variable number of trials per experiment
 %
@@ -16,8 +16,8 @@ function Out = Fluoro_to_Table(dataDir,Behavior)
 
 % init
 
-if ~exist('Behavior','var')
-    Behavior = 0 ;
+if ~exist('Behavior_flag','var')
+    Behavior_flag = 0 ;
 end 
 
 Vec_DFF_all = [];           % main data structure 
@@ -164,23 +164,42 @@ uFreqs  = handles.uFreqs ;
   uF    = length(uFreqs);
 uLevels = handles.uLevels;
   uL    = length(uLevels);
+Freqs   = handles.Freqs(1:total_trials);
+Levels  = handles.Levels(1:total_trials);
+ 
+  
 
   % strip non-numeric and convert to num
 % uLevels = cellfun(@(x) str2double(x([regexp(x,'[-0-9]')])),uLevels);
 uLevels = sort(uLevels,'descend');
-Freqs   = handles.Freqs(1:total_trials);
-Levels  = handles.Levels(1:total_trials);
+
 Levels(Levels>100) = inf;
 uLevels(uLevels>100) = inf;
 FreqLevelOrder = table(Freqs,Levels);
-[FreqLevelOrder, fl_ind]= sortrows(FreqLevelOrder, {'Freqs','Levels'},{'Ascend','Descend'});
+[FreqLevelOrder, fl_idx]= sortrows(FreqLevelOrder, {'Freqs','Levels'},{'Ascend','Descend'});
+
+if  mod(total_trials, uF * uL) ~= 0  && ~Behavior_flag
+    [FreqLevelOrder,fl_idx] = FreqCheck(FreqLevelOrder,fl_idx,total_trials);
+end 
+
+% uncomment if you need to subset data
+% freq_idx = FreqLevelOrder{:,1} < 64000;
+% if any(~freq_idx) 
+%    uF = uF -1 ;
+%    uFreqs = uFreqs(1:end-1);
+%     FreqLevelOrder = FreqLevelOrder(freq_idx,:);
+%     fl_idx = fl_idx(freq_idx);
+% end 
+
 FreqLevels = unique(FreqLevelOrder);
 FreqLevels = sortrows(FreqLevels, {'Freqs','Levels'},{'ascend','descend'});
 
 if ~ isfield(handles,'BackgroundNoise') || handles.BackgroundNoise(1) == -99
+    noise_flag = 0;
     first_sound = handles.PreStimSilence;
 else 
     first_sound  = min( handles.PreStimSilence,handles.BackgroundNoise(2) );
+    noise_flag = 1;
 end 
 numtrials = size(FreqLevelOrder,1);
 numreps = floor(numtrials / uL / uF);
@@ -228,7 +247,7 @@ B_Vec = repmat(nanmean(FCellCorrected(1:baseline_frames,:,:)),[trialdur,1,1]);
 Vec_DFF = (FCellCorrected -B_Vec)./B_Vec * 100;
 %
 %Sort DFF by Freq/Level Combination, shorten if necessary
-Vec_DFF = Vec_DFF(:,fl_ind,:);
+Vec_DFF = Vec_DFF(:,fl_idx,:);
 
 % smoothing
 
@@ -255,12 +274,17 @@ Vec_DFF = imfilter(Vec_DFF,gausfilt);
 
 
   active = zeros(Neurons,1);
+  if noise_flag
+      test_end = size(Vec_DFF,1);
+  else 
+      test_end = soundoff;
+  end 
    for ii = 1:Neurons
   N = Vec_DFF(:,:,ii);
   N=N';
   
-  
-  [~,p]=ttest2(nanmean(N(:,1:baseline_frames),2),nanmean(N(:,soundon+1:end),2));
+ 
+  [~,p]=ttest2(nanmean(N(:,1:baseline_frames),2),nanmean(N(:,soundon+1:test_end),2));
   active(ii,1) = p;
    end 
    % find significantly active neurons  number indicates the number of
@@ -280,7 +304,7 @@ Vec_DFF = imfilter(Vec_DFF,gausfilt);
   
    FLO =  table2array(FreqLevelOrder);
    FLO = sum(FLO,2);
-   counts =histcounts(FLO,unique(FLO)); % known bug, last bin will have twice the data
+   counts =histcounts(FLO,unique(FLO)+1); 
    
        DFF_conditions = [];
       rep_mode = mode(counts);
@@ -377,7 +401,7 @@ Vec_DFF = imfilter(Vec_DFF,gausfilt);
  
  
 % append DFF's to output list
-if Behavior == 1  % active condition
+if Behavior_flag == 1  % active condition
 
     Vec_DFF_all{expt_id} = Vec_DFF;
     
@@ -407,8 +431,11 @@ end
  % silence is less than 1. a noisy trial often has 10-100times the variance
  % of a normal trial which makes it easy to spot in standard deviation
  % before sound onset
- Clean_idx = squeeze(max(abs(nanstd(Vec_DFF_all(1:baseline_frames-1,:,:),[],2))) < 25 ); 
+ Clean_idx_1 = squeeze(max(abs(nanstd(Vec_DFF_all(1:baseline_frames-1,:,:),[],2))) < 20 );
  
+  Clean_idx_2 = squeeze(max(abs(nanmean(DFF_Z(1:baseline_frames-1,:,:),2))) < 1.5 );
+ 
+  Clean_idx = Clean_idx_1 & Clean_idx_2;
  DFF2 = nanmean(Vec_DFF_all,2);
 
 DFF_ab_max = max(abs(DFF2));
@@ -478,3 +505,42 @@ catch
    Out = []
 end 
     
+function [FLO_fixed, fl_idx_fixed] = FreqCheck(FreqLevelOrder,fl_idx,total_trials)
+
+   fl_idx_fixed = [];
+   FLO_fixed = table();
+  
+   FLO =  table2array(FreqLevelOrder);
+   FLO = sum(FLO,2);
+   counts =histcounts(FLO,[unique(FLO);max(FLO)+1]);
+   rep_mode = mode(counts);
+   
+   remainder = 0;
+   idx_pointer = 1;
+   for ii = 1:length(counts)
+       start_pointer = idx_pointer ;
+       end_pointer = idx_pointer+rep_mode-1;
+       
+       fl_idx_fixed = cat(1,fl_idx_fixed,...
+                           fl_idx(start_pointer:end_pointer) );
+       
+       FLO_fixed = cat(1,FLO_fixed,FreqLevelOrder(start_pointer:end_pointer,:));               
+                       
+       remainder = counts(ii) - rep_mode;
+       idx_pointer = idx_pointer + rep_mode + remainder;
+       
+       
+   end 
+   
+   
+
+  
+  
+  
+  
+  
+
+
+
+
+
