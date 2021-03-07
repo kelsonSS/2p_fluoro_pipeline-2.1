@@ -16,8 +16,7 @@ DFF  = Out.DFF;
 frames  = size(DFF,1);
 trials  = size(DFF,2);
 FLO = Out.FreqLevelOrder;
-expt_id = Out.Experiment_list;
-handles = Out.Handles;
+handles = Out.handles{1};
 % parse a single psignalfile to get trial information
 
  % define behaviorally relevant timepoints

@@ -9,12 +9,18 @@ function Out = MungeBehaviorGroupData(behavior)
 SNRs = [20 10 0 -10];  
 AnimalIDs  =  fieldnames(behavior);
 
+
+
 for curr_snr = 1:length(SNRs)
 	SNRLatency = [] ;
     HitRateMean = [] ;
     NumTrials = [] ;
     for expt_idx = 1:length(AnimalIDs)
-    expt = behavior.(AnimalIDs{expt_idx}).resultsAll.Combined;
+        Animal_ID = AnimalIDs{expt_idx};
+        if strcmp(Animal_ID,'group')
+            continue
+        end 
+    expt = behavior.(Animal_ID).resultsAll.Combined;
     
     snr_idx = find(expt.SNR == SNRs(curr_snr));
     if isempty(snr_idx)

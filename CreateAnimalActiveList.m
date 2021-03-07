@@ -16,7 +16,7 @@ else
 end
 
 % this will currently break if you put in a nonexistant animalID
- ActiveFolders = dir( [AnimalPath, '\**\TonesNoiseActive\Fluorescence.mat']);
+ ActiveFolders = dir( [AnimalPath, '\**\TonesNoise*Active\Fluorescence.mat']);
 
  if isempty(ActiveFolders) 
     % if running on data on the source psignalfiles on google drive 
@@ -27,7 +27,7 @@ end
      ActiveFolders = struct2cell(ActiveFolders);
      ActiveFolders = ActiveFolders(2,:)';
    
-     ActiveFolders2 = dir( [AnimalPath, '\**\ToneNoiseActive\Fluorescence.mat']);
+     ActiveFolders2 = dir( [AnimalPath, '\**\ToneNoise*Active\Fluorescence.mat']);
      ActiveFolders2 = struct2cell(ActiveFolders2);
      ActiveFolders2 = ActiveFolders2(2,:)';
      

@@ -31,7 +31,11 @@ end
          fps = fps/2;
      end 
      
+     try
      xml = get_options_from_xml(xmlfile);
+     catch
+         return
+     end 
      
     %% File Prep
     if iscell(PsignalFile)

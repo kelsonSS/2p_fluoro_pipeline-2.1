@@ -48,7 +48,7 @@ for expt_id = 1:m
     
     try
         % get active data
-    active =  Fluoro_to_Table(experiment_files{expt_id,2});  
+    active =  Fluoro_to_Table(experiment_files{expt_id,2},1);  
     Active_list{expt_id,2} = active; 
     Active_list{expt_id,4} = experiment_files{expt_id,2};
     catch

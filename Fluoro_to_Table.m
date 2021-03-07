@@ -85,7 +85,7 @@ end
 
 %% Psignal Handling
 handles = WF_getPsignalInfo(fullfile(Main_path,Psignal_file));
-total_trials =  size(handles.Trialindicies,1);
+total_trials =  size(handles.Freqs,1);
 
 %% Fluorescence Handling & Cell ID handling
 
@@ -182,14 +182,14 @@ if  mod(total_trials, uF * uL) ~= 0  && ~Behavior_flag
     [FreqLevelOrder,fl_idx] = FreqCheck(FreqLevelOrder,fl_idx,total_trials);
 end 
 
-% uncomment if you need to subset data
-% freq_idx = FreqLevelOrder{:,1} < 64000;
-% if any(~freq_idx) 
-%    uF = uF -1 ;
-%    uFreqs = uFreqs(1:end-1);
-%     FreqLevelOrder = FreqLevelOrder(freq_idx,:);
-%     fl_idx = fl_idx(freq_idx);
-% end 
+%%uncomment if you need to subset data
+freq_idx = FreqLevelOrder{:,1} < 64000;
+if any(~freq_idx) 
+   uF = uF -1 ;
+   uFreqs = uFreqs(1:end-1);
+    FreqLevelOrder = FreqLevelOrder(freq_idx,:);
+    fl_idx = fl_idx(freq_idx);
+end 
 
 FreqLevels = unique(FreqLevelOrder);
 FreqLevels = sortrows(FreqLevels, {'Freqs','Levels'},{'ascend','descend'});
@@ -205,7 +205,9 @@ numtrials = size(FreqLevelOrder,1);
 numreps = floor(numtrials / uL / uF);
 first_sound_time = min(handles.PreStimSilence, handles.BackgroundNoise(2));
 baseline_frames = floor(first_sound* handles.pfs / XML.totalZplanes);
-    
+
+% behavior parsing
+
 %% red channel handling 
 % RedCells_file = 'RedNeuronNumber.mat';
 % if exist(fullfile(Main_path,RedCells_file),'file')
@@ -401,18 +403,14 @@ Vec_DFF = imfilter(Vec_DFF,gausfilt);
  
  
 % append DFF's to output list
-if Behavior_flag == 1  % active condition
 
-    Vec_DFF_all{expt_id} = Vec_DFF;
-    
-else  % passive condition
 try
 Vec_DFF_all = cat(3,Vec_DFF_all,Vec_DFF);
 catch
     continue
 end 
 
-end 
+
     clear DFFtemp
 
     
@@ -433,7 +431,7 @@ end
  % before sound onset
  Clean_idx_1 = squeeze(max(abs(nanstd(Vec_DFF_all(1:baseline_frames-1,:,:),[],2))) < 20 );
  
-  Clean_idx_2 = squeeze(max(abs(nanmean(DFF_Z(1:baseline_frames-1,:,:),2))) < 1.5 );
+  Clean_idx_2 = squeeze(max(abs(nanmean(DFF_Z(1:baseline_frames-1,:,:),2))) < 2 );
  
   Clean_idx = Clean_idx_1 & Clean_idx_2;
  DFF2 = nanmean(Vec_DFF_all,2);
@@ -475,6 +473,11 @@ curr_expt = curr_expt+1;
 
  fprintf('%d neurons, %d expt-list,\n', length(expt_list),size(Vec_DFF_all,3))
 
+ 
+ if Behavior_flag & size(Vec_DFF_all,2) ~= length(handles.Freqs)
+     pause
+ end 
+ 
 end 
 
 

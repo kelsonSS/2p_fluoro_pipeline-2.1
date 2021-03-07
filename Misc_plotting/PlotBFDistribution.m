@@ -14,9 +14,13 @@ function freqs_prop = PlotBFDistribution(DF,lvl)
                     continue
                 end 
             end
-            
-   df_by_level = df_by_level .* df_by_level_sig;
-   
+
+%   only look at cells with significant responses 
+    
+    %df_by_level = df_by_level .* df_by_level_sig
+     df_by_level = df_by_level(:,:,DF.active{:,2}>0) ;
+     
+     
    if size(df_by_level,1) > 1 % if there are multiple levels 
    
        if lvl

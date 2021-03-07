@@ -3,6 +3,9 @@
 BehaviorList = FindPairedBehaviorExperiments;
 TNBehavior = Fluoro_to_Table_Behavior(BehaviorList);
 
+% remove any rows that didn't properly get extracted 
+has_behavior_idx = ~cellfun(@isempty,TNBehavior(:,2));
+TNBehavior = TNBehavior(has_behavior_idx,:);
 
 % Behavior has some files with different amount of PreStim Silence
 % trim them all to all be consistent with 1 second prestim silence 
@@ -25,12 +28,12 @@ AnimalIDS = cellfun(@(x) strsplit(x,filesep),TNBehavior(:,3),'UniformOutput',0);
  clear AnimalIDS
  
 %% clustering 
-BehaviorResults.Young.Clust.Passive = Cluster_DF(TNBehaviorYoung(:,1),'K-means',8);
-BehaviorResults.Young.Clust.Active = Cluster_DF(TNBehaviorYoung(:,2),'K-means',8,...
+BehaviorResults.Young.Clust.Passive = Cluster_DF(TNBehaviorYoung(:,1),'K-means');
+BehaviorResults.Young.Clust.Active = Cluster_DF(TNBehaviorYoung(:,2),'K-means',9,...
 'normalized',BehaviorResults.Young.Clust.Passive.Centroids);
 
-BehaviorResults.Old.Clust.Passive = Cluster_DF(TNBehaviorOld(:,1),'K-means',8);
-BehaviorResults.Old.Clust.Active = Cluster_DF(TNBehaviorOld(:,2),'K-means',8,...
+BehaviorResults.Old.Clust.Passive = Cluster_DF(TNBehaviorOld(:,1),'K-means');
+BehaviorResults.Old.Clust.Active = Cluster_DF(TNBehaviorOld(:,2),'K-means',9,...
 'normalized',BehaviorResults.Old.Clust.Passive.Centroids);
 
 
@@ -74,4 +77,8 @@ BehaviorResults.Young.Behavior.group = MungeBehaviorGroupData(BehaviorResults.Yo
 
 %Plot group Behavior 
 PlotGroupedData(BehaviorResults.Old.Behavior.group)
+PlotGroupedData(BehaviorResults.Young.Behavior.group)
+
+
+% analyse Passive Data
 

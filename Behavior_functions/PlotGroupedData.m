@@ -45,7 +45,7 @@ function PlotGroupedData(Behavior)
           for ii = 1:length(hit_lvl)
               temp(ii) = hit_lvl(ii);
           end 
-           hitRateAll = cat(2,hitRateAll,temp);
+           hitRateAll = cat(2,hitRateAll,temp(1:length(hitRateAll)));
            clear temp
       end 
           
@@ -53,6 +53,7 @@ function PlotGroupedData(Behavior)
  end             
      figure
  bar(hitRate_mu)
+ set(gca,'TickLabelInterpreter','None')
  hold on
  xticks(1:m);
  xticklabels(Levels);
@@ -68,10 +69,10 @@ function PlotGroupedData(Behavior)
  levelLabels = strrep(Levels,'SNR_','');
  levelLabels = strrep(levelLabels,'minus_','-');
  figure
- plot(hitRateAll')
+
  hold on
- 
  shadedErrorBar([],mean(hitRateAll),std(hitRateAll)/sqrt(6),'k')
+  plot(hitRateAll')
  xticks(1:4)
  set(gca,'Xdir','rev')
  xticklabels(levelLabels)

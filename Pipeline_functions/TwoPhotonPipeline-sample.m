@@ -139,11 +139,11 @@ end
 %Register movies
 
 
-for expt=1:length(expt_paths)
+for expt=1:length(y)
     %Select current path
     input.path = input.inpath;
-    input.expname = expt_paths{expt};
-    input.animalID = animalID{expt};
+    input.expname = y{expt};
+    %input.animalID = animalID{expt};
     %Register combined movies
     %RegisterMovie(input)
      RegisterMovie_SingleChannel(input)
@@ -159,18 +159,18 @@ end
 % end
 
 % Extract Timing Params
-for expt=1:length(paths)
+for expt=1:length(expt_paths)
     %Select current path
     input.path = input.inpath;
     input.expname = expt_paths(expt);
     input.animalID = animalID(expt);
     input.psignalfiles = psignalfiles(expt);
-    fprintf('analyzing %d of %d: \n',expt,length(paths)) 
+    fprintf('analyzing %d of %d: \n',expt,length(expt_paths)) 
     ExtractTimingParams(input,1);
 end
 
 
-CreateCellDefinitionList(input) 
+CreateCellDefinitionList(input.savepath) 
 %%
 %Click cell centers of registered movies. CellDefinitionGUI will save cell
 %definitions to the directory that the images were loaded from, so be sure
@@ -178,21 +178,6 @@ CreateCellDefinitionList(input)
 CellDefinitionGUI(input)
 %%
 % 
-badfiles = {};
-for i=1:length(ExtractionPaths)
-    %Select current path
-    input.path = ExtractionPaths{i};
-    %Select current Psignal file
-    input.psignalfiles = ExtractionPsignalFiles{i};
-    fprintf('analyzing %d of %d: %s \n',i,length(ExtractionPaths),input.path) 
-   out =  ExtractFluorescence(input);
- %  if ~isempty(out.Errors)
-  %     badfiles{end+1} = ExtractionPaths{i};
-%end
-end 
-% end
-% 
-
 
 
 

@@ -16,7 +16,7 @@ FreqLevelOrder = TN.FreqLevelOrder;
 L_num = length(unique(FreqLevelOrder.Levels));
 F_num = length(unique(FreqLevelOrder.Freqs));
 e_ls = TN.experiment_list;
-rep_mode = 10; % trials per unique condition
+rep_mode = 5; % trials per unique condition
 n_frames = size(DFF,1);
 n_trials =size(DFF,2);
 handles = TN.handles{1};
@@ -183,7 +183,8 @@ disp('Analyzing Signal Statistics')
 %% plotting - Signal and noise CDFs
 
 %
-
+figure;cdfplot(L_corr_flat);title('Signal Correlation')
+figure;cdfplot(N_corr_flat);title('Noise Correlation')
 
 % plotting- Ncorr Bars
 Bars_by_level(L_mu,L_CI,'Signal')
@@ -227,8 +228,11 @@ corr_std = nanstd(corr_flat);
 corr_CI = corr_std ./ sqrt(length(corr_flat))  * 1.96;  % 95 percent Confidence interval
 
 [p ~,stats] = anova1(corr_flat,[],'off');
-corr_sig = multcompare(stats,[],'off')
-
+if size(corr_flat,2) >1
+    corr_sig = multcompare(stats,[],'off')
+else 
+    corr_sig = p;
+end 
 % figure
 % hold on 
 % for ii = 1:4

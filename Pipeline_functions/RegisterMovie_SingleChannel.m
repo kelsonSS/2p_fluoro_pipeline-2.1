@@ -33,7 +33,7 @@ end
 %     end
 % end
 
- if isempty(dir(fullfile(newpath, 'greenchannel.raw')))
+ if isempty(dir(fullfile(newpath, 'GreenChannel.raw')))
     return
  end 
 
