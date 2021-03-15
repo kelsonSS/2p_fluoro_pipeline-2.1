@@ -1,12 +1,18 @@
-function PlotFluoroCDF(DF,type)
+function PlotFluoroCDF(DF,type,lvl_idx)
 
     % type = max or mean
+    if ~exist('lvl_idx','var')
+         lvl_idx = true(size(DF.DFF2,2),1);
+    end 
 
-    idx = DF.Clean_idx & DF.active{:,2} > 0 ;
-    dff = DF.DFF(1:end-1,:,idx);
+         
+    nn_idx = DF.Clean_idx & DF.active{:,2} > 0 ;
+    dff = DF.DFF(1:end-1,lvl_idx,nn_idx);
+    
+    
     
     if strcmp(type,'max')
-        dff = squeeze(max(nanmean(dff,2))) ;
+        dff = squeeze(max(max(dff,[],2))) ;
     else 
         dff = squeeze(nanmean(nanmean(dff,2)));
     end

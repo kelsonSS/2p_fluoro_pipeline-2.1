@@ -14,7 +14,7 @@ tempDF.active = DF.active;
 
 
 % clean DFF to contain only clean and active cells 
-clean_idx = DF.Clean_idx & ( DF.active{:,2}>0 );
+clean_idx = DF.Clean_idx & ( DF.active{:,2}>1 );
 DF.DFF = DF.DFF(:,:,clean_idx);
 DF.DFF_Z = DF.DFF_Z(:,:,clean_idx);
 NeuronNumber = length(clean_idx);
@@ -71,23 +71,30 @@ for lvl = 1:length(uLevels)
             
             % perform k-means classification
             if lvl == 1
-               [clusters_temp , out.DF{lvl},...
-               out.AvgTraces{lvl},~,...
-               out.ClusterCentroids{lvl}]= Cluster_DF(lvl_DF,'K-means',...
+                out.AvgTraces{lvl} = [];
+            out.ClusterCentroids{lvl} = [];
+                
+               lvl_C = Cluster_DF(lvl_DF,'K-means',...
                                            max_clust);
                
             else
-                num_clust = max(clusters_temp);
+                num_clust = max(out.Clusters{1});
                 
-               [clusters_temp , out.DF{lvl},...
-               out.AvgTraces{lvl},~,...
-               out.ClusterCentroids{lvl}]= Cluster_DF(lvl_DF,'Paired-K-means',...
+               lvl_C = Cluster_DF(lvl_DF,'Paired-K-means',...
                                            num_clust,'normalized',...
                                            out.ClusterCentroids{lvl-1});
+            
                                        
+                                       
+                    
             end 
+            
             % add store clusters
-            out.Clusters{lvl}(clean_idx) = clusters_temp;
+            out.Clusters{lvl}(clean_idx) = lvl_C.Clusters;
+            out.AvgTraces{lvl} = lvl_C.ClusterAvg; 
+            out.ClusterCentroids{lvl} = lvl_C.Centroids;
+            
+          
        
        
             figure
@@ -100,9 +107,7 @@ for lvl = 1:length(uLevels)
             out.Clusters{lvl} = out_clusters;
             
             % perform k-means classification
-            [clusters_temp , out.DF{lvl},...
-               out.AvgTraces{lvl},~,...
-               out.ClusterCentroids{lvl}]= Cluster_DF(lvl_DF,'K-means',max_clust);
+            out= Cluster_DF(lvl_DF,'K-means',max_clust);
             % add store clusters
             out.Clusters{lvl}(clean_idx) = clusters_temp;
        
@@ -122,10 +127,10 @@ for lvl = 1:length(uLevels)
   
     
 end 
- 
+
 % pooled analysis
-if strmatch(clust_style,'pooled')
-    [out.Clusters, out.DF,~,~,out.centroids] = Cluster_DF(tempDF,'K-means',max_clust);
+if strcmp(clust_style,'pooled')
+    out = Cluster_DF(tempDF,'K-means',max_clust);
 
         %% pooled
         % permute into level X neuron order
