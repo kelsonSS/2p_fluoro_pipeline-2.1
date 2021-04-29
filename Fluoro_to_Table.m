@@ -179,7 +179,11 @@ FreqLevelOrder = table(Freqs,Levels);
 [FreqLevelOrder, fl_idx]= sortrows(FreqLevelOrder, {'Freqs','Levels'},{'Ascend','Descend'});
 
 if  mod(total_trials, uF * uL) ~= 0  && ~Behavior_flag
+    try
     [FreqLevelOrder,fl_idx] = FreqCheck(FreqLevelOrder,fl_idx,total_trials);
+    catch
+        continue
+        end ;
 end 
 
 %%uncomment if you need to subset data

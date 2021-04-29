@@ -182,23 +182,6 @@ CreateCellDefinitionList(input)
 CellDefinitionGUI(input)
 %%
 
-badfiles = {};
-for i=1:length(ExtractionPaths)
-    %Select current path
-    input.path = ExtractionPaths{i};
-    %Select current Psignal file
-    input.psignalfiles = ExtractionPsignalFiles{i};
-    fprintf('analyzing %d of %d: %s \n',i,length(ExtractionPaths),input.path) 
-   out =  ExtractFluorescence(input);
- %  if ~isempty(out.Errors)
-  %     badfiles{end+1} = ExtractionPaths{i};
-%end
-end 
-% end
-% 
-
-
-
 
 %% Extract Fluorescence Traces 
 
@@ -209,7 +192,7 @@ for expt=1:length(ExtractionPaths)
     %Select current path
     input.path = ExtractionPaths{expt};
     %Select current Psignal file
-    input.psignalfiles = ExtractionPsignalFiles{expt};
+    %input.psignalfiles = ExtractionPsignalFiles{expt};
     fprintf('analyzing %d of %d: %s \n',expt,length(ExtractionPaths),input.path) 
    out =  ExtractFluorescence(input,1);
    if ~isempty(out.Errors)
@@ -217,74 +200,76 @@ for expt=1:length(ExtractionPaths)
 end
 end 
 
-%% Quality check extracted Fluorescence
-for i=1:length(paths)
-    %Select current path
-    input.path = paths{i};
-    input.expname = expnames(~cellfun(@isempty,expnames(:,i)),i);
-    %Select current Psignal file
-    input.psignalfiles = psignalfiles(~cellfun(@isempty,psignalfiles(:,i)),i);
-    fprintf('QC-ing %d of %d: %s \n',i,length(paths),input.path) 
-    CheckExperimentQuality(input);
-end
+
+% 
+% %% Quality check extracted Fluorescence
+% for i=1:length(paths)
+%     %Select current path
+%     input.path = paths{i};
+%     input.expname = expnames(~cellfun(@isempty,expnames(:,i)),i);
+%     %Select current Psignal file
+%     input.psignalfiles = psignalfiles(~cellfun(@isempty,psignalfiles(:,i)),i);
+%     fprintf('QC-ing %d of %d: %s \n',i,length(paths),input.path) 
+%     CheckExperimentQuality(input);
+% end
+% 
+% 
+% 
+% 
+% %% package into Experiments
+% 
+% 
+% for i=1:length(paths)
+%     %Select current path
+%     input.path = paths{i};
+%     input.expname = expnames(~cellfun(@isempty,expnames(:,i)),i);
+%     %Select current Psignal file
+%     input.psignalfiles = psignalfiles(~cellfun(@isempty,psignalfiles(:,i)),i);
+%     fprintf('packaging %d of %d: %s \n',i,length(paths),input.path) 
+%     GatherFluoroByExperiment(input);
+% end
+% 
+% 
+% 
+% 
+% %% convert files to NWB
+% %%  MatNWB generator initilization
+%  matnwb = 'C:\Users\Kelson\Documents\GitHub\matnwb';
+%   addpath(genpath(matnwb))
+%  cd(matnwb)
+% 
+% 
+% 
+% 
+% 
+% 
+% for i=1:length(paths)
+%    %Select current path
+%    input.path = paths{i};
+%    bb=strsplit(input.path,'\'); 
+%    input.animalID = bb{end};
+%    input.path = fullfile(input.savepath,input.animalID);
+%    input.expname = expnames(~cellfun(@isempty,expnames(:,i)),i);
+%     %Select current Psignal file
+%     input.psignalfiles = psignalfiles(~cellfun(@isempty,psignalfiles(:,i)),i);
+%     fprintf('Converting %d of %d: %s \n', i,length(paths),input.path)
+%     Mat2NWB(input)
+% end
+% 
+%   
+%  
 
 
 
 
-%% package into Experiments
-
-
-for i=1:length(paths)
-    %Select current path
-    input.path = paths{i};
-    input.expname = expnames(~cellfun(@isempty,expnames(:,i)),i);
-    %Select current Psignal file
-    input.psignalfiles = psignalfiles(~cellfun(@isempty,psignalfiles(:,i)),i);
-    fprintf('packaging %d of %d: %s \n',i,length(paths),input.path) 
-    GatherFluoroByExperiment(input);
-end
-
-
-
-
-%% convert files to NWB
-%%  MatNWB generator initilization
- matnwb = 'C:\Users\Kelson\Documents\GitHub\matnwb';
-  addpath(genpath(matnwb))
- cd(matnwb)
-
-
-
-
-
-
-for i=1:length(paths)
-   %Select current path
-   input.path = paths{i};
-   bb=strsplit(input.path,'\'); 
-   input.animalID = bb{end};
-   input.path = fullfile(input.savepath,input.animalID);
-   input.expname = expnames(~cellfun(@isempty,expnames(:,i)),i);
-    %Select current Psignal file
-    input.psignalfiles = psignalfiles(~cellfun(@isempty,psignalfiles(:,i)),i);
-    fprintf('Converting %d of %d: %s \n', i,length(paths),input.path)
-    Mat2NWB(input)
-end
-
-  
- 
-
-
-
-
-%% Analysis Starts here 
- 
-FindFilesByExptName('FRANoise')
-
-
-Data = Fluoro_to_Table_interactive('\\Vault3\Data\Kelson\Analyzed')
-
-Data.df_by_level = getTracesAndFRA(Data) 
-
+% %% Analysis Starts here 
+%  
+% FindFilesByExptName('FRANoise')
+% 
+% 
+% Data = Fluoro_to_Table_interactive('\\Vault3\Data\Kelson\Analyzed')
+% 
+% Data.df_by_level = getTracesAndFRA(Data) 
+% 
 
 

@@ -36,6 +36,9 @@ BehaviorResults.Old.Clust.Passive = Cluster_DF(TNBehaviorOld(:,1),'K-means');
 BehaviorResults.Old.Clust.Active = Cluster_DF(TNBehaviorOld(:,2),'K-means',9,...
 'normalized',BehaviorResults.Old.Clust.Passive.Centroids);
 
+BehaviorResults.Combined.Clust.Passive = Cluster_DF(TNBehavior(:,1),'K-means',10);
+BehaviorResults.Combined.Clust.Active = Cluster_DF(TNBehavior(:,2),'K-means',6,...
+'normalized',BehaviorResults.Combined.Clust.Passive.Centroids);
 
 
 %% plot Cluster transitions 
@@ -70,6 +73,9 @@ for ii = 1:length(BehaviorResults.AnimalID)
         load(fullfile(behavior_path,curr_id));
     end 
 end 
+
+TN_passive =Munge_DF(TNBehavior(:,1));
+TN_active = Munge_DF(TNBehavior(:,2));
 
 % analyze behavior
 BehaviorResults.Old.Behavior.group = MungeBehaviorGroupData(BehaviorResults.Old.Behavior);

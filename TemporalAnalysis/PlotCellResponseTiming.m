@@ -1,4 +1,4 @@
-function PlotCellResponseTiming(DF,lvl,by_expts)
+function x= PlotCellResponseTiming(DF,lvl,by_expts)
 
 
  % create indicies  
@@ -48,7 +48,7 @@ end
     try
    [~,~,stats] = anova1(timing_prc, [] ,'off');
   x= multcompare(stats,'Display','off');
-  x(1:10,:)  
+  x=x(1:10,:)  
     catch
     end 
     figure; bar(mean(timing_prc),'BarWidth',1)

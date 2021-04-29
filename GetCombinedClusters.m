@@ -19,6 +19,14 @@ young_clusters = young_clust;
 old_clust(old_clust ==0)= [];
 young_clust(young_clust ==0)= [];
 
+% munge clusters to final positiions
+old_clust(old_clust ==1) = 10;
+old_clust = old_clust -1 ;
+
+young_clust(young_clust == 1) = 10;
+young_clust = young_clust -1 ;
+
+
 old_counts =  histcounts(old_clust,m) / length(old_clust);
 young_counts =  histcounts(young_clust,m) / length(young_clust);
 

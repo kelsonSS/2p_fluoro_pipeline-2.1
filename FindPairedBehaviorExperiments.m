@@ -1,8 +1,9 @@
-function paired_expts_list= FindPairedBehaviorExperiments()
+function paired_expts_list,to_click = FindPairedBehaviorExperiments()
 
 paired_expts_list = {};
 
-files = dir('Z:\Kelson\Analyzed\**\2020*\Tones*Active\Fluorescence.mat');
+files = dir('Z:\Kelson\Analyzed\**\2020*\Tones*Active\');
+to_click = {}
 expt_idx = 1; 
 for fl_idx = 1:length(files)
     
@@ -17,7 +18,7 @@ for fl_idx = 1:length(files)
     else 
         continue
     end 
-    active_file = FullFileNameFromDir(files(fl_idx));
+    active_file = FullFileNameFromDir(dir(fullfile(files(fl_idx),'Fluorescence.mat');
     
    % add to experiment file and increment idx
     

@@ -1,24 +1,6 @@
 
 
-DFF_passive = BehaviorPassive.DFF;
 
-passive_freq_idx = BehaviorPassive.FreqLevelOrder{:,1} == 11314;
-
-passive_expt_idx = BehaviorPassive.Experiment_list == 1 |...
-                   BehaviorPassive.Experiment_list == 2;
-
-DFF_passive = DFF_passive(:,:,passive_expt_idx);
-
-DFF_passive  = squeeze(nanmean(DFF_passive,2));
-
-
-
-DFF_active = []
-for ii =1:2:3
-DFF_temp = squeeze(nanmean(test{ii}.DFF,2));
-DFF_active = cat(2,DFF_active,DFF_temp);
-end
-DFF_active = DFF_active(31:120,:);
 
 
 % WARNING: this is a hack that only works with current data set 
@@ -28,20 +10,20 @@ DFF_active = DFF_active(31:120,:);
 % of distnace between points any time there is a change that would indicate
 % a mismatch 
 
-size_diff = length(DFF_passive) - length(DFF_active);
+size_diff = length(mean_passive) - length(mean_active);
 
-DFF_passive = DFF_passive(:,1:end-size_diff);
+mean_passive = mean_passive(:,1:end-size_diff);
 
-DFF_passive = DFF_passive';
-DFF_active = DFF_active';
+mean_passive = mean_passive';
+mean_active = mean_active';
 
 
 %% sorting and normalizing response 
-[passive_max,passive_timing] = max(DFF_passive,[],2);
-[active_max,active_timing] = max(DFF_active,[],2);
+[passive_max,passive_timing] = max(mean_passive,[],2);
+[active_max,active_timing] = max(mean_active,[],2);
 
-DFF_active = DFF_active./active_max;
-DFF_passive = DFF_passive./passive_max;
+mean_active = mean_active./active_max;
+mean_passive = mean_passive./passive_max;
 
 [~,passive_order] = sort(passive_timing);
 [~,active_order] = sort(active_timing);   
@@ -49,35 +31,35 @@ DFF_passive = DFF_passive./passive_max;
 
 %% base plots
 
-figure;imagesc(DFF_passive);title('Average Timecourse passive')
+figure;imagesc(mean_passive);title('Average Timecourse passive')
 FramesToSeconds
 
-figure;imagesc(DFF_active);title('Average Timecourse active')
+figure;imagesc(mean_active);title('Average Timecourse active')
 FramesToSeconds
 
 
 %% passive ordered plots
-DFF_passive_p = DFF_passive(passive_order,:);
-DFF_active_p = DFF_active(passive_order,:);
+mean_passive_p = mean_passive(passive_order,:);
+mean_active_p = mean_active(passive_order,:);
 
 
-figure;imagesc(DFF_passive_p);title('Average Timecourse Passive-Passive ordered')
+figure;imagesc(mean_passive_p);title('Average Timecourse Passive-Passive ordered')
 FramesToSeconds
 
-figure;imagesc(DFF_active_p);title('Average Timecourse Active-Passive ordered')
+figure;imagesc(mean_active_p);title('Average Timecourse Active-Passive ordered')
 FramesToSeconds
 
 %% active ordered plots
 
-DFF_passive_a = DFF_passive(active_order,:);
-DFF_active_a = DFF_active(active_order,:);
+mean_passive_a = mean_passive(active_order,:);
+mean_active_a = mean_active(active_order,:);
 
 
-figure;imagesc(DFF_passive_a);title('Average Timecourse Passive-Active ordered')
+figure;imagesc(mean_passive_a);title('Average Timecourse Passive-Active ordered')
 FramesToSeconds
 
 
-figure;imagesc(DFF_active_a);title('Average Timecourse Active-Active ordered')
+figure;imagesc(mean_active_a);title('Average Timecourse Active-Active ordered')
 FramesToSeconds
 
 figure;histogram(active_timing - passive_timing);

@@ -1,8 +1,8 @@
-function PlotFluoroCDF(DF,type,lvl_idx)
+function dff = PlotFluoroCDF(DF,type,lvl_idx)
 
     % type = max or mean
     if ~exist('lvl_idx','var')
-         lvl_idx = true(size(DF.DFF2,2),1);
+         lvl_idx = true(size(DF.DFF,2),1);
     end 
 
          
