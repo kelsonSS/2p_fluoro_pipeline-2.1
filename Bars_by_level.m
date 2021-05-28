@@ -1,6 +1,7 @@
  function Bars_by_level(mu,CI,name,sig)
        % takes a mean and 95% confidence interval and plots them 
         % plotting- Ncorr Bars
+    
 figure
 errorbar(mu,CI, '.')
 hold on
@@ -19,6 +20,3 @@ hold off
 title(sprintf('%s Correlations by level',name),'Interpreter','none')
 set(gca,'XTick',[1:3])
 set(gca,'XTickLabel',{'+20','+10','0'})
-
-
-
