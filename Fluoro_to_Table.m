@@ -16,6 +16,8 @@ function Out = Fluoro_to_Table(dataDir,Behavior_flag)
 
 % init
 
+Freq_cutoff = 65000;
+
 if ~exist('Behavior_flag','var')
     Behavior_flag = 0 ;
 end 
@@ -183,11 +185,11 @@ if  mod(total_trials, uF * uL) ~= 0  && ~Behavior_flag
     [FreqLevelOrder,fl_idx] = FreqCheck(FreqLevelOrder,fl_idx,total_trials);
     catch
         continue
-        end ;
+        end 
 end 
 
-%%uncomment if you need to subset data
-freq_idx = FreqLevelOrder{:,1} < 64000;
+%%change if you need to subset data
+freq_idx = FreqLevelOrder{:,1} < Freq_cutoff;
 if any(~freq_idx) 
    uF = uF -1 ;
    uFreqs = uFreqs(1:end-1);
@@ -334,7 +336,7 @@ Vec_DFF = imfilter(Vec_DFF,gausfilt);
             baseline = squeeze(nanmean(Vec_DFF_Temp(1:baseline_frames,:,:),2));
             after_onset = squeeze(nanmean(Vec_DFF_Temp(soundon:soundoff,:,:),2));
             
-            for nn = size(Vec_DFF_Temp,3)
+            for nn = 1:size(Vec_DFF_Temp,3)
                 df_by_level_sig_temp(lvl,freq,nn) = ttest2(baseline(:,nn),after_onset(:,nn));
             end
             
@@ -345,7 +347,7 @@ Vec_DFF = imfilter(Vec_DFF,gausfilt);
                   nanmean(nanmean(...
                   Vec_DFF_Temp(soundoff:soundoff+1*handles.pfs ,:,:),2));
               
-             DFF_conditions(:,:,condition,:) = Vec_DFF_Temp;  
+             %DFF_conditions(:,:,condition,:) = Vec_DFF_Temp;  
             condition = condition+1;
             fprintf(repmat('\b',1,print_len))
          clear Vec_DFF_Temp 
@@ -369,25 +371,25 @@ Vec_DFF = imfilter(Vec_DFF,gausfilt);
    clear df_by_level_offset_temp
 %    
 %    
- DFF_conditions_mu = squeeze(mean(DFF_conditions(soundon:soundoff,:,:,:)));
- DFF_conditions_mu_offset = squeeze(mean(DFF_conditions(soundoff:end,:,:,:)));
- %    % initialize old based signifiance list 
-     active2 = zeros(1,Neurons);
-     active_offset = zeros(1,Neurons);
-     for ii = 1:Neurons 
-         active2(1,ii) = anova1(DFF_conditions_mu(:,:,ii)',[],'off');
-         active_offset(1,ii)= anova1(DFF_conditions_mu_offset(:,:,ii)',[],'off');
-     end 
-     
-     active2_idx = active2<.01;
-     offset_idx = active_offset <.01;
- if ~(exist('anova_idx','var'))
-     anova_idx = [];
-     anova_offset_idx = [];
- end
-     anova_idx = cat(2,anova_idx,active2_idx) ;
-     anova_offset_idx = cat(2,anova_offset_idx,offset_idx); 
-    DFF_cleaned = Vec_DFF(:,:,active2_idx);
+%  DFF_conditions_mu = squeeze(mean(DFF_conditions(soundon:soundoff,:,:,:)));
+%  DFF_conditions_mu_offset = squeeze(mean(DFF_conditions(soundoff:end,:,:,:)));
+%  %    % initialize old based signifiance list 
+%      active2 = zeros(1,Neurons);
+%      active_offset = zeros(1,Neurons);
+%      for ii = 1:Neurons 
+%          active2(1,ii) = anova1(DFF_conditions_mu(:,:,ii)',[],'off');
+%          active_offset(1,ii)= anova1(DFF_conditions_mu_offset(:,:,ii)',[],'off');
+%      end 
+%      
+%      active2_idx = active2<.01;
+%      offset_idx = active_offset <.01;
+%  if ~(exist('anova_idx','var'))
+%      anova_idx = [];
+%      anova_offset_idx = [];
+%  end
+%     anova_idx = cat(2,anova_idx,active2_idx) ;
+    % anova_offset_idx = cat(2,anova_offset_idx,offset_idx); 
+    % DFF_cleaned = Vec_DFF(:,:,active2_idx);
   
 %% Clean-up 
 
@@ -505,8 +507,8 @@ Out.DataDirs = good_dirs;
 Out.nplanes = XML.totalZplanes;
 Out.Class_idx = Class_idx;
 Out.Classes = Classes;
-Out.anova = anova_idx;
-Out.Offset = anova_offset_idx;
+%Out.anova = anova_idx;
+%Out.Offset = anova_offset_idx;
 Out.handles =handles_all;
 catch
    Out = []
@@ -518,6 +520,7 @@ function [FLO_fixed, fl_idx_fixed] = FreqCheck(FreqLevelOrder,fl_idx,total_trial
    FLO_fixed = table();
   
    FLO =  table2array(FreqLevelOrder);
+   FLO(isinf(FLO)) = 99;
    FLO = sum(FLO,2);
    counts =histcounts(FLO,[unique(FLO);max(FLO)+1]);
    rep_mode = mode(counts);
