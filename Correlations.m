@@ -183,13 +183,15 @@ disp('Analyzing Signal Statistics')
 %% plotting - Signal and noise CDFs
 
 %
-%figure;cdfplot(L_corr_flat);title('Signal Correlation')
-%figure;cdfplot(N_corr_flat);title('Noise Correlation')
+% figure;cdfplot(L_corr_flat);title('Signal Correlation')
+% figure;cdfplot(N_corr_flat);title('Noise Correlation')
 
 % plotting- Ncorr Bars
 Bars_by_level(L_mu,L_CI,'Signal')
+Bars_Overall(L_mu,L_CI,'Signal')
 Bars_by_level(N_mu,N_CI,'Noise')
-%Bars_by_level(N_mu2,N_CI2,'Noise2')
+Bars_Overall(N_mu,N_CI,'Noise')
+% Bars_by_level(N_mu2,N_CI2,'Noise2')
 %% packaging
     Out.Corr = Corr;
     Out.LCorr = LCorr;
@@ -240,7 +242,6 @@ end
 % end
 % title(sprintf('%s Correlation by Level',name))
 % 
-
 
 
 

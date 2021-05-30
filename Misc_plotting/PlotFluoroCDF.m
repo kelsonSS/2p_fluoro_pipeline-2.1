@@ -20,4 +20,3 @@ function dff = PlotFluoroCDF(DF,type,lvl_idx)
     figure;
     cdfplot(dff)
     title(sprintf('%s Fluorescence',type))
-        
