@@ -1,4 +1,4 @@
-function x= PlotCellResponseTiming(DF,lvl,by_expts)
+function x= TemporalAnalysisByAnimal(DF,lvl)
 
 
  % create indicies  
@@ -19,9 +19,6 @@ end
    % get expt_idx 
     expt_list = DF.experiment_list(active_idx);
     
-    if ~exist('by_expts','var')
-        expt_list(:) = 1;
-    end 
     
     n_expts = max(expt_list);
     
@@ -41,14 +38,14 @@ end
    
    [~,timing] =  max(DFF_temp);
    
-    timing_prc(timing_col_id,:) = histcounts(timing,[1:15:size(DFF_temp,1)+4])./length(timing);
+    timing_prc(timing_col_id,:) = histcounts(timing,[1:10:size(DFF_temp,1)+4])./length(timing);
     timing_col_id = timing_col_id +1;
     end 
     
     try
    [~,~,stats] = anova1(timing_prc, [] ,'off');
   x= multcompare(stats,'Display','off');
-  x=x(1:10,:)  
+  x=x(1:15,:)  
     catch
     end 
     figure; bar(mean(timing_prc),'BarWidth',1)
