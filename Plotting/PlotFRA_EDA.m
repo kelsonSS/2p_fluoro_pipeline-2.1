@@ -17,6 +17,7 @@ frames  = size(DFF,1);
 trials  = size(DFF,2);
 FLO = Out.FreqLevelOrder;
 handles = Out.handles{1};
+active = Out.active{:,2} >0;
 % parse a single psignalfile to get trial information
 
  % define behaviorally relevant timepoints
@@ -24,7 +25,7 @@ soundon = handles.PreStimSilence*handles.pfs;
 soundoff = soundon + handles.PrimaryDuration * handles.pfs;
 %% average response over trials
 
-DFF2 = squeeze(nanmean(Out.DFF,2));        
+DFF2 = squeeze(nanmean(Out.DFF(:,:,active),2));        
 
 %% sort by average  max response 
 
@@ -48,7 +49,7 @@ DFF3 = DFF3(:,DFF3_order);
 % plot
 figure
 imagesc(DFF3')
-caxis([0 1 ])
+caxis([-1 1 ])
 FramesToSeconds
 title('Time To Max Response')
 

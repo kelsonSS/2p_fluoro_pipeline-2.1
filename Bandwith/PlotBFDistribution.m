@@ -1,8 +1,13 @@
-function freqs_prop = PlotBFDistribution(DF,lvl)
+function freqs_prop = PlotBFDistribution(DF,lvl,by_expt)
 
     if ~exist('lvl','var')
-        lvl = 0
+        lvl = 0;
     end 
+    
+    if ~exist('by_expt','var')
+        by_expt = 0 ;
+    end 
+        
   df_by_level = [];
   df_by_level_sig = [];
 
@@ -19,7 +24,7 @@ function freqs_prop = PlotBFDistribution(DF,lvl)
     
     %df_by_level = df_by_level .* df_by_level_sig
      df_by_level = df_by_level(:,:,DF.active{:,2}>0) ;
-     
+     expt_list = DF.experiment_list(DF.active{:,2}>0);
      
    if size(df_by_level,1) > 1 % if there are multiple levels 
    
@@ -36,6 +41,37 @@ function freqs_prop = PlotBFDistribution(DF,lvl)
    
    n_freqs = size(df_by_level,1);
    n_neurons = size(df_by_level,2);
+  
+   if by_expt
+       expt_id =1;
+       for expt = 1:max(DF.experiment_list)
+          
+           
+           df_expt = df_by_level(:,expt_list == expt);
+           n_neurons = size(df_expt,2);
+           if isempty(df_expt)
+               continue
+           end
+           [ ~,freqs] = max(df_expt);
+           freqs_count = histcounts(freqs,n_freqs);
+           freqs_prop_t = freqs_count ./ n_neurons;
+           
+           freqs_prop(:,expt_id) = freqs_prop_t;
+           expt_id = expt_id +1
+           clear freqs_prop_t
+       end 
+           
+           
+           figure;errorbar([],mean(freqs_prop'),std(freqs_prop')/sqrt(size(freqs_prop,2)) * 1.93,'.')
+           hold on
+           bar(mean(freqs_prop') , 'k' )
+           
+           figure;bar(freqs_prop)
+           
+       
+   else 
+    
+       
    
    [~,freqs] = max(df_by_level);
    freqs_count = histcounts(freqs,n_freqs);
@@ -44,4 +80,4 @@ function freqs_prop = PlotBFDistribution(DF,lvl)
    
    figure;bar(freqs_prop)
    
-   
+        end 
