@@ -1,13 +1,16 @@
-function dff = PlotFluoroCDF(DF,type,lvl_idx)
+function dff = PlotFluoroCDF(DF,type,lvl)
 
     % type = max or mean
-    if ~exist('lvl_idx','var')
-         lvl_idx = true(size(DF.DFF,2),1);
+    if ~exist('lvl','var')
+         lvl = true(size(DF.DFF,2),1);
     end 
-
+    
+    lvl = DF.FreqLevelOrder{:,2} == lvl;
+    
+    assert( sum(lvl) > 0)
          
     nn_idx = DF.Clean_idx & DF.active{:,2} > 0 ;
-    dff = DF.DFF(1:end-1,lvl_idx,nn_idx);
+    dff = DF.DFF(1:end-1,lvl,nn_idx);
     
     
     

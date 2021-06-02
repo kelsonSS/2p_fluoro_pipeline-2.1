@@ -1,4 +1,4 @@
-function PlotCellResponseTiming(DF,lvl,by_expts)
+function PlotCellResponseTiming(DF,lvl)
 
 
  % create indicies  
@@ -19,9 +19,6 @@ end
    % get expt_idx 
     expt_list = DF.experiment_list(active_idx);
     
-    if ~exist('by_expts','var')
-        expt_list(:) = 1;
-    end 
     
     n_expts = max(expt_list);
     
@@ -48,7 +45,7 @@ end
     try
    [~,~,stats] = anova1(timing_prc, [] ,'off');
   x= multcompare(stats,'Display','off');
-  x(1:10,:)  
+  x(1:15,:)  
     catch
     end 
     figure; bar(mean(timing_prc),'BarWidth',1)
