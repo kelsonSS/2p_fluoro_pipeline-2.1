@@ -1,9 +1,9 @@
 
 
-Old_N = Flatten_Corr(Flatten_Corr(FRA_old_noise.Corrs.All.NCorr));
-Old_S = Flatten_Corr(Flatten_Corr(FRA_old_noise.Corrs.All.LCorr));
-Young_S =Flatten_Corr(Flatten_Corr(FRA_young_noise.Corrs.All.LCorr));
-Young_N = Flatten_Corr(Flatten_Corr(FRA_young_noise.Corrs.All.NCorr));
+Old_N = Flatten_Corr(Flatten_Corr(Tonebox_FRA_stats.NCorr));
+Old_S = Flatten_Corr(Flatten_Corr(Tonebox_FRA_stats.LCorr));
+Young_S =Flatten_Corr(Flatten_Corr(Control_FRA_stats.LCorr));
+Young_N = Flatten_Corr(Flatten_Corr(Control_FRA_stats.NCorr));
 
 
 % output structure

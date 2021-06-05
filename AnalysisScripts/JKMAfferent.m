@@ -11,15 +11,20 @@ DF=ans;
 plotAllDFFs(DF)
 Cluster_DF(DF)
 
-%
+%%
 %Get Bandwidth
 BandwidthAnalysis(DF, 'Significant',0,'Pos',.5)
 BandwidthData=ans
 
 %%
-%%Get Cell Response Timing
+% Get BF Distribution
+PlotBFDistribution(DF)
+BFDistribution=ans
+
+%%
+%Get Cell Response Timing
 % PlotCellResponseTiming(DF)
-TemporalAnalysis(DF)
+TemporalAnalysisByAnimal(DF)
 FluoroResponseTimes=ans
 
 %% Plot Mean & Max Flouresence

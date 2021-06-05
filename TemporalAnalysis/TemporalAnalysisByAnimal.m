@@ -1,4 +1,4 @@
-function x= TemporalAnalysisByAnimal(DF,lvl)
+function [TemporalOutput]= TemporalAnalysisByAnimal(DF,lvl);
 
 
  % create indicies  
@@ -9,7 +9,7 @@ else
     lvl_idx = true(1,size(DF.DFF,2));
 end 
     
-    
+    TemporalOutput=[];
   
    active_idx=  DF.active{:,2}>0  ;
      
@@ -45,12 +45,16 @@ end
     try
    [~,~,stats] = anova1(timing_prc, [] ,'off');
   x= multcompare(stats,'Display','off');
-  x=x(1:15,:)  
+  x=x(1:1000,:);
     catch
     end 
     figure; bar(mean(timing_prc),'BarWidth',1)
+    TemporalOutput.Values=mean(timing_prc);
+    TemporalOutput.Stats=x;
+    TemporalOutput.Error=std(timing_prc) / sqrt(n_expts) * 1.86 ;
     hold on 
     errorbar(mean(timing_prc), std(timing_prc) / sqrt(n_expts) * 1.86 ,'.')
+
     
            
          
