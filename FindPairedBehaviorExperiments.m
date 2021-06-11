@@ -1,24 +1,25 @@
-function paired_expts_list,to_click = FindPairedBehaviorExperiments()
+function [paired_expts_list,unpaired] = FindPairedBehaviorExperiments()
 
 paired_expts_list = {};
-
-files = dir('Z:\Kelson\Analyzed\**\2020*\Tones*Active\');
-to_click = {}
+unpaired = {};
+active_files = dir('Z:\Kelson\Analyzed\**\*\Tones*Active\');
+folders = unique({active_files.folder}');
+%to_click = {}
 expt_idx = 1; 
-for fl_idx = 1:length(files)
+for fl_idx = 1:length(folders)
     
     %  find paired passive file if it exists 
     passive_dir = dir( fullfile(...
-        fileparts(files(fl_idx).folder),...
+        fileparts(folders{fl_idx}),...
                   'Tones*Passive',...
                    'Fluorescence.mat'));
     
     if ~isempty(passive_dir)
         passive_file =  FullFileNameFromDir(passive_dir);
     else 
-        continue
+        unpaired{end+1} = folders{fl_idx};
     end 
-    active_file = FullFileNameFromDir(dir(fullfile(files(fl_idx),'Fluorescence.mat');
+    active_file = folders{fl_idx};
     
    % add to experiment file and increment idx
     

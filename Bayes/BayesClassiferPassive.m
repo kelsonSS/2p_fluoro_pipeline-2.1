@@ -9,9 +9,9 @@ function  Loss = BayesClassiferPassive(Passive,Savename,Savepath)
 % init
 
 
-if ~exist('Savepath','var')
-Savepath = fullfile('\\vault3\Data\Kelson', Savename);
-end 
+%if ~exist('Savepath','var')
+%Savepath = fullfile('Z:\Kelson', Savename);
+%end 
 
 handles = Passive.handles{1};
 tone_on = handles.PreStimSilence * 30 ;
@@ -108,7 +108,7 @@ for expt = 1:size(Passive.DataDirs)
 end
 Passive.BayesModels.NumbersLossLvl = permute(Passive.BayesModels.NumbersLossLvl,[2,1,3,4]);
 
-save(Savepath,'Passive','-v7.3') 
+%save(Savepath,'Passive','-v7.3') 
 
 %Test how classes of neurons encode Tone  information
 for run = 1:num_reps
@@ -222,7 +222,7 @@ for run = 1:num_reps
         end
     end
 end
- save(Savepath,'Passive','-v7.3') 
+% save(Savepath,'Passive','-v7.3') 
 
 
 %%% Classes information over time
@@ -320,7 +320,7 @@ for run = 1:num_reps
     end
 end
 
-save(Savepath,'Passive','-v7.3') 
+%save(Savepath,'Passive','-v7.3') 
 
 
 %% Noise Over time 
@@ -417,7 +417,7 @@ for run = 1:num_reps
     end
 end
 
-save(Savepath,'Passive','-v7.3') 
+%save(Savepath,'Passive','-v7.3') 
 
 
 % 
@@ -505,6 +505,10 @@ y = squeeze( sum(x(:,1,:,:) == x(:,2,:,:))./320);
 
 
 toc;
+
+Loss = Passive.BayesModels;
+
+
 %TODO
 %
 %

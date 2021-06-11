@@ -98,7 +98,7 @@ for expt = 1:length(dataDir) %For each file in a directory
          fn = strrep(Datapath,'-','_');
          fn = strrep(Datapath,'/','\');
          fn = strsplit(fn,'\');
-         fileName1 = strcat(fn{6} ,'_',fn{7}, '_' , TypeName);
+         fileName1 = strcat(fn{end-2} ,'_',fn{end-1}, '_' , TypeName);
          if RedChannel
              fileName1 = [fileName1 '_Labeled'];
          end  
@@ -128,7 +128,7 @@ for expt = 1:length(dataDir) %For each file in a directory
      fn = strrep(Data,'-','_');
      fn = strrep(Data,'/','\');
      fn = strsplit(fn,'\');
-     fileName1 = strcat(fn{6} ,'_',fn{7}, '_' , TypeName);
+     fileName1 = strcat(fn{end-2} ,'_',fn{end-1}, '_' , TypeName);
      
          
      dir_out_all{expt} = dir_out;    

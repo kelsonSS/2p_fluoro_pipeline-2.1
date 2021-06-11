@@ -1,4 +1,4 @@
-function [BD,P,Levels] = BandwidthAnalysis(DF,Type,Classes,Sig,Lvl)
+function [BD,P,Levels] = BandwidthAnalysis(DF,Type,Classes,Sig,Lvl,SaveName)
 
 %  DF is data structure created by  Fluoro_to_table a 
 %  containing DF.df_by_level (LevelX Freq X neuron) object
@@ -23,12 +23,18 @@ if ~ exist('Type','var'); Type = 'BRFS'; end
 
 if ~ exist('Classes','var'); Classes = 0; end 
 
+if ~ exist('SaveName','var'); SaveName = ''; end 
+
+
+
 
 Levels = [];
 
 if ~isstruct(DF)
     errordlg('This function currently only accepts structs')
 end 
+
+   
 
     Freqs = unique(DF.FreqLevelOrder{:,1});
     Levels = sort(unique(DF.FreqLevelOrder{:,2}),'descend');
@@ -50,7 +56,7 @@ end
         df_by_level_sig = DF.df_by_level_sig;
         if  iscell(df_by_level)
             df_by_level = [];
-            df_by_level_sig = []
+            df_by_level_sig = [];
             for ii = 1:length(DF.df_by_level);
                 try
                 df_by_level = cat(3,df_by_level,DF.df_by_level{ii}(1:rc(1),1:rc(2),:));
@@ -80,14 +86,14 @@ end
       for Class = 1:length(DF.Classes)
         Class_idx = DF.Class_idx == Class;
         final_idx = (active>0) & Class_idx;
-        BD{Class,1} = FindBandwidth(df_by_level(:,:,final_idx),Freqs,Lvl,Type,Sig,DF.Classes{Class});
+        BD{Class,1} = FindBandwidth(df_by_level(:,:,final_idx),Freqs,Lvl,Type,Sig,DF.Classes{Class},[SaveName, '-', DF.Classes{Class}]  );
         BD{Class,3} = DF.Classes{Class};
      end
      
     else
       DF = df_by_level(:,:,active>0);
-      BD{1,1} = FindBandwidth(DF,Freqs,Lvl,Type,Sig);
-      BD{1,3} = 'All'
+      BD{1,1} = FindBandwidth(DF,Freqs,Lvl,Type,Sig,'All',SaveName);
+      BD{1,3} = 'All';
     end 
   
    
@@ -103,12 +109,12 @@ end
         
         
         
-        PlotBandwidth(BD2);title('Max')
+        PlotBandwidth(BD2,SaveName);title('Max')
      BD = AnalyzeBandwidth(BD2);
         PlotBandwidth(BD3);title('Sum')
     else
     BD  = AnalyzeBandwidth(BD);
-          PlotBandwidth(BD)
+          PlotBandwidth(BD,SaveName)
     end
 
 
@@ -138,9 +144,9 @@ if ~strcmp(Sig,'Neg')
     DF = DF./m;
      lvl_idx = DF >= Lvl;
 elseif strcmp(Sig,'Neg')
-    DF(DF>0) =0 
-    m = min(min(abs(DF)))
-    DF = DF./m
+    DF(DF>0) =0 ;
+    m = min(min(DF));
+    DF = DF./m;
     % DF is in range -1 =0 
     lvl_idx = abs(DF) >= Lvl;  
 end
@@ -150,7 +156,7 @@ end
 
 
 
-function BD = FindBandwidth(DF,Freqs,Lvl,Type,Sig,ClassName)
+function BD = FindBandwidth(DF,Freqs,Lvl,Type,Sig,ClassName,SaveName)
 
 
 if ~exist('ClassName','var')
@@ -167,14 +173,18 @@ switch Type
        figure   
        imagesc(squeeze(mean(DF.* lvl_idx,3)))
      title( sprintf('%s Average FRA',ClassName),'Interpreter','none')
-     if strcmp(Sig,'Neg') colormap('bone'); else colormap('hot'); end 
+     if strcmp(Sig,'Neg'); colormap('bone'); else colormap('hot'); end 
     case 'BRFS'
        BD = squeeze(sum(lvl_idx,2)); 
        figure
        imagesc(sum(lvl_idx,3) / sum(lvl_idx(:)) ) % normalized values
        title( sprintf('%s Average FRA',ClassName),'Interpreter','none')
-       if strcmp(Sig,'Neg') colormap('bone'); else colormap('hot'); end 
-    
+       if strcmp(Sig,'Neg'); colormap('bone'); else colormap('hot'); end 
+       colorbar
+       set(gca,'CLim', [.02 .10])
+       if SaveName
+           saveas(gcf,sprintf('%s-FRA.pdf', SaveName))
+       end
     
     
     
@@ -253,7 +263,7 @@ end
 
 
 
-function PlotBandwidth(BD)
+function PlotBandwidth(BD,SaveName)
     figure
     hold on 
     if ~iscell(BD)
@@ -276,7 +286,9 @@ function PlotBandwidth(BD)
      xlabel('level')
      ylabel('Bandwidth (half-octaves) ')
     
-    
+     if SaveName
+          saveas(gcf,sprintf('%s-Bandwidth.pdf', SaveName))
+     end
     
 end 
 

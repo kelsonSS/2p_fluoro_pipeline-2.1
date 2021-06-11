@@ -1,4 +1,4 @@
-function [all_stats,main_effects] = CompareOldYoung(old,young,levels,full_levels)
+function [all_stats,main_effects] = CompareOldYoung(old,young,levels,SaveName,full_levels)
 
 % this function will create an anova to compare two groups
 % at different levels 
@@ -37,4 +37,9 @@ end
 [x,main_effects,stats,z]= anovan(all,{age_idx,lvl_idx},'model','interaction');
 
 all_stats = multcompare(stats,'Dimension',[1 2]);
+
+if exist('SaveName','var')
+    saveas(gcf,sprintf('%s -Comparision.pdf',SaveName) )
+end 
+
 
