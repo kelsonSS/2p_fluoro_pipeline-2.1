@@ -38,7 +38,7 @@ end
    
    [~,timing] =  max(DFF_temp);
    
-    timing_prc(timing_col_id,:) = histcounts(timing,[1:10:size(DFF_temp,1)+4])./length(timing);
+    timing_prc(timing_col_id,:) = histcounts(timing,[1:2.9:size(DFF_temp,1)+4])./length(timing);
     timing_col_id = timing_col_id +1;
     end 
     
