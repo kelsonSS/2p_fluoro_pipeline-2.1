@@ -33,6 +33,18 @@ if pfs == 0
     pfs = 30;
 end 
 handles.pfs= pfs;
+
+
+% extract date of experiment 
+if isfield(exptevents,'Timestamp')
+    handles.ExperimentDate = exptevents(1).Timestamp;
+else 
+    handles.ExperimentDate = datetime(globalparams.Date,'InputFormat', 'yyyy-MM-dd');
+
+end 
+
+
+% sound data munging
 try
     handles.FirstResponse   = exptparams.FirstResponse(:,1);
 catch
