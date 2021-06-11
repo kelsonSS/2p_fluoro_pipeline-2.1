@@ -1,4 +1,4 @@
-function Plot_Clusters(DF,norm,clusters)
+function Plot_Clusters(DF,clusters,norm)
 % standalone function to plot clusters from TN object after calling the
 % Cluster_DF in the resultant plot cluster object.
 
