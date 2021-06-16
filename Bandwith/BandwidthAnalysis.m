@@ -57,14 +57,18 @@ end
         if  iscell(df_by_level)
             df_by_level = [];
             df_by_level_sig = [];
+            expt_list = [];
             for ii = 1:length(DF.df_by_level);
                 try
                 df_by_level = cat(3,df_by_level,DF.df_by_level{ii}(1:rc(1),1:rc(2),:));
                 df_by_level_sig = cat(3,df_by_level_sig,DF.df_by_level_sig{ii}(1:rc(1),1:rc(2),:));
+                expt_list = cat(1,expt_list,DF.experiment_list(DF.experiment_list == ii) );
                 catch
                 end 
             end
         end   
+        
+        
         
         df_by_level = df_by_level.* df_by_level_sig;
         if strcmp(Type, 'Significant')
@@ -92,6 +96,7 @@ end
      
     else
       DF = df_by_level(:,:,active>0);
+      expt_list = expt_list(active>0);
       BD{1,1} = FindBandwidth(DF,Freqs,Lvl,Type,Sig,'All',SaveName);
       BD{1,3} = 'All';
     end 
@@ -112,10 +117,13 @@ end
         PlotBandwidth(BD2,SaveName);title('Max')
      BD = AnalyzeBandwidth(BD2);
         PlotBandwidth(BD3);title('Sum')
+
     else
-    BD  = AnalyzeBandwidth(BD);
-          PlotBandwidth(BD,SaveName)
-    end
+        BD  = AnalyzeBandwidth(BD);
+        PlotBandwidth(BD,SaveName)
+        
+        BD = AnalyzeByAnimal(BD,expt_list,SaveName);
+    end 
 
 
 end
@@ -278,7 +286,7 @@ function PlotBandwidth(BD,SaveName)
     for ii =  1:size(BD,1)
       
        errorbar([],nanmean(BD{ii,1},2),nanstd(BD{ii,1},[],2) / sqrt(size(BD{ii,1},2)))
-       
+
     end 
      
      legend(BD(:,3),'Interpreter','none')
@@ -292,6 +300,45 @@ function PlotBandwidth(BD,SaveName)
     
 end 
 
+function BD = AnalyzeByAnimal(BD,ExptIdx,SaveName)
 
+BD{1,4} = [];
+for expt =1:max(ExptIdx)
+    ExptBD = BD{:,1}(:,ExptIdx == expt);
+    
+    BD{1,4} = cat(2, BD{1,4}, squeeze(nanmean(ExptBD,2)) );
+end 
+
+
+
+ figure
+    hold on 
+
+        errorbar([],nanmean(BD{1,4},2),nanstd(BD{1,4},[],2) / sqrt(size(BD{1,4},2)) * 1.96)
+        
+          n_lvls = size(BD{1,4},1);
+    n_expts = size(BD{1,4},2);
+    
+    timing = repmat( [1:n_lvls],n_expts,1);
+    
+ scatter(timing(:),BD{1,4}(:),'k.' )
+                
+
+     xlim([0.5,4])
+     legend(BD(:,3),'Interpreter','none')
+     xticks(0:1:4)
+     xlabel('level')
+     ylabel('Bandwidth (half-octaves) ')
+     
+     title('Bandwidth By Animal')
+    
+     if SaveName
+          saveas(gcf,sprintf('%s-BandwidthByAnimal.pdf', SaveName))
+     end
+    
+
+
+
+end 
 
 
