@@ -29,7 +29,7 @@ for expt_id = 1:n_expts
          if strcmp(type,'max')
         results{expt_id} = squeeze(max(max(DFF_temp,[],2))) ;
     else 
-        results{expt_id} = squeeze(nanmean(nanmean(DFF_temp,2)));
+        results{expt_id} = squeeze(nanmean(max(DFF_temp,[],2)));
          end
          
     expt_ids_plotting{expt_id} = repmat(expt_id, length( results{expt_id} ), 1 ); 
@@ -41,6 +41,15 @@ end
 figure
 boxplot(cell2mat(results'),cell2mat(expt_ids_plotting'))
 title(sprintf( '%s Fluorescence', type))
+
+figure
+hold on
+
+results_mu = cellfun(@mean, results );
+boxplot( results_mu)
+scatter(ones(length(results_mu),1), results_mu, '.k')
+
+
 
 
 

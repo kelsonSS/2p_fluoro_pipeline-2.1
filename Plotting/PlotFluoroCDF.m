@@ -26,7 +26,7 @@ function dff = PlotFluoroCDF(DF,type,lvl,sex_flg)
     if strcmp(type,'max')
         dff = squeeze(max(max(dff,[],2))) ;
     else 
-        dff = squeeze(nanmean(nanmean(dff,2)));
+        dff = squeeze(nanmean(max(dff,[],2)));
     end
     
     figure;
