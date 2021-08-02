@@ -139,10 +139,10 @@ end
 %Register movies
 
 
-for expt=1:length(y)
+for expt=1:length(expt_paths)
     %Select current path
     input.path = input.inpath;
-    input.expname = y{expt};
+    input.expname = expt_paths{expt};
     %input.animalID = animalID{expt};
     %Register combined movies
     %RegisterMovie(input)
@@ -161,8 +161,8 @@ end
 % Extract Timing Params
 for expt=1:length(expt_paths)
     %Select current path
-    input.path = input.inpath;
-    input.expname = expt_paths(expt);
+    input.path = fullfile(input.path,expt_paths(expt));
+    %input.expname = expt_paths(expt);
     input.animalID = animalID(expt);
     input.psignalfiles = psignalfiles(expt);
     fprintf('analyzing %d of %d: \n',expt,length(expt_paths)) 
@@ -197,6 +197,8 @@ for expt=1:length(ExtractionPaths)
        badfiles{end+1} = ExtractionPaths{expt};
 end
 end 
+
+
 %% Quality check extracted Fluorescence
 for i=1:length(paths)
     %Select current path
@@ -253,6 +255,25 @@ end
 
   
  
+%% Optional extraction files  starts here
+
+% If re-extraction of timing is necesary or to check extraction of all
+% files in analyzed 
+
+% Extract Timing Params
+[TimingPaths, TimingPsignalFiles] = CreateTimingExtractionList(input.savepath);
+
+for expt=1:length(TimingPaths)
+    %Select current path
+    input.path = TimingPaths{expt};
+    input.expname = TimingPaths(expt);
+    input.animalID = animalID(expt);
+    input.psignalfiles = TimingPsignalFiles(expt);
+    fprintf('analyzing %d of %d: \n',expt,length(TimingPaths)) 
+    ExtractTimingParams(input,1);
+end
+
+
 
 
 

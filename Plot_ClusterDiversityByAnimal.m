@@ -1,4 +1,4 @@
-function Plot_ClusterDiversityByAnimal(Clusters,expt_ids)
+function active = Plot_ClusterDiversityByAnimal(Clusters,expt_ids)
 
 
 if isstruct(Clusters)

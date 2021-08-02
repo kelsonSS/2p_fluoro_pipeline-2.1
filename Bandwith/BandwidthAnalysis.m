@@ -1,3 +1,4 @@
+
 function [BD,P,Levels] = BandwidthAnalysis(DF,Type,Classes,Sig,Lvl,SaveName)
 
 %  DF is data structure created by  Fluoro_to_table a 
@@ -42,7 +43,7 @@ end
     active = DF.active{:,2};
    
     if iscell(DF.df_by_level)
-        
+            
         DF_shapes = cellfun(@size,DF.df_by_level,'UniformOutput',0);
         DF_shapes = cell2mat(cellfun(@(x) x(1:2)',DF_shapes,'UniformOutput',0));
         DF_shape = DF_shapes(:);
@@ -104,6 +105,9 @@ end
    
     if  strcmp(Type, 'interp')
         for class_idx = 1:size(BD,1)
+            % convert answers to half octaves
+            BD{class_idx,1} = cellfun(@(x) x * 2,  BD{class_idx,1},'UniformOutput',0);
+            % calculate sum and max bandwith
             BD2{class_idx,1} = cellfun(@(X) max(X(:,2)-X(:,1)) , BD{class_idx,1});
             BD3{class_idx,1} = cellfun(@(X) sum(X(:,2)-X(:,1)) , BD{class_idx,1});
             
@@ -115,8 +119,10 @@ end
         
         
         PlotBandwidth(BD2,SaveName);title('Max')
-     BD = AnalyzeBandwidth(BD2);
-        PlotBandwidth(BD3);title('Sum')
+        PlotBandwidth(BD3,SaveName);title('Sum')
+        BD = AnalyzeBandwidth(BD3);
+        BD = AnalyzeByAnimal(BD,expt_list,SaveName);
+     
 
     else
         BD  = AnalyzeBandwidth(BD);
@@ -200,7 +206,7 @@ switch Type
         Freqs = Freqs(1:size(DF,2));
         Freqs_lg2 = log2(Freqs);
         Freqs_lg2 = Freqs_lg2 - min(Freqs_lg2);
-        interp_factor = .1; % interpolate by .X of an octave Ex .1 = 10th octave
+        interp_factor = .05; % interpolate by .X of an octave Ex .1 = 10th octave
         Freqs_lg2_interp = [min(Freqs_lg2):interp_factor:max(Freqs_lg2)];
         
         for neuron = 1:size(DF,3)
@@ -209,12 +215,20 @@ switch Type
             DF_interp(:,:,neuron) = interp1(Freqs_lg2',V',Freqs_lg2_interp')';
             
             for lvl_idx = 1:size(DF_interp,1)
+                % normalize responses to current level
+                nn_lvls = DF_interp(lvl_idx,:,neuron) ./ max(DF_interp(lvl_idx,:,neuron));
+                
+                % if there were no significant responses return [0 0]
+                
                 % find_bandwidth
                 inds= find(  DF_interp(lvl_idx,:,neuron) > Lvl );
                 
-                if isempty(inds)
+                if max(nn_lvls) == Inf || isempty(inds)
                     bands(1,:) = [0 0];
                 else
+                
+                
+                
                 % multipeaked neuron test
                 % if there are multiple peaks it will show up as a beak in the
                 % indicies
@@ -308,18 +322,24 @@ for expt =1:max(ExptIdx)
     
     BD{1,4} = cat(2, BD{1,4}, squeeze(nanmean(ExptBD,2)) );
 end 
+ 
 
-
-
+ bandMean = nanmean(BD{1,4},2);
+ bandSE = nanstd(BD{1,4},[],2) / sqrt(size(BD{1,4},2)) * 1.96 ;
+ 
+ BD{1,4} 
+ % normalize to tones 
+ 
+ 
  figure
     hold on 
 
-        errorbar([],nanmean(BD{1,4},2),nanstd(BD{1,4},[],2) / sqrt(size(BD{1,4},2)) * 1.96)
+        errorbar([],bandMean,bandSE)
         
           n_lvls = size(BD{1,4},1);
     n_expts = size(BD{1,4},2);
     
-    timing = repmat( [1:n_lvls],n_expts,1);
+    timing = repmat( [1:n_lvls],n_expts,1)';
     
  scatter(timing(:),BD{1,4}(:),'k.' )
                 

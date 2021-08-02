@@ -10,7 +10,7 @@ if iscell(DF) % if Cell iterate over cells to get full index
     clear  DF
     DF = struct()
     DF.DFF_norm = []; 
-    DF.DFF_norm_mu= [];
+  %  DF.DFF_norm_mu= [];
     DF.Clean_idx = [];
     DF.active = [];
     DF.experiment_list = [];
@@ -21,13 +21,13 @@ if iscell(DF) % if Cell iterate over cells to get full index
          if ii> 1 && size(expt,2) ~= size(DF.DFF_norm,2);
              if ~iscell(DF.DFF_norm)
                  DF.DFF_norm = {DF.DFF_norm};
-                 DF.DFF_norm_mu = {DF.DFF_norm_mu};
+               %  DF.DFF_norm_mu = {DF.DFF_norm_mu};
              end 
              DF.DFF_norm{ii} = expt.DFF_norm;
-              DF.DFF_norm_mu{ii} = expt.DFF_norm_mu;
+%              DF.DFF_norm_mu{ii} = expt.DFF_norm_mu;
          else
             DF.DFF_norm = cat(2,DF.DFF_norm, expt.DFF_norm  );
-            DF.DFF_norm_mu = cat(2,DF.DFF_norm_mu, expt.DFF_norm_mu  );
+          % DF.DFF_norm_mu = cat(2,DF.DFF_norm_mu, expt.DFF_norm_mu  );
             
          end 
         DF.Clean_idx = cat(1,DF.Clean_idx,temp{ii}.Clean_idx);

@@ -1,26 +1,25 @@
-function Out = Fluoro_to_Table(dataDir,Behavior_flag)
+function Out = Fluoro_to_Table(dataDir,Freq_cutoff)
 % takes a cell of filepaths containing both an output file and a
 % psignal_file and creates two tables from them: a table cotaining all
 % neurons from that experiment sorted by freqeuency and level and a list 
 % statistically significant neurons
 
-% Behavior_flag - If animals are actively performing we need to change the output
-% structure of Vec_DFF to be Cells instead of a 3d Vector since there will
-% be a variable number of trials per experiment
+%Freq_cutoff - If trying to combine files with different numbers of
+%frequencies can use Freq_cuttoff to only collect frequencies below the
+%Freq_cuttoff
 %
-% 1 = behavior
-% 0 = passive
+
 %
 %
 % if dataDir is needed try get_paths_interactive
 
 % init
-
-Freq_cutoff = 65000;
-
-if ~exist('Behavior_flag','var')
-    Behavior_flag = 0 ;
+if ~exist('Freq_cutoff','var')
+    Freq_cutoff = 65000;  % largst freq played in lab is usually 64k
 end 
+
+
+
 
 Vec_DFF_all = [];           % main data structure 
 ActiveTable = table();      % activity data structure 
@@ -180,7 +179,7 @@ uLevels(uLevels>100) = inf;
 FreqLevelOrder = table(Freqs,Levels);
 [FreqLevelOrder, fl_idx]= sortrows(FreqLevelOrder, {'Freqs','Levels'},{'Ascend','Descend'});
 
-if  mod(total_trials, uF * uL) ~= 0  && ~Behavior_flag
+if  mod(total_trials, uF * uL) ~= 0 
     try
     [FreqLevelOrder,fl_idx] = FreqCheck(FreqLevelOrder,fl_idx,total_trials);
     catch
@@ -337,7 +336,7 @@ Vec_DFF = imfilter(Vec_DFF,gausfilt);
             after_onset = squeeze(nanmean(Vec_DFF_Temp(soundon:soundoff,:,:),2));
             
             for nn = 1:size(Vec_DFF_Temp,3)
-                df_by_level_sig_temp(lvl,freq,nn) = ttest2(baseline(:,nn),after_onset(:,nn));
+                df_by_level_sig_temp(lvl,freq,nn) = ttest2(baseline(:,nn),after_onset(:,nn),'alpha',.001);
             end
             
              df_by_level_temp(lvl,freq,:) = ...
@@ -480,10 +479,7 @@ curr_expt = curr_expt+1;
  fprintf('%d neurons, %d expt-list,\n', length(expt_list),size(Vec_DFF_all,3))
 
  
- if Behavior_flag & size(Vec_DFF_all,2) ~= length(handles.Freqs)
-     pause
- end 
- 
+
 end 
 
 

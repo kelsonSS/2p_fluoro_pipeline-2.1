@@ -6,7 +6,7 @@ function Out = MungeBehaviorGroupData(behavior)
 % animal name is not critical but resultsAll and its relative location is 
 
 
-SNRs = [20 10 0 -10];  
+SNRs = [20 10 0 ];  
 AnimalIDs  =  fieldnames(behavior);
 
 

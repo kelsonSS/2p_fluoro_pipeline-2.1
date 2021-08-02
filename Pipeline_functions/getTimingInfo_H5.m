@@ -285,7 +285,7 @@ end
  % sanity check
  if bad_timing_flag || bad_frame_flag
      warning(sprintf('%s may be wrong file! manual inspection needed',ThorSyncFile))
-     TimingInfo.Error('Suspected File Mismatch')
+     TimingInfo.Error = 'Suspected File Mismatch'
  end 
 
 

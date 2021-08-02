@@ -1,4 +1,4 @@
-function CreateAnimalAgeDatabase(InPath)
+function getAnimalInfo(InPath)
 % this function loops over all PsignalFolders containing an AnimalInfo.mat 
 % file and creates a table containing the animals mean age during experiments 
 % as well ast the age when it started experiments and the age when it

@@ -16,6 +16,7 @@ function Info = getAnimalInfo(AnimalList,BasePath)
 AnimalID = {};
 DOB = {};
 Sex = {};
+Experiment_Date ={};
 Age_Months = {};
 Age_Days = {};
 
@@ -58,7 +59,8 @@ for ii = 1:length(AnimalList)
          
      Expt_date = handles.ExperimentDate;
      
-     Age_Months{ii} = between(DOB{ii},Expt_date,{'months','days'})
+     Experiment_Date{ii} = Expt_date;
+     Age_Months{ii} = between(DOB{ii},Expt_date,{'months','days'});
      Age_Days{ii} = caldiff([DOB{ii},Expt_date],'days');
      
 
@@ -73,8 +75,8 @@ for ii = 1:length(AnimalList)
      
 end 
      
-    Info = table(AnimalID',Sex',DOB',Age_Months',Age_Days','VariableNames',...
-                 {'AnimalID','Sex','DOB','Months_old','Days_old'}); 
+    Info = table(AnimalID',Sex',DOB',Experiment_Date',Age_Months',Age_Days','VariableNames',...
+                 {'AnimalID','Sex','DOB','ExptDate','Months_old','Days_old'}); 
     
     
 end 

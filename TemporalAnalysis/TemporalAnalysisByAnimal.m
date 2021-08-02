@@ -1,5 +1,8 @@
-function [x,timing_prc]= TemporalAnalysisByAnimal(DF,lvl)
+function [x,timing_prc]= TemporalAnalysisByAnimal(DF,lvl,SaveName)
 
+if ~exist('SaveName','var')
+    SaveName = ''
+end 
 
  % create indicies  
 if exist('lvl','var')
@@ -28,7 +31,7 @@ end
         
        DFF_temp = DFF(:, expt_list == expt_id);
    
-        if size(DFF_temp,2) < 20 
+        if size(DFF_temp,2) < 10 
           continue
         end 
        % get first derivative 
@@ -38,18 +41,16 @@ end
    
    [~,timing] =  max(DFF_temp);
    
-<<<<<<< Updated upstream
-    timing_prc(timing_col_id,:) = histcounts(timing,[1:2.9:size(DFF_temp,1)+4])./length(timing);
-=======
+
     timing_prc(timing_col_id,:) = histcounts(timing,[1:15:size(DFF_temp,1)+4])./length(timing);
->>>>>>> Stashed changes
+
     timing_col_id = timing_col_id +1;
     end 
     
     try
    [~,~,stats] = anova1(timing_prc, [] ,'off');
   x= multcompare(stats,'Display','off');
-  x=x(1:10,:)  
+  x=x(1:size(timing_prc,2),:)  
     catch
     end 
     
@@ -70,6 +71,9 @@ end
     timing = repmat( [1:n_timebins],n_expts,1);
     
  scatter(timing(:),timing_prc(:),'k.' )
+ if SaveName
+     saveas(gcf,sprintf('%s-TimingByAnimal.pdf', SaveName))
+ end
     
     
            

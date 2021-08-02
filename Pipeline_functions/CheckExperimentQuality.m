@@ -7,11 +7,10 @@ tic();
 %Find index of experiment to be used for registration template
 %regidx=find(strcmpi(input.expname,input.regexp));
 %Path of images used for registration template
-for expnum = 1:length(input.expname)
+for expnum = 1:length(input.DataDirs)
 
-bb=strsplit(input.path,'\');
-newpath = char(strcat(input.savepath, '\', bb{end} , '\' , input.expname{expnum}, '\' )) ;
-disp(newpath)
+    
+newpath = input.DataDirs{expnum}
 
 if ~exist(fullfile(newpath,'Fluorescence.mat'),'file')
     continue

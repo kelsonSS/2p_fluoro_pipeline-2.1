@@ -1,4 +1,4 @@
-function PlotGroupedData(Behavior)
+function PlotGroupedData(Behavior,AnimalInfo)
 
 % Takes grouped Data from MungeBehaviorGroupData and plots it 
 
@@ -21,7 +21,7 @@ function PlotGroupedData(Behavior)
        
        plot([1,1],[ax(3), ax(4)], 'g-') 
        plot([2,2],[ax(3), ax(4)], 'g-') 
-              
+       xlim([0 , 3])       
     
      
  end 
@@ -77,6 +77,17 @@ function PlotGroupedData(Behavior)
  set(gca,'Xdir','rev')
  xticklabels(levelLabels)
  ylabel('Percent Hit Rate')
-xlabel('dB SNR') 
+ xlabel('dB SNR') 
+ 
+ 
+ % SNR plot 3 - HitRate As a function of Animal Age
+Age = 
+ 
+ figure
+title('Hit Rate by Age')
+
+
+
+ 
  
  
