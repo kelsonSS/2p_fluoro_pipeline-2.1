@@ -11,9 +11,10 @@ function sig = FluoroIntensityAnalysis(s1,s2,type,GroupNames,Levels)
  
  %byAnimal
      
-  s1_animal = PlotFluoroByAnimal(s1,type); close(gcf)
-  s2_animal = PlotFluoroByAnimal(s2,type); close(gcf)
-   
+  s1_animal = PlotFluoroByAnimal(s1,type);
+
+  s2_animal = PlotFluoroByAnimal(s2,type);
+
   
  [~,sig.animal] = ttest2(s1_animal,s2_animal);
 

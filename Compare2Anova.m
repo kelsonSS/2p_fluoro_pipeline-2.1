@@ -1,5 +1,7 @@
 function [all_stats,main_effects] = Compare2Anova(g1,g2,GroupNames,levels,SaveName,varnames,full_levels)
 
+%  Compare2Anova(g1,g2,GroupNames,levels,SaveName,varnames,full_levels)
+
 % this function will create an anova to compare two groups
 % at different levels 
 %
@@ -17,17 +19,36 @@ end
 
 if ~exist('SaveName','var')
     SaveName = [];
+else 
+    SaveName = [GroupNames{1}, GroupNames{2},SaveName];
 end 
 
+
+% plot error-bars 
+if iscell(g1) || iscell (g2)
+   g1 = cell2mat(cellfun(@(x) x(:), g1,'UniformOutput',false)')';
+   g2 = cell2mat(cellfun(@(x) x(:), g2,'UniformOutput',false)')';
+    
+end
+    
+Means =[nanmean(g1,2),nanmean(g2,2)]
+CIs = [ nanstd(g1,[],2)./sqrt(size(g1,2)) * 1.96, ...
+        nanstd(g2,[],2)./sqrt(size(g2,2)) * 1.96  ];   
+
+figure;PlotGroupedErrorBars(Means , CIs )
+legend(GroupNames)
+xticklabels(levels)
+title(SaveName,'interpreter','none')
+xlabel('Levels')
+ylabel('A.U')
+saveas(gcf,sprintf('%s-Bars.pdf',SaveName))
+
+% create indexing for Anova
 
 g1_idx = repmat({GroupNames{1}}, numel(g1),1);
 g2_idx = repmat({GroupNames{2}},numel(g2),1);
 age_idx = cat(1,g1_idx,g2_idx);
 
-try
-figure;bar([nanmean(g1);nanmean(g2)]')
-catch
-end
 g1 = g1(:);
 g2 = g2(:);
 
