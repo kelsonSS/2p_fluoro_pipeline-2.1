@@ -59,7 +59,7 @@ end
     
     figure; bar(mean(timing_prc),'BarWidth',1)
     hold on 
-    errorbar(mean(timing_prc), std(timing_prc) / sqrt(n_expts) * 1.86 ,'.')
+    errorbar(mean(timing_prc), std(timing_prc) / sqrt(n_expts) * 1.96 ,'.')
     
     % plotting individual animals with scatter plot
     
