@@ -2,7 +2,7 @@ function active = Plot_ClusterDiversityByAnimal(Clusters,expt_ids)
 
 
 if isstruct(Clusters)
-    Plot_ClusterDiversityByAnimal(Clusters.Combined_Classes,Clusters.experiment_list)
+  active =  Plot_ClusterDiversityByAnimal(Clusters.Combined_Classes,Clusters.experiment_list)
     return
 
 end 
@@ -36,10 +36,10 @@ errorbar( mean(active),std(active) ./ sqrt(N_expts) * 1.96 , '.' ) ;
 set(gca,'Ylim',[0 m+1])
 title('Cluster Diversity')
 
-figure 
-bar(mean(expt_prc));
-hold on 
-errorbar( mean(expt_prc),std(expt_prc) ./ sqrt(N_expts) * 1.96 , '.' ) ;
+%figure 
+%bar(mean(expt_prc));
+%hold on 
+%errorbar( mean(expt_prc),std(expt_prc) ./ sqrt(N_expts) * 1.96 , '.' ) ;
 
 
 

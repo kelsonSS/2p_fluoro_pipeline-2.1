@@ -224,7 +224,7 @@ switch Type
                 inds= find(  DF_interp(lvl_idx,:,neuron) > Lvl );
                 
                 if max(nn_lvls) == Inf || isempty(inds)
-                    bands(1,:) = [0 0];
+                    bands(1,:) = [nan nan];
                 else
                 
                 

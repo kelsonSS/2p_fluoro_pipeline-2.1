@@ -69,14 +69,14 @@ for Expt = 1:Expt_num
 %   end 
   
     % continue if  size  = 20 
-    if n_neurons <= 20 
-         Corr{Expt} = nan;
-    for Lvl = 1:L
-    LCorr{Expt,Lvl} = nan;
-    NCorr{Expt,Lvl}  = nan;
-    end 
-    continue
-    end 
+%     if n_neurons <= 20 
+%          Corr{Expt} = nan;
+%     for Lvl = 1:L
+%     LCorr{Expt,Lvl} = nan;
+%     NCorr{Expt,Lvl}  = nan;
+%     end 
+%     continue
+%     end 
         
    
     
@@ -156,9 +156,11 @@ end
 
 disp('Analyzing Noise Statistics')
 %[N_mu,N_std,N_CI,N_sig] = getCorrStatistics(NCorr,'Noise');
-[N_mu,N_std,N_CI,N_sig,N_corr_flat,N_mu_expt] = getCorrStatistics(NCorr2,'Noise2'); 
+[N_mu,N_std,N_CI,N_sig,N_corr_flat,N_mu_expt,...
+   N_diff,N_diff_expt] = getCorrStatistics(NCorr2,'Noise2'); 
 disp('Analyzing Signal Statistics')
-[L_mu,L_std,L_CI,L_sig,L_corr_flat,L_mu_expt] = getCorrStatistics(LCorr,'Signal'); 
+[L_mu,L_std,L_CI,L_sig,L_corr_flat,L_mu_expt,...
+    L_diff,L_diff_expt] = getCorrStatistics(LCorr,'Signal'); 
 %  Older version - Delete if above is running fine 
 %  LCorr_flat = cell2mat(cellfun(@(x)x(:),LCorr,'UniformOutput',0));
 %  NCorr_flat = cell2mat(cellfun(@(x)x(:),NCorr,'UniformOutput',0));
@@ -195,6 +197,8 @@ Bars_Overall(L_mu,L_CI,'Signal')
 Bars_by_level(N_mu,N_CI,'Noise');AddScatter(N_mu_expt)
 Bars_Overall(N_mu,N_CI,'Noise')
 % Bars_by_level(N_mu2,N_CI2,'Noise2')
+
+
 %% packaging
     Out.Corr = Corr;
     Out.LCorr = LCorr;
@@ -207,6 +211,10 @@ Bars_Overall(N_mu,N_CI,'Noise')
     Out.Signal_Stats.std = L_std;
     Out.Noise_Stats.mean = N_mu;
     Out.Noise_Stats.std = N_std;
+    Out.LCorrDiff = L_diff;
+    Out.LCorrDiffAnimal = L_diff_expt;
+    Out.NCorrDiff = N_diff;
+    Out.NCorrDiffAnimal = N_diff_expt;
     
 
 
@@ -243,11 +251,15 @@ function AddScatter(mu_expt)
 
 
 
-function [corr_mu,corr_std,corr_CI,corr_sig,corr_flat,corr_mu_expt] =...
+function [corr_mu,corr_std,corr_CI,corr_sig,corr_flat,corr_mu_expt,...
+          corr_diff,corr_diff_expt] =...
                  getCorrStatistics(corrs,name)
     % this function takes the correlations and flattens them and extracts
     % the relevant statistics 
+
+CorrStats = struct()    
 corr_flat = cellfun(@(x)x(:),corrs,'UniformOutput',0);
+
 
 corr_mu_expt =   cellfun(@nanmean ,corr_flat);
 corr_mu = nanmean(corr_mu_expt);
@@ -260,6 +272,16 @@ if size(corr_flat,2) >1
 else 
     corr_sig = p;
 end 
+
+% see how correlation changes in comparision to tone level
+corr_diff = {}
+for ii = 1:size(corrs,1)
+    corr_diff(ii,:) = cellfun( @(x) x - corrs{ii,1},corrs(ii,:),'UniformOutput',false);
+end 
+
+corr_diff_expt =  cellfun(@(x) nanmean(x(:)),corr_diff);
+
+
 % figure
 % hold on 
 % for ii = 1:4

@@ -20,7 +20,7 @@ end
 if ~exist('SaveName','var')
     SaveName = [];
 else 
-    SaveName = [GroupNames{1}, GroupNames{2},SaveName];
+    SaveName = [GroupNames{1}, GroupNames{2},'-',SaveName];
 end 
 
 
@@ -41,13 +41,16 @@ xticklabels(levels)
 title(SaveName,'interpreter','none')
 xlabel('Levels')
 ylabel('A.U')
-saveas(gcf,sprintf('%s-Bars.pdf',SaveName))
+saveas(gcf,sprintf('%s-ComparisonBars.pdf',SaveName))
 
 % create indexing for Anova
 
 g1_idx = repmat({GroupNames{1}}, numel(g1),1);
+
 g2_idx = repmat({GroupNames{2}},numel(g2),1);
 age_idx = cat(1,g1_idx,g2_idx);
+
+g1_lvl_idx = repmat(levels',1,size(g1,2));
 
 g1 = g1(:);
 g2 = g2(:);
@@ -65,17 +68,29 @@ end
 
 [x,main_effects,stats,z]= anovan(all,{age_idx,lvl_idx},'model','interaction','varnames',varnames);
 
-maineffectsplot(all,{age_idx,lvl_idx},'varnames',{'age','level'})
-if SaveName 
-    suptitle(sprintf('Main Effects for: %s', SaveName'))
-    saveas(gcf,sprintf('%s -MainEffects.pdf',SaveName) )
-end 
 
-figure
-all_stats = multcompare(stats,'Dimension',[1 2]);
 
-if SaveName
-    saveas(gcf,sprintf('%s -Comparision.pdf',SaveName) )
-end 
+% if SaveName 
+%     suptitle(sprintf('Main Effects for: %s', SaveName'))
+%     saveas(gcf,sprintf('%s -MainEffects.pdf',SaveName) )
+% end 
+
+
+main_effects_P_value = main_effects(2:3,end);
+ my_maineffectsplot(all,{age_idx,lvl_idx},...
+                    main_effects_P_value,...
+                    {'age','level'})
+ if SaveName 
+     suptitle(sprintf('Main Effects for: %s', SaveName'))
+     saveas(gcf,sprintf('%s -MainEffectsPlot.pdf',SaveName) )
+ end 
+
+ figure
+ all_stats = multcompare(stats,'Dimension',[1 2]);
+% % 
+% % 
+% % if SaveName
+% %     saveas(gcf,sprintf('%s -Comparision.pdf',SaveName) )
+% % end 
 
 

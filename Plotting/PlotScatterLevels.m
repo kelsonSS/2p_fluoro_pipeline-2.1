@@ -1,4 +1,5 @@
-function PlotScatterLevels(GroupNames,Levelnames,Title,Style,varargin)
+
+function PlotScatterLevels(GroupNames,Levelnames,Title,varargin)
 % PlotScatterLevels(GroupNames,Levelnames,Title,varargin)
 % creates scatterplots of N datasets at the various levels 
 % 
@@ -15,7 +16,7 @@ hold on
 % where plotting starts and how much we'll shift each plot by 
 increment = .2 ;
 start_level = 1;
-all_start_levels = []
+all_start_levels = [];
 % to save fig handles 
 h = [];
 
@@ -32,17 +33,13 @@ for ii = 1:length(varargin)
    levels =  repmat([start_level: n_levels+1]' ,1, n_animals);
    
    % plot scatterplot
-   switch Style
-       case 'bar'
-         h(ii) =bar(levels(:,1),nanmean(data,2)); 
-       case 'scatter'
+
           h(ii) =scatter(levels(:),data(:),'filled');
-   end 
    % plot errorbar with 95% CI
-   errorbar(levels(:,1), nanmean(data,2), nanstd(data,[],2) / sqrt(n_animals) * 1.96 ,'.');  
-   (levels(:,1),nanmean(data,2); 
+   errorbar(levels(:,1)+increment/4, nanmean(data,2), nanstd(data,[],2) / sqrt(n_animals) * 1.96 ,'.');   
 end
 
+ylim([0 300])
 legend(h,GroupNames)
 xticks( [ median(all_start_levels) : n_levels+1] )
 xticklabels(Levelnames)

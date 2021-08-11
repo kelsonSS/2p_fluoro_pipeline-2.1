@@ -1,4 +1,8 @@
-function PlotGroupedErrorBars(Grouped_means, Grouped_CI) 
+function x = PlotGroupedErrorBars(Grouped_means, Grouped_CI, calc_flag) 
+
+if exist('calc_flag','var') && calc_flag
+    [Grouped_means,Grouped_CI] = Analyze(Grouped_means,Grouped_CI);
+end     
 
 
 h = bar(Grouped_means, 'grouped');
@@ -15,3 +19,22 @@ for i = 1:nbars
     errorbar(x, Grouped_means(:,i), Grouped_CI(:,i), 'k', 'linestyle', 'none');
 end
 hold off
+
+
+
+
+function [Grouped_means,Grouped_CI] = Analyze(x1,x2)
+
+
+Grouped_means = [nanmean(x1);nanmean(x2)];
+
+Grouped_CI = [ nanstd(x1) / sqrt(size(x1,1)) * 1.96 ;  nanstd(x2) / sqrt(size(x2,1)) * 1.96];
+      
+          
+          
+          
+
+
+
+
+

@@ -179,13 +179,14 @@ uLevels(uLevels>100) = inf;
 FreqLevelOrder = table(Freqs,Levels);
 [FreqLevelOrder, fl_idx]= sortrows(FreqLevelOrder, {'Freqs','Levels'},{'Ascend','Descend'});
 
-if  mod(total_trials, uF * uL) ~= 0 
+%if  mod(total_trials, uF * uL) ~= 0 
     try
     [FreqLevelOrder,fl_idx] = FreqCheck(FreqLevelOrder,fl_idx,total_trials);
     catch
+        fprintf('Bad freqs, continuing \n')
         continue
         end 
-end 
+%end 
 
 %%change if you need to subset data
 freq_idx = FreqLevelOrder{:,1} < Freq_cutoff;
@@ -412,6 +413,7 @@ Vec_DFF = imfilter(Vec_DFF,gausfilt);
 try
 Vec_DFF_all = cat(3,Vec_DFF_all,Vec_DFF);
 catch
+     fprintf('too few freqs, continuing \n')
     continue
 end 
 
@@ -519,7 +521,7 @@ function [FLO_fixed, fl_idx_fixed] = FreqCheck(FreqLevelOrder,fl_idx,total_trial
    FLO(isinf(FLO)) = 99;
    FLO = sum(FLO,2);
    counts =histcounts(FLO,[unique(FLO);max(FLO)+1]);
-   rep_mode = mode(counts);
+   rep_mode = min(counts);
    
    remainder = 0;
    idx_pointer = 1;

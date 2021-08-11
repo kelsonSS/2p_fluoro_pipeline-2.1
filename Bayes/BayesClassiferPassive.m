@@ -61,54 +61,54 @@ Levels2(Levels2 == 99) = 0 ;
 uLevels2 = unique(Levels2);
 
 
-
-% test the number of neurons that are needed for classifications at different SNRS
-tic;
-for expt = 1:size(Passive.DataDirs)
-    disp([' Numbers: expt #' num2str(expt) '/' num2str(size(Passive.DataDirs))  ': ' ...
-        num2str(floor( toc / 60  )) ' min elapsed' ])
-    for run = 1:ceil( num_reps / length(Passive.DataDirs) )
-        %% indexing
-        expt_idx = expt_list == expt;
-       
-        in_idx = expt_idx & active_idx & ~ bad_idx ;
-        
-        AllData = Passive.DFF_Z(:,:,in_idx);
-        
-%         if size(AllData,3) < 20
-%             continue
-%             end
+% 
+% % test the number of neurons that are needed for classifications at different SNRS
+% tic;
+% for expt = 1:size(Passive.DataDirs)
+%     disp([' Numbers: expt #' num2str(expt) '/' num2str(size(Passive.DataDirs))  ': ' ...
+%         num2str(floor( toc / 60  )) ' min elapsed' ])
+%     for run = 1:ceil( num_reps / length(Passive.DataDirs) )
+%         %% indexing
+%         expt_idx = expt_list == expt;
+%        
+%         in_idx = expt_idx & active_idx & ~ bad_idx ;
 %         
-        for neurons = 2:num_neurons
-            
-            
-            %% subscripting
-            
-            rand_idx = randi( size(AllData,3),neurons,1);
-            %% Modeling
-            mdlData = squeeze(nanmean(AllData(tone_on:tone_off,1:trials,rand_idx)));
-            mdlData(isnan(mdlData)) = 0;
-            mdl =  fitcnb(mdlData,Freqs,'CrossVal','on') ;
-            %% Predicting
-            %total
-            Prediction =   mdl.kfoldPredict;
-            Passive.BayesModels.NumbersLossTotal(neurons,expt,run) = sum( Prediction == Freqs )...
-                /length(Freqs);
-            % by level
-            for lvl = 1: length(uLevels)
-                lvl_idx = Levels == uLevels(lvl);
-                Passive.BayesModels.NumbersLossLvl(lvl,neurons,expt,run) = sum( Prediction(lvl_idx) == ...
-                    Freqs(lvl_idx) )/length(Freqs(lvl_idx));
-            end
-            
-            
-            
-        end
-    end
-end
-Passive.BayesModels.NumbersLossLvl = permute(Passive.BayesModels.NumbersLossLvl,[2,1,3,4]);
-
-%save(Savepath,'Passive','-v7.3') 
+%         AllData = Passive.DFF_Z(:,:,in_idx);
+%         
+% %         if size(AllData,3) < 20
+% %             continue
+% %             end
+% %         
+%         for neurons = 2:num_neurons
+%             
+%             
+%             %% subscripting
+%             
+%             rand_idx = randi( size(AllData,3),neurons,1);
+%             %% Modeling
+%             mdlData = squeeze(nanmean(AllData(tone_on:tone_off,1:trials,rand_idx)));
+%             mdlData(isnan(mdlData)) = 0;
+%             mdl =  fitcnb(mdlData,Freqs,'CrossVal','on') ;
+%             %% Predicting
+%             %total
+%             Prediction =   mdl.kfoldPredict;
+%             Passive.BayesModels.NumbersLossTotal(neurons,expt,run) = sum( Prediction == Freqs )...
+%                 /length(Freqs);
+%             % by level
+%             for lvl = 1: length(uLevels)
+%                 lvl_idx = Levels == uLevels(lvl);
+%                 Passive.BayesModels.NumbersLossLvl(lvl,neurons,expt,run) = sum( Prediction(lvl_idx) == ...
+%                     Freqs(lvl_idx) )/length(Freqs(lvl_idx));
+%             end
+%             
+%             
+%             
+%         end
+%     end
+% end
+% Passive.BayesModels.NumbersLossLvl = permute(Passive.BayesModels.NumbersLossLvl,[2,1,3,4]);
+% 
+% %save(Savepath,'Passive','-v7.3') 
 
 %Test how classes of neurons encode Tone  information
 for run = 1:num_reps
@@ -116,7 +116,7 @@ for run = 1:num_reps
      disp([' Classes Tones: Run #' num2str(run) '/' num2str(num_reps)  ': ' ...
         num2str(floor( toc / 60  )) ' min elapsed' ])
     
-    for class = 1:length(classes) +1
+    for class = length(classes) +1
         
         %% indexing
         class_idx = all_classes == class;                         
@@ -164,65 +164,65 @@ Passive.BayesModels.ClassesTonesLossLvl = permute(Passive.BayesModels.ClassesTon
 
 % save(Savepath,'Passive','-v7.3') 
 
-
-
-% %% Test How the same Classes encode Noise Information
-%
-%
-for run = 1:num_reps
-    
-     disp([' Classes Noise: Run #' num2str(run) '/' num2str(num_reps)  ': ' ...
-        num2str(floor( toc / 60  )) ' min elapsed' ])
-    
-    for neurons = 2:num_neurons
-        for class = 1:length(classes)+1
-            
-            %% indexing
-           
-                   
-            class_idx = all_classes == class;
-            
-             if class == length(classes)+1
-                 class_idx = ones(size(class_idx));
-             end 
-           
-            
-            in_idx = class_idx & active_idx & ~ bad_idx;
-            
-            %% subscripting
-            AllData = Passive.DFF_Z(noise_on:tone_on,:,in_idx);
-             if size(AllData,3) < 20
-            continue
-            end
-            rand_idx = randi( size(AllData,3),neurons,1);
-            %% Modeling
-            mdlData = squeeze(nanmean(AllData(:,1:trials,rand_idx)));
-             mdlData(isnan(mdlData)) = 0;
-            mdl =  fitcnb(mdlData,Levels2,'Crossval','on') ;
-            %% Predicting
-            %total
-            Prediction =  mdl.kfoldPredict;
-            Passive.BayesModels.ClassesNoiseLossTotal(neurons,class,run) = sum( Prediction == Levels2 )...
-                /length(Levels2);
-            % by level
-           
-            % by level- reshaping into reps x lvls x Freqs
-            Prediction_by_Lvl = reshape(Prediction,10,4,[]);
-            Prediction_by_Lvl = permute(Prediction_by_Lvl,[3,1,2]);
-            
-            Levels_by_Lvl = reshape(Levels2,10,4,[]);
-            Levels_by_Lvl = permute(Levels_by_Lvl,[3,1,2]);
-          
-            Passive.BayesModels.ClassesNoiseLossLvl(neurons,:,class,run) =...
-                squeeze(sum(sum(...
-                                 Prediction_by_Lvl == Levels_by_Lvl))...
-                                 / (8*10) );
-            
-            
-        end
-    end
-end
-% save(Savepath,'Passive','-v7.3') 
+% 
+% 
+% % %% Test How the same Classes encode Noise Information
+% %
+% %
+% for run = 1:num_reps
+%     
+%      disp([' Classes Noise: Run #' num2str(run) '/' num2str(num_reps)  ': ' ...
+%         num2str(floor( toc / 60  )) ' min elapsed' ])
+%     
+%     for neurons = 2:num_neurons
+%         for class = 1:length(classes)+1
+%             
+%             %% indexing
+%            
+%                    
+%             class_idx = all_classes == class;
+%             
+%              if class == length(classes)+1
+%                  class_idx = ones(size(class_idx));
+%              end 
+%            
+%             
+%             in_idx = class_idx & active_idx & ~ bad_idx;
+%             
+%             %% subscripting
+%             AllData = Passive.DFF_Z(noise_on:tone_on,:,in_idx);
+%              if size(AllData,3) < 20
+%             continue
+%             end
+%             rand_idx = randi( size(AllData,3),neurons,1);
+%             %% Modeling
+%             mdlData = squeeze(nanmean(AllData(:,1:trials,rand_idx)));
+%              mdlData(isnan(mdlData)) = 0;
+%             mdl =  fitcnb(mdlData,Levels2,'Crossval','on') ;
+%             %% Predicting
+%             %total
+%             Prediction =  mdl.kfoldPredict;
+%             Passive.BayesModels.ClassesNoiseLossTotal(neurons,class,run) = sum( Prediction == Levels2 )...
+%                 /length(Levels2);
+%             % by level
+%            
+%             % by level- reshaping into reps x lvls x Freqs
+%             Prediction_by_Lvl = reshape(Prediction,10,4,[]);
+%             Prediction_by_Lvl = permute(Prediction_by_Lvl,[3,1,2]);
+%             
+%             Levels_by_Lvl = reshape(Levels2,10,4,[]);
+%             Levels_by_Lvl = permute(Levels_by_Lvl,[3,1,2]);
+%           
+%             Passive.BayesModels.ClassesNoiseLossLvl(neurons,:,class,run) =...
+%                 squeeze(sum(sum(...
+%                                  Prediction_by_Lvl == Levels_by_Lvl))...
+%                                  / (8*10) );
+%             
+%             
+%         end
+%     end
+% end
+% % save(Savepath,'Passive','-v7.3') 
 
 
 %%% Classes information over time
@@ -240,7 +240,8 @@ zData = AllData;
 for run = 1:num_reps
     disp(['Time: Run #' num2str(run) '/' num2str(num_reps)  ': ' ...
         num2str(floor( toc / 60  )) ' min elapsed' ])
-    for class = 1:length(classes) +1
+    %for class = 1:length(classes) +1
+    for class = length(classes) +1
         for Time = padsize+1:150+padsize
             
             
@@ -320,102 +321,102 @@ for run = 1:num_reps
     end
 end
 
-%save(Savepath,'Passive','-v7.3') 
-
-
-%% Noise Over time 
-
-LossLvl = nan(size(Passive.DFF,1),length(uLevels),num_classes,num_reps);
-tic;
-frame_window = 5;
-padsize = floor(frame_window/2)  ;
-
-AllData = Passive.DFF_Z;
-
-zData = AllData;
-
-for run = 1:num_reps
-    disp(['Time-Noise: Run #' num2str(run) '/' num2str(num_reps)  ': ' ...
-        num2str(floor( toc / 60  )) ' min elapsed' ])
-    for class = 1:length(classes) +1
-        for Time = padsize+1:150+padsize
-            
-            
-            %% indexing
-            class_idx = all_classes == class;  
-            if class == length(classes)+1      
-                class_idx = ones(size(class_idx));      
-            end             
-            
-           
-        
-            
-            in_idx = class_idx & active_idx & ~ bad_idx  ;
-            
-            %% subscripting
-            % AllData = Passive.DFF_Z;
-            
-            %             AllData_size = size(AllData);
-            %
-            %
-            %              % shuffling
-            %             AllData = AllData(randperm(AllData_size(1)),...
-            %                   randperm(AllData_size(2)),...
-            %                   randperm(AllData_size(3) ));
-            %
-            %            AllData(isnan(AllData)) = rand(sum(sum(sum(isnan(AllData)))),1 );
-            % selection
-            AllData = zData(:,:,in_idx);
-            
-             if size(AllData,3) < 20
-            continue
-            end
-            
-            % padding
-            padding =  nan(padsize,size(AllData,2),size(AllData,3))  ;
-            AllData = [ padding;AllData;padding];
-            AllData = AllData(Time-padsize:Time+padsize,:,:);
-            
-            
-            
-            rand_idx = randi(size(AllData,3),80,1);
-            
-            
-            %% Modeling
-            mdlData = squeeze(nanmean(AllData(:,1:trials,rand_idx)));
-             mdlData(isnan(mdlData)) = 0;
-            
-            
-            mdl =  fitcnb(mdlData,Levels2,'Crossval','on') ;
-            %% Predicting
-            
-            %total
-            Prediction =  mdl.kfoldPredict;
-            Passive.BayesModels.TimeLossNoiseTotal(Time,class,run) = sum( Prediction == Levels2 )...
-                /length(Freqs);
-            PredictionsTotal (:,Time,class,run)= Prediction;
-            
-            % by level- reshaping into reps x lvls x Freqs
-            Prediction_by_Lvl = reshape(Prediction,10,4,[]);
-            Prediction_by_Lvl = permute(Prediction_by_Lvl,[3,1,2]);
-            
-            Levels_by_Lvl = reshape(Levels2,10,4,[]);
-            Levels_by_Lvl = permute(Levels_by_Lvl,[3,1,2]);
-            Passive.BayesModels.TimeLossNoiseLvl(Time,:,class,run) = squeeze(sum(sum(...
-                Prediction_by_Lvl == Levels_by_Lvl))...
-                / (8*10) );
-            %
-            %         by level- validation
-            %          for lvl = 1: length(uLevels)
-            %                 lvl_idx = Freqs == uLevels(lvl);
-            %                 LossLvl(Time,lvl,class,run) = sum( Prediction(lvl_idx) == ...
-            %                     Freqs(lvl_idx) )/length(Freqs(lvl_idx));
-            %             end
-            %
-            
-        end
-    end
-end
+% %save(Savepath,'Passive','-v7.3') 
+% 
+% 
+% %% Noise Over time 
+% 
+% LossLvl = nan(size(Passive.DFF,1),length(uLevels),num_classes,num_reps);
+% tic;
+% frame_window = 5;
+% padsize = floor(frame_window/2)  ;
+% 
+% AllData = Passive.DFF_Z;
+% 
+% zData = AllData;
+% 
+% for run = 1:num_reps
+%     disp(['Time-Noise: Run #' num2str(run) '/' num2str(num_reps)  ': ' ...
+%         num2str(floor( toc / 60  )) ' min elapsed' ])
+%     for class = 1:length(classes) +1
+%         for Time = padsize+1:150+padsize
+%             
+%             
+%             %% indexing
+%             class_idx = all_classes == class;  
+%             if class == length(classes)+1      
+%                 class_idx = ones(size(class_idx));      
+%             end             
+%             
+%            
+%         
+%             
+%             in_idx = class_idx & active_idx & ~ bad_idx  ;
+%             
+%             %% subscripting
+%             % AllData = Passive.DFF_Z;
+%             
+%             %             AllData_size = size(AllData);
+%             %
+%             %
+%             %              % shuffling
+%             %             AllData = AllData(randperm(AllData_size(1)),...
+%             %                   randperm(AllData_size(2)),...
+%             %                   randperm(AllData_size(3) ));
+%             %
+%             %            AllData(isnan(AllData)) = rand(sum(sum(sum(isnan(AllData)))),1 );
+%             % selection
+%             AllData = zData(:,:,in_idx);
+%             
+%              if size(AllData,3) < 20
+%             continue
+%             end
+%             
+%             % padding
+%             padding =  nan(padsize,size(AllData,2),size(AllData,3))  ;
+%             AllData = [ padding;AllData;padding];
+%             AllData = AllData(Time-padsize:Time+padsize,:,:);
+%             
+%             
+%             
+%             rand_idx = randi(size(AllData,3),80,1);
+%             
+%             
+%             %% Modeling
+%             mdlData = squeeze(nanmean(AllData(:,1:trials,rand_idx)));
+%              mdlData(isnan(mdlData)) = 0;
+%             
+%             
+%             mdl =  fitcnb(mdlData,Levels2,'Crossval','on') ;
+%             %% Predicting
+%             
+%             %total
+%             Prediction =  mdl.kfoldPredict;
+%             Passive.BayesModels.TimeLossNoiseTotal(Time,class,run) = sum( Prediction == Levels2 )...
+%                 /length(Freqs);
+%             PredictionsTotal (:,Time,class,run)= Prediction;
+%             
+%             % by level- reshaping into reps x lvls x Freqs
+%             Prediction_by_Lvl = reshape(Prediction,10,4,[]);
+%             Prediction_by_Lvl = permute(Prediction_by_Lvl,[3,1,2]);
+%             
+%             Levels_by_Lvl = reshape(Levels2,10,4,[]);
+%             Levels_by_Lvl = permute(Levels_by_Lvl,[3,1,2]);
+%             Passive.BayesModels.TimeLossNoiseLvl(Time,:,class,run) = squeeze(sum(sum(...
+%                 Prediction_by_Lvl == Levels_by_Lvl))...
+%                 / (8*10) );
+%             %
+%             %         by level- validation
+%             %          for lvl = 1: length(uLevels)
+%             %                 lvl_idx = Freqs == uLevels(lvl);
+%             %                 LossLvl(Time,lvl,class,run) = sum( Prediction(lvl_idx) == ...
+%             %                     Freqs(lvl_idx) )/length(Freqs(lvl_idx));
+%             %             end
+%             %
+%             
+%         end
+%     end
+% end
 
 %save(Savepath,'Passive','-v7.3') 
 
@@ -470,12 +471,12 @@ end
 
 
 
-
-
-% theoretical minimum
-x =  randi(8,320,2,80,10000);
-y = squeeze( sum(x(:,1,:,:) == x(:,2,:,:))./320);
-
+% 
+% 
+% % theoretical minimum
+% x =  randi(8,320,2,80,10000);
+% y = squeeze( sum(x(:,1,:,:) == x(:,2,:,:))./320);
+% 
 
 
 % %% plotting

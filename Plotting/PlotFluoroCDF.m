@@ -27,9 +27,10 @@ function dff = PlotFluoroCDF(DF,type,lvl,SaveName)
     
     
     
-    if strcmp(type,'max')
+    switch type 
+        case 'max'
         dff = squeeze(max(max(dff,[],2))) ;
-    else 
+        case 'mean'
         dff = squeeze(nanmean(max(dff,[],2)));
     end
     

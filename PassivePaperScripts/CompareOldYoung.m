@@ -1,23 +1,23 @@
-function [Out] = CompareOldYoung(old,young,GroupNames,Levels,SaveName,full_levels)
+function [Out] = CompareOldYoung(s1,s2,GroupNames,Levels,SaveName,full_levels)
 
 % 
  if ~exist('SaveName','var')
      SaveName = [];
  end 
 
-s1_animal = old{end}
-s2_animal = young{end}
+s1_animal = s1{end};
+s2_animal = s2{end};
  
-[Out.Cell.all_stats,Out.Cell.main_effects] = Compare2Anova(old{1},young{1},GroupNames,...
+[Out.Cell.all_stats,Out.Cell.main_effects] = Compare2Anova(s1{1},s2{1},GroupNames,...
            Levels,[SaveName '-Cell']);
        
-[Out.Animal.all_stats,Out.Animal.main_effects] = Compare2Anova(old{end},young{end},GroupNames,...
+[Out.Animal.all_stats,Out.Animal.main_effects] = Compare2Anova(s1{end},s2{end},GroupNames,...
            Levels,[SaveName '-animal']);       
 
 
 title_str = sprintf('%s-byAnimal-scatter',SaveName)
        
- PlotScatterLevels(GroupNames,Levels,title_str,s1_animal,s2_animal)
+ PlotScatterLevels(GroupNames,'Group',title_str,mean(s1_animal),mean(s2_animal))
 % this function will create an anova to compare two groups
 % at different levels 
 % 

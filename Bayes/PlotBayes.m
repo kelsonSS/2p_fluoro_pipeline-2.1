@@ -11,9 +11,9 @@ if isfield(BayesModels,'BayesModels')
     BayesModels = BayesModels.BayesModels;
 end 
     
-if ~isfield(BayesModels,'NumbersLossTotal')
-    error('Object must be BayesModelsObject or Contain a field named BayesModels')
-end
+%if ~isfield(BayesModels,'NumbersLossTotal')
+%    error('Object must be BayesModelsObject or Contain a field named BayesModels')
+%end
 
 fn = fieldnames(BayesModels);
 

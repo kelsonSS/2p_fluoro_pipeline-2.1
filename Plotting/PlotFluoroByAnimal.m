@@ -40,11 +40,12 @@ for expt_id = 1:n_expts
        DFF_temp = DF.DFF(:,lvl_idx, nn_idx & (DF.experiment_list == expt_id) );
        
        
-         if strcmp(type,'max')
+       switch type 
+           case 'max'
         results{expt_id} = squeeze(max(max(DFF_temp,[],2))) ;
-    else 
+           case 'mean'
         results{expt_id} = squeeze(nanmean(max(DFF_temp,[],2)));
-         end
+       end
          
     expt_ids_plotting{expt_id} = repmat(expt_id, length( results{expt_id} ), 1 ); 
          
