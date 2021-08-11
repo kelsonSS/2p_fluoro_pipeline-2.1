@@ -63,7 +63,7 @@ for Expt = 1:Expt_num
         
 %   else 
        FLO = FreqLevelOrder;
-        uLevels = unique(FreqLevelOrder.Levels);
+         uLevels = sort(unique(DF.FreqLevelOrder{:,2}),'descend');
         L = length(uLevels);
         uFreqs = unique(FreqLevelOrder.Freqs);
 %   end 
@@ -85,7 +85,7 @@ for Expt = 1:Expt_num
       for freq = 1:F_num
         for lvl = 1:L_num
          
-            %  fprintf('Level %d Freq %d \n', uLevels(lvl),uFreqs(freq))
+              fprintf('Level %d Freq %d \n', uLevels(lvl),uFreqs(freq))
            FL_idx=  FLO{:,1} == uFreqs(freq) &... 
            FLO{:,2} == uLevels(lvl);
             
