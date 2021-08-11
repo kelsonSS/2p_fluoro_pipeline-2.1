@@ -60,7 +60,7 @@ for Expt = 1:Expt_num
         
 %   else 
        FLO = FreqLevelOrder;
-        Levels = sort(unique(DF.FreqLevelOrder{:,2}),'descend');
+        Levels = sort(unique(FLO{:,2}),'descend');
         L = length(uLevels);
         uFreqs = unique(FreqLevelOrder.Freqs);
 %   end 
