@@ -120,7 +120,7 @@ end
         
         PlotBandwidth(BD2,SaveName);title('Max')
         PlotBandwidth(BD3,SaveName);title('Sum')
-        BD = AnalyzeBandwidth(BD3);
+        BD = AnalyzeBandwidth(BD2);
         BD = AnalyzeByAnimal(BD,expt_list,SaveName);
      
 
@@ -152,13 +152,13 @@ function [DF,lvl_idx]= FindSigLevels(DF,Sig,Lvl)
 if ~strcmp(Sig,'Neg')
     
     if strcmp(Sig,'Pos')
-        DF(DF<0) = 0;
+        DF(DF<0) = nan;
     end 
     m =  max(max(DF));
     DF = DF./m;
      lvl_idx = DF >= Lvl;
 elseif strcmp(Sig,'Neg')
-    DF(DF>0) =0 ;
+    DF(DF>0) =nan ;
     m = min(min(DF));
     DF = DF./m;
     % DF is in range -1 =0 
@@ -216,7 +216,7 @@ switch Type
             
             for lvl_idx = 1:size(DF_interp,1)
                 % normalize responses to current level
-                nn_lvls = DF_interp(lvl_idx,:,neuron) ./ max(DF_interp(lvl_idx,:,neuron));
+                nn_lvls = DF_interp(lvl_idx,:,neuron) ./ max(max(DF_interp(:,:,neuron)));
                 
                 % if there were no significant responses return [0 0]
                 
@@ -224,7 +224,9 @@ switch Type
                 inds= find(  DF_interp(lvl_idx,:,neuron) > Lvl );
                 
                 if max(nn_lvls) == Inf || isempty(inds)
-                    bands(1,:) = [nan nan];
+                    bands(1,:) = [0 0];
+                
+                    %bands(1,:) = [nan nan]
                 else
                 
                 
@@ -306,7 +308,7 @@ function PlotBandwidth(BD,SaveName)
      legend(BD(:,3),'Interpreter','none')
      xticks(0:1:4)
      xlabel('level')
-     ylabel('Bandwidth (half-octaves) ')
+     ylabel('Bandwidth (octaves) ')
     
      if SaveName
           saveas(gcf,sprintf('%s-Bandwidth.pdf', SaveName))
