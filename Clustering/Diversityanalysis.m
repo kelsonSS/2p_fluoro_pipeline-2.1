@@ -1,10 +1,14 @@
 function stats =  Diversityanalysis(g1,g2,GroupNames)
 
-g1_animal = Plot_ClusterDiversityByAnimal(g1);close(gcf)
-g2_animal = Plot_ClusterDiversityByAnimal(g2);close(gcf)
+g1_animal = ClusterDiversityByAnimal(g1);
+g2_animal = ClusterDiversityByAnimal(g2);
 
 
-[~,stats] = ttest2(g1_animal,g2_animal);
+scatter_title = sprintf('%s%s-ClusterDiversity-Animal-Scatter',GroupNames{1},GroupNames{2});
+
+PlotScatterLevels(GroupNames,'Group',scatter_title,g1_animal,g2_animal)
+
+[~,stats.p,~,stats.tstat] = ttest2(g1_animal,g2_animal);
 
 figure
 PlotGroupedErrorBars(g1_animal,g2_animal,1)
