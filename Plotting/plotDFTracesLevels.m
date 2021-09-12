@@ -17,6 +17,7 @@ end
 FreqLevels = sortrows(unique(Data.FreqLevelOrder),{'Freqs','Levels'},{'Ascend','Descend'});
 T = length(unique(Data.FreqLevelOrder{:,1})); 
 L = length(unique(Data.FreqLevelOrder{:,2})); 
+num_subplots = T * L;
 active_list = Data.active{:,2};
 active_idx = active_list >= activity;
 cell_ids = find(active_idx);
@@ -58,8 +59,8 @@ for ii = 1:T
        
        % plot trace
         subplot(L,T,idx)
-         
-       
+         hold on
+        
         
         ToneInNoise_MeanTrace(DFTraces(:,trial_idx,cell));
         title( sprintf( 'Freq: %d, level: %d',Freq, Level))
@@ -67,15 +68,36 @@ for ii = 1:T
         %move to next condition
         FL_idx = FL_idx+1; 
         
-           
+          axis off
 end 
 
 
-end 
-pause 
+end  
+ax = findall(gcf,'Type','Axes')
+ax = ax(1:end-1);
+ymin = min([ax.YLim]);
+ymax = max([ax.YLim]);
+
+set(ax,'Ylim',[ymin ymax])
+
+% style subplots 
+for idx  = 1:num_subplots
+    subplot(L,T,idx)
+style_subplot()
+ end 
+
+
+pause
  end 
   
-        
+
+function style_subplot()
+ aa = axis;
+  plot([30 30], [aa(3),aa(4)],'--')
+  plot([60 60], [aa(3),aa(4)],'--g')
+  plot([90 90], [aa(3),aa(4)],'--g')
+  plot([120 120], [aa(3),aa(4)],'--r')
+  xlim([0 150])       
         
         
         
