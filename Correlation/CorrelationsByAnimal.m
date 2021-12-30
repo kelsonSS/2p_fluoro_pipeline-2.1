@@ -1,8 +1,22 @@
-function Out = CorrelationsByAnimal(TN,normalized)
+function Out = CorrelationsByAnimal(TN,normalized,toPlot)
+
+
+
 
 if ~exist('normalized','var')
     normalized = 0
 end 
+
+if ~exist('toPlot','var')
+    toPlot = false;
+end 
+
+if iscell(TN)
+   Out = CorrelationsByAnimalBehavior(TN,normalized)
+return
+end
+
+
 
 %Cells = TN.CellID; 
 if normalized 
@@ -16,7 +30,7 @@ FreqLevelOrder = TN.FreqLevelOrder;
 L_num = length(unique(FreqLevelOrder.Levels));
 F_num = length(unique(FreqLevelOrder.Freqs));
 e_ls = TN.experiment_list;
-rep_mode = 10; % trials per unique condition
+rep_mode =5; % trials per unique condition
 n_frames = size(DFF,1);
 n_trials =size(DFF,2);
 handles = TN.handles{1};
@@ -79,7 +93,7 @@ for Expt = 1:Expt_num
 %     end 
         
    
-    
+    DFF_all_mu =  squeeze(nanmean(nanmean(DFF_t(soundon:soundoff,:,:),2)))
     
      % rehape Frame X Repeat X Level X Frequency X Neuron 
       for freq = 1:F_num
@@ -88,12 +102,13 @@ for Expt = 1:Expt_num
               fprintf('Level %d Freq %d \n', uLevels(lvl),uFreqs(freq))
            FL_idx=  FLO{:,1} == uFreqs(freq) &... 
            FLO{:,2} == uLevels(lvl);
-            
+            try
             Vec_DFF_Temp = DFF_t(:,FL_idx,:);
             % in case trials have different reps
-            try
+            
             Vec_DFF_Temp = Vec_DFF_Temp(:,1:rep_mode,:);
             catch
+                continue
             end
           %  plot(Vec_DFF_Temp(:,:,1))
             % baseline = squeeze(nanmean(Vec_DFF_Temp(1:30,:,:),2));
@@ -118,16 +133,17 @@ for Expt = 1:Expt_num
    % DFF_c =  reshape(DFF_t, [frames,[],L_num,F_num,N_t]);
     %DFF_mu = squeeze(nanmean(nanmean(DFF_c(60:120,:,:,:,:),2))); % average over stim frames and repeats
     % change to column major form 
-    DF_flat = reshape(DFF_mu,[L_num *F_num ,size(DFF_mu,3)]); 
     
- 
+    DF_flat = reshape(DFF_mu,[] ,size(DFF_mu,3)); 
+
     
     
     % subtract the mean for each sound/level to find residuals
-   % DFF_n = DFF_n2 - permute(repmat(DFF_mu,1,1,1,10),...
-   %                                  [4 2 1 3 ]);
+    DFF_n = reshape(DFF_n2, [], size(DFF_n2,4));
+   
+    
                                  
-   % DFF_n2 = reshape(DFF_n2, 10 * 7 , 4, [] );           
+           
     
   
     
@@ -135,10 +151,12 @@ for Expt = 1:Expt_num
     
     
     Corr{Expt_ID} = getCorrFromCov(cov(DF_flat));
+    NCorr{Expt_ID} = getCorrFromCov(cov(DFF_n));
+    
     clear DF_flat
-    for Lvl = 1:size(DFF_mu,1);
+    for Lvl = 1:size(DFF_mu,1)
     LCorr{Expt_ID,Lvl} = getCorrFromCov(cov(squeeze(DFF_mu(Lvl,:,:))));
-    %NCorr{Expt,Lvl}  = getCorrFromCov(cov(squeeze(DFF_n(:,Lvl,:))));
+    
     
     NCorr2{Expt_ID,Lvl} = getCorrFromCov( cov(...
                 reshape( DFF_n2(Lvl,:,:,:),...
@@ -186,7 +204,7 @@ disp('Analyzing Signal Statistics')
 
 
 %% plotting - Signal and noise CDFs
-
+if toPlot
 %
 % figure;cdfplot(L_corr_flat);title('Signal Correlation')
 % figure;cdfplot(N_corr_flat);title('Noise Correlation')
@@ -198,12 +216,13 @@ Bars_by_level(N_mu,N_CI,'Noise');AddScatter(N_mu_expt)
 Bars_Overall(N_mu,N_CI,'Noise')
 % Bars_by_level(N_mu2,N_CI2,'Noise2')
 
-
+end
 %% packaging
     Out.Corr = Corr;
     Out.LCorr = LCorr;
     Out.LCorrAnimal = L_mu_expt;
     Out.NCorr = NCorr2;
+    Out.NCorrCell = NCorr;
     Out.NCorrAnimal = N_mu_expt;
     Out.Signal_Sig = L_sig;
     Out.Noise_Sig  = N_sig;
@@ -267,7 +286,7 @@ corr_std =  nanstd(corr_mu_expt);
 corr_CI = corr_std ./ sqrt(length(corr_flat))  * 1.96;  % 95 percent Confidence interval
 
 [p ~,stats] = anova1(cell2mat(corr_flat),[],'off');
-if size(corr_flat,2) >1
+if all( size(corr_flat) > 1)
     corr_sig = multcompare(stats,[],'off')
 else 
     corr_sig = p;

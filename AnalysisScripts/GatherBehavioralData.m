@@ -1,6 +1,6 @@
 %CreateFilesForUpload- Script to upload files 
-BehaviorFiles = dir('Z:\Kelson\Analyzed\**\2020*\Tones*Active');
-PassiveBehaviorFiles =  dir('Z:\Kelson\Analyzed\**\2020*\Tones*Passive');
+BehaviorFiles = dir('Z:\Kelson\Analyzed\**\*\Tones*Active');
+PassiveBehaviorFiles =  dir('Z:\Kelson\Analyzed\**\*\Tones*Passive');
 AllBehaviorFiles = cat(1,BehaviorFiles,PassiveBehaviorFiles);
 
 

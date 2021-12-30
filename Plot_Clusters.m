@@ -1,7 +1,8 @@
-function Plot_Clusters(DF,clusters,norm)
+function Plot_Clusters(DF,clusters,SaveName,norm)
 % standalone function to plot clusters from TN object after calling the
 % Cluster_DF in the resultant plot cluster object.
 
+if ~exist('SaveName','var');SaveName ='';end  
 if ~exist('norm','var')||isempty(norm) ;norm = 'normalized';end
 if ~exist('clusters','var');clusters = DF.Class_idx; end 
 
@@ -40,6 +41,16 @@ for clust_num = 1:m
  
 end 
 
+cluster_colors = [ 0 0 0 ;...
+                    255 125 0;...
+                    255 0 0;...
+                    244 195 86;...
+                    247 129 191;...
+                    116 173 209;...
+                    0   0   255;...
+                    102  54 149;
+                    26   255 80 ]./ 255 ;
+     
 
 rc = numSubplots(m);
 %%  plotting
@@ -48,7 +59,8 @@ for clust_num = 1:m
     
 
     subplot(rc(1),rc(2), clust_num)
-    shadedErrorBar([],avg_trace{clust_num}.mu,avg_trace{clust_num}.sigma);
+    shadedErrorBar([],avg_trace{clust_num}.mu,avg_trace{clust_num}.sigma,...
+    {'color',cluster_colors(clust_num,:),'linewidth',2});
     title( sprintf('%d Neurons', avg_trace{clust_num}.clust_n) );
     %ylim([-1 1])
      axis tight 
@@ -64,7 +76,14 @@ for clust_num = 1:m
     
     style_cluster_plot(aa,style)
 end 
+
+if SaveName 
     
+    saveas(gcf,sprintf('%s-Clusters.pdf',SaveName))
+end 
+
+
+% derivatives
 figure
 
 for clust_num = 1:m 

@@ -2,30 +2,32 @@ function PlotGroupedData(Behavior,AnimalInfo)
 
 % Takes grouped Data from MungeBehaviorGroupData and plots it 
 
- Levels = fieldnames(Behavior);
+ Levels = Behavior.uSNRs;
  
  
  HitRate =[];
- LickLatency = [];
- 
+
  figure
  % latency plot 
  m = length(Levels);
  for curr_level = 1:m
        subplot(m,1,curr_level);
-       histogram(Behavior.(Levels{curr_level}).SNRLatency,...
+        
+       histogram(vertcat(Behavior.LickLatency{curr_level,:}),...
            'BinWidth',.1);
        hold on 
-       title(Levels{curr_level},'Interpreter','None')
+       title(Levels(curr_level),'Interpreter','None')
        ax = axis;
        
        plot([1,1],[ax(3), ax(4)], 'g-') 
        plot([2,2],[ax(3), ax(4)], 'g-') 
-       xlim([0 , 3])       
-    
-     
+       xlim([0 , 3])
+       xticks(0:1:3)
+      
+       ylabel('Count')
  end 
- 
+ xlabel('Time (s)')
+ suptitle('First-Lick Distribution')
  
  % SNR Plot 1 -   HitRate grouped by SNR
  
@@ -33,6 +35,9 @@ function PlotGroupedData(Behavior,AnimalInfo)
  hitRate_SEM = zeros(m,1);
  hitRateAll= [];
  
+
+
+
  for curr_level = 1:m
       hitRate_mu(curr_level) = nanmean(Behavior.(Levels{curr_level}).HitRateMean);
       hitRate_SEM(curr_level) = nanstd(Behavior.(Levels{curr_level}).HitRateMean) /...
@@ -51,40 +56,13 @@ function PlotGroupedData(Behavior,AnimalInfo)
           
  
  end             
-     figure
- bar(hitRate_mu)
- set(gca,'TickLabelInterpreter','None')
- hold on
- xticks(1:m);
- xticklabels(Levels);
- errorbar(hitRate_mu,hitRate_SEM ,'.')
- title('Fraction Correct vs. dB SNR')
- ylabel('Fraction Correct')
- xlabel ('dB SNR')
-       
-
-               
- 
- % SNR Plot 2 -HitRate  grouped by Animal 
- levelLabels = strrep(Levels,'SNR_','');
- levelLabels = strrep(levelLabels,'minus_','-');
- figure
-
- hold on
- shadedErrorBar([],mean(hitRateAll),std(hitRateAll)/sqrt(6),'k')
-  plot(hitRateAll')
- xticks(1:4)
- set(gca,'Xdir','rev')
- xticklabels(levelLabels)
- ylabel('Percent Hit Rate')
- xlabel('dB SNR') 
- 
+   
  
  % SNR plot 3 - HitRate As a function of Animal Age
-Age = 
+%Age = 
  
- figure
-title('Hit Rate by Age')
+%figure
+%title('Hit Rate by Age')
 
 
 

@@ -34,9 +34,10 @@ fra ./ max( fra(:) )  ;
   
   
   %% create figure 
-   pcolor(fra) 
+   h = pcolor(fra) 
+   set(h, 'EdgeColor','none')
    set(gca,'Ydir','Reverse')    
-   
+
    
  %% Format Figure 
  

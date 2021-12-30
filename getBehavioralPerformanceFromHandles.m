@@ -50,9 +50,4 @@ end
 
 
 
-%% plot group data 
-1+1 == 2 
-
-
-
 end 

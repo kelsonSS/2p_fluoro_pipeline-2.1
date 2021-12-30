@@ -4,10 +4,16 @@ if ~exist('out_folder','var')
     to_plot = 0
 else
     to_plot = 1
+    
+    if ~exist(out_folder,'dir')
+        mkdir(out_folder)
+    end 
 end 
 
+
+
 noise_level = 50;
-detectLevelSNR = [-10, 0 ,10,20];
+detectLevelSNR = [ 0 ,10,20];
 
 Out = CreateOutputStructure(detectLevelSNR);
 
@@ -20,14 +26,30 @@ detectLevels = detectLevelSNR  + noise_level;
         expt= TNBehavior{expt_idx};
         handles = expt.handles{1};
         uLevels = handles.uLevels - 50;
+       
         
-        F = expt.DFF_Z(:,:,expt.Clean_idx & expt.active{:,2}>0);
+        F = expt.DFF(:,:,expt.Clean_idx & expt.active{:,2}>0);
+        %F = expt.DFF_Z(:,:,expt.Clean_idx & expt.active{:,2}>0);
         
         hits_idx = handles.Hits';
         miss_idx = handles.Miss';
         early_idx = handles.Early';
+        Levels = handles.Levels;
+       
+        all_lvl_idx = any(handles.Levels - noise_level == [ 0 10 20],2);
         
-        all_lvl_idx = any(handles.Levels - noise_level == [-10 0 10 20],2);
+        
+        n_expts = size(F,2)
+         if length(all_lvl_idx) ~= n_expts
+             continue
+         end 
+%            hits_idx = hits_idx(1:n_expts);
+%            miss_idx = miss_idx(1:n_expts);
+%            early_idx = early_idx(1:n_expts);
+%            all_lvl_idx = all_lvl_idx(1:n_expts);
+%            Levels = Levels(1:n_expts)
+%         end
+        
         
         all_hits_temp = squeeze(nanmean(F(:,all_lvl_idx & hits_idx,:),2));
         all_miss_temp = squeeze(nanmean(F(:,all_lvl_idx & miss_idx,:),2));
@@ -44,7 +66,7 @@ detectLevels = detectLevelSNR  + noise_level;
             uLevel = uLevels(lvl);
             if any(uLevel == detectLevelSNR)
                 
-                lvl_idx = (handles.Levels - noise_level) == uLevel;
+                lvl_idx = (Levels - noise_level) == uLevel;
                 hits_temp = squeeze(nanmean(F(:,lvl_idx & hits_idx,:),2));
                 miss_temp = squeeze(nanmean(F(:,lvl_idx & miss_idx,:),2));
                 early_temp = squeeze(nanmean(F(:,lvl_idx & early_idx,:),2));
@@ -98,23 +120,56 @@ f = fieldnames(Out);
 
 for lvl =1:length(f)
     
-figure; hold on
-shadedErrorBar([],nanmean(Out.(f{lvl}).Hits,2),nanstd(Out.(f{lvl}).Hits,[],2)/ sqrt(length(Out.(f{lvl}).Hits)) * 1.96, 'b')
-shadedErrorBar([],nanmean(Out.(f{lvl}).Miss,2),nanstd(Out.(f{lvl}).Miss,[],2)/ sqrt(length(Out.(f{lvl}).Miss)) * 1.96 )
-shadedErrorBar([],nanmean(Out.(f{lvl}).Early,2),nanstd(Out.(f{lvl}).Early,[],2)/ sqrt(length(Out.(f{lvl}).Early)) * 1.96,'r')
-title_name = sprintf('%s',f{lvl});
+ pos_idx = max(Out.(f{lvl}).Hits(40:70,:)) > 0
+ hits_pos = Out.(f{lvl}).Hits(:,pos_idx);
+ hits_neg = Out.(f{lvl}).Hits(:,~pos_idx);
+ miss_pos = Out.(f{lvl}).Miss(:,pos_idx);
+ miss_neg = Out.(f{lvl}).Miss(:,~pos_idx);
+ early_pos = Out.(f{lvl}).Early(:,pos_idx);
+ early_neg = Out.(f{lvl}).Early(:,~pos_idx);
+ figure; hold on
+shadedErrorBar([],nanmean(hits_pos,2),nanstd(hits_pos,[],2)/ sqrt(length(hits_pos)) * 1.96, 'b')
+shadedErrorBar([],nanmean(miss_pos,2),nanstd(miss_pos,[],2)/ sqrt(length(miss_pos)) * 1.96 )
+%shadedErrorBar([],nanmean(early_pos,2),nanstd(early_pos,[],2)/ sqrt(length(early_pos)) * 1.96,'r')
+title_name = sprintf('%s-pos',f{lvl});
 title(title_name,'Interpreter','none');
+%ylim([-1 5])
 print(fullfile(out_path,[title_name '.pdf']),'-dpdf')
 
-figure
-shadedErrorBar([],nanmean(Out.(f{lvl}).Hits-Out.(f{lvl}).Miss,2),nanstd(Out.(f{lvl}).Hits-Out.(f{lvl}).Miss,[],2)/ sqrt(length(Out.(f{lvl}).Hits)) * 1.96)
-title_name =sprintf('%s: Hit-miss',f{lvl});
-title(title_name ,'Interpreter','none');
+ figure; hold on
+shadedErrorBar([],nanmean(hits_neg,2),nanstd(hits_neg,[],2)/ sqrt(length(hits_neg)) * 1.96, 'b')
+shadedErrorBar([],nanmean(miss_neg,2),nanstd(miss_neg,[],2)/ sqrt(length(miss_neg)) * 1.96 )
+%shadedErrorBar([],nanmean(early_neg,2),nanstd(early_neg,[],2)/ sqrt(length(early_neg)) * 1.96,'r')
+title_name = sprintf('%s-neg',f{lvl});
+title(title_name,'Interpreter','none');
+%ylim([-5 1])
+print(fullfile(out_path,[title_name '.pdf']),'-dpdf')
 
 
-print(fullfile(out_path, sprintf('%s_HitMissDiff.pdf',f{lvl}) ),'-dpdf' ) 
 
 
+
+ figure
+ shadedErrorBar([],nanmean(hits_pos - miss_pos,2),...
+                   nanstd(hits_pos - miss_pos,[],2)/ sqrt(length(hits_pos)) * 1.96)
+ title_name =sprintf('%s: Hit-miss-pos',f{lvl});
+% ylim([-5 5])
+  title(title_name ,'Interpreter','none');
+ 
+ 
+ print(fullfile(out_path, sprintf('%s_HitMissDiff-pos.pdf',f{lvl}) ),'-dpdf' ) 
+
+  figure
+ shadedErrorBar([],nanmean(hits_neg - miss_neg,2),...
+                   nanstd(hits_neg - miss_neg,[],2)/ sqrt(length(hits_neg)) * 1.96)
+ title_name =sprintf('%s: Hit-miss-neg',f{lvl});
+  title(title_name ,'Interpreter','none');
+ % ylim([-5 5])
+ 
+ print(fullfile(out_path, sprintf('%s_HitMissDiff-neg.pdf',f{lvl}) ),'-dpdf' ) 
+
+
+ 
 
 end 
 end 

@@ -33,7 +33,8 @@ CleanPlot(varnames{2},LevelNames2,p_values{2})
 
 function [all_mean,all_CI,UIDs] = CalculateMeanCI(allData,IDS)
 % find unique groups
-UIDs = unique(IDS);
+UIDs = flipud( unique(IDS));
+
 N_IDS = length(UIDs);
 
 % preallocate outputs

@@ -27,13 +27,14 @@ end
     xmlfile = fullfile(LocalPath,'Experiment.xml');
     PsignalFile= fullfile(LocalPath,PsignalFileName);
       fps =input.expectedFPS ;
-     if exist(fullfile(LocalPath,'redchannel.mat'),'file')
+     if exist(char(fullfile(LocalPath,'redchannel.mat')),'file')
          fps = fps/2;
      end 
      
      try
      xml = get_options_from_xml(xmlfile);
      catch
+       warning('bad xml file')
          return
      end 
      

@@ -16,11 +16,11 @@ if isnumeric(DFF) && ~isstruct(DFF)
     plotDFFs(DFF,'All',size(DFF,3))
 else 
     if classes 
-         num_classes = max(DFF.Class_idx);
-         ClassNames = DFF.Classes;
+         num_classes = max(DFF.Combined_Classes);
+         %ClassNames = DFF.Classes;
          
          % get classes of all active neurons
-     All_Classes =  DFF.Class_idx .* (DFF.active{:,2}>0);  
+     All_Classes =  DFF.Combined_Classes .* (DFF.active{:,2}>0);  
          
          
      for ii = 1:num_classes 
@@ -76,7 +76,7 @@ else
         %% plotting 
          neurons = size(Fluoro,3);
          
-         plotDFFs(Fluoro,ClassNames{class},neurons)
+         plotDFFs(Fluoro,'',neurons)
     end        
 end 
 

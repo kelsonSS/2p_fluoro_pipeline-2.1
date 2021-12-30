@@ -1,8 +1,9 @@
 function active = Plot_ClusterDiversityByAnimal(Clusters,expt_ids)
 
 
+
 if isstruct(Clusters)
-  active =  Plot_ClusterDiversityByAnimal(Clusters.Combined_Classes,Clusters.experiment_list)
+  active =  Plot_ClusterDiversityByAnimal(Clusters.Combined_Classes,Clusters.experiment_list,to_plot)
     return
 
 end 

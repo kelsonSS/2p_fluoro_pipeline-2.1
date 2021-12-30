@@ -3,21 +3,21 @@ function [NeedsExtraction,PsignalFiles] = CreateTimingExtractionList(savepath)
 % extracted via the TwoPhotonPipeline's ExtractFluorescence functionality
 
 if ~exist('savepath','var')
-    savepath = '\\vault3\data\kelson\analyzed';
+    savepath = 'Z:\kelson\analyzed';
 end 
  
  Registered = dir( [savepath, '\**\greenchannelregistered.raw']);
  Registered = struct2cell(Registered);
  Registered = Registered(2,:)';
  
- TimingInfo = dir( [savepath, '\**\TimingInfo.mat']);
- TimingInfo = struct2cell(TimingInfo);
- TimingInfo = TimingInfo(2,:)';
-
- 
-
- NeedsExtraction =  setdiff(Registered,TimingInfo);
-
+NeedsExtraction_idx = false(length(Registered),1);
+for  file_idx = 1:length(Registered) 
+  if isempty( dir([Registered{file_idx}, '\**\TimingInfo.mat']) )
+       NeedsExtraction_idx(file_idx) = 1;
+  end
+end
+  
+ NeedsExtraction = Registered(NeedsExtraction_idx);
  
  
  PsignalFiles = cellfun(@PsignalFileCheck,NeedsExtraction,'UniformOutput',0);

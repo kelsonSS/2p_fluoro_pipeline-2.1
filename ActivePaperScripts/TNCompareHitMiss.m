@@ -19,9 +19,9 @@ for expt = 1:size(TNBehavior,1)
     FA_idx   = handles.Early;
     
     
-    Hit_mean = Mean_DFF(Active,Hits_idx);
-    Miss_mean = Mean_DFF(Active,Miss_idx);
-    FA_mean = Mean_DFF(Active,FA_idx);
+    Hit_mean = GetMeanDFF(Active,Hits_idx);
+    Miss_mean = GetMeanDFF(Active,Miss_idx);
+    FA_mean = GetMeanDFF(Active,FA_idx);
     
     
      Hit_means{expt} = Hit_mean;
@@ -41,26 +41,43 @@ figure
 hold on 
  plotShadedErrorBar(cell2mat(Hit_means),'b')
  plotShadedErrorBar(cell2mat(Miss_means),'k')
+ StyleFigure()
 
  figure
     plotShadedErrorBar(cell2mat(Reward_means))
     title('Hit - False Alarm')
-    
-    
+    StyleFigure()
  figure
     plotShadedErrorBar(cell2mat(Activity_means))
     title('Hit - Miss')
+    StyleFigure()
 
 end 
 
-function DFF_mu = Mean_DFF(experiment,trials_idx)
+function DFF_mu = GetMeanDFF(experiment,trials_idx)
 
 active = experiment.active{:,2} > 0;
 trials_idx = logical(trials_idx);
-if length(trials_idx > 
+
 trials_idx = trials_idx( 1:size(experiment.DFF,2));
 
 DFF_mu = squeeze(nanmean(experiment.DFF_norm(:,trials_idx,active),2));
 
 
-end 
+end
+
+function StyleFigure()
+aa = axis;
+hold on
+plot([aa(1) aa(2)], [0 0 ] ,'k--')
+plot([30 30], [aa(3) aa(4)],'b--')
+plot([60 60], [aa(3) aa(4)],'b--')
+xlim([0 90])
+xticks(0:30:91)
+xticklabels({'0','1','2','3'})
+xlabel('Time(s)')
+ylabel('Normalized Fluorescence(AU)')
+    end 
+
+
+

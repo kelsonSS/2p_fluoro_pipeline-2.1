@@ -177,9 +177,12 @@ uLevels = sort(uLevels,'descend');
 Levels(Levels>100) = inf;
 uLevels(uLevels>100) = inf;
 FreqLevelOrder = table(Freqs,Levels);
+
+
+if uF > 1 
 [FreqLevelOrder, fl_idx]= sortrows(FreqLevelOrder, {'Freqs','Levels'},{'Ascend','Descend'});
 
-%if  mod(total_trials, uF * uL) ~= 0 
+% if  mod(total_trials, uF * uL) ~= 0 
     try
     [FreqLevelOrder,fl_idx] = FreqCheck(FreqLevelOrder,fl_idx,total_trials);
     catch
@@ -199,6 +202,9 @@ end
 
 FreqLevels = unique(FreqLevelOrder);
 FreqLevels = sortrows(FreqLevels, {'Freqs','Levels'},{'ascend','descend'});
+else
+    fl_idx = 1:trials;
+end 
 
 if ~ isfield(handles,'BackgroundNoise') || handles.BackgroundNoise(1) == -99
     noise_flag = 0;
@@ -358,6 +364,7 @@ Vec_DFF = imfilter(Vec_DFF,gausfilt);
        df_by_level = [];
        df_by_level_sig = [];
        df_by_level_offset= [];
+       responsive_neurons = [];
        
    end 
    
@@ -366,9 +373,23 @@ Vec_DFF = imfilter(Vec_DFF,gausfilt);
     df_by_level{expt_id} = df_by_level_temp;
     df_by_level_sig{expt_id} = df_by_level_sig_temp;
     df_by_level_offset{expt_id} = df_by_level_offset_temp;
+    
+    n_active_levels  =   squeeze( sum(...
+                                    sum(...
+                                        df_by_level_sig_temp,...
+                                        1),...
+                                        2) ) ; 
+    responsive_neurons_expt = n_active_levels >=1;
+    responsive_neurons = cat(1,responsive_neurons,responsive_neurons_expt);
+
     clear df_by_level_temp
     clear df_by_level_sig_temp
-   clear df_by_level_offset_temp
+    clear df_by_level_offset_temp
+    clear n_active_levels
+    clear responsive_neurons_expt
+    
+
+
 %    
 %    
 %  DFF_conditions_mu = squeeze(mean(DFF_conditions(soundon:soundoff,:,:,:)));
@@ -408,13 +429,61 @@ Vec_DFF = imfilter(Vec_DFF,gausfilt);
  end
  
  
-% append DFF's to output list
 
+if expt_id == 1 
+    rep_mode_all = rep_mode;
+end 
+
+if rep_mode ~= rep_mode_all
+    
+    
+    if rep_mode > rep_mode_all
+        % too many repeats
+        % get first rep_mode_all trials of each unique stimulus
+        trial_idx = [1:size(Vec_DFF,2)];
+        sub_idx = trial_idx(mod(trial_idx-1,rep_mode)>=rep_mode_all);
+        
+        Vec_DFF = Vec_DFF(:,sub_idx,:);
+    elseif rep_mode < rep_mode_all
+        % too few repeats
+        
+        if length(unique(counts)) == 1
+            
+            % create output with the correct number of trials
+            Vec_DFF_temp = nan(size(Vec_DFF_all,1),size(Vec_DFF_all,2),size(Vec_DFF,3));
+            
+            
+            temp_idx = 1;
+            old_idx = 1;
+            for ii = 1:height(unique(FreqLevels))
+                
+                Vec_DFF_temp(:,temp_idx:temp_idx + rep_mode - 1) = ...
+                    Vec_DFF(:,old_idx:old_idx + rep_mode - 1);
+                
+                fprintf('old: %d-%d  new: %d-%d \n', old_idx,  old_idx + rep_mode-1,...
+                    temp_idx, temp_idx + rep_mode_all-1)
+                temp_idx = temp_idx + rep_mode_all;
+                old_idx = old_idx + rep_mode ;
+                
+            end
+            
+            if size(Vec_DFF_temp,2) == size(Vec_DFF_all,2)
+                Vec_DFF = Vec_DFF_temp;
+            end
+            clear Vec_DFF_temp
+            
+            
+        end
+    end
+end 
+
+% append DFF's to output list
 try
 Vec_DFF_all = cat(3,Vec_DFF_all,Vec_DFF);
 catch
      fprintf('too few freqs, continuing \n')
-    continue
+     
+    %continue
 end 
 
 
@@ -493,6 +562,7 @@ Out.DFF_Z = DFF_Z;
 Out.Clean_idx= Clean_idx;
 Out.DFF_norm = DFF_normalized;
 Out.active = ActiveTable;
+Out.responsive = responsive_neurons;
 Out.FreqLevelOrder = FreqLevelOrder;
 Out.experiment_list = expt_list;
 Out.PlaneID = planeID;
@@ -513,7 +583,14 @@ catch
 end 
     
 function [FLO_fixed, fl_idx_fixed] = FreqCheck(FreqLevelOrder,fl_idx,total_trials)
-
+    
+   uF = unique(FreqLevelOrder{:,1});
+   if length(uF) == 1 
+       FLO_fixed = FreqLevelOrder;
+       fl_idx_fixed = fl_idx;
+       return
+   end 
+   
    fl_idx_fixed = [];
    FLO_fixed = table();
   

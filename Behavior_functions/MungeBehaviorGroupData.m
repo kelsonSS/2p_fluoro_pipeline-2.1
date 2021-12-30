@@ -28,7 +28,7 @@ AnimalIDs  =  fieldnames(behavior);
     if expt_idx == 1
         Out = expt_subset;
     else
-        Out = ConcatenateStructs(Out,expt_subset)
+        Out = ConcatenateStructs(Out,expt_subset);
     end 
     
     end 
@@ -36,67 +36,37 @@ AnimalIDs  =  fieldnames(behavior);
 
 end 
     
+% %_NOTE_ Functions below have been extracted into their own functions 
+% they remain here only as a reference. do not uncomment. use the standalone functions 
 
-function  Out = SubsetExpt(expt,SNRs)
-
-Out = struct();
-% get indicies
-for curr_SNR = 1:length(SNRs)
-    
-  idx = find(expt.SNR' == SNRs(curr_SNR));
-
- 
-  Out = fillOutWithValue(Out,expt,idx);
-
-end 
-end 
-
-function MainStruct =  ConcatenateStructs(MainStruct,SecondStruct)
-% given two structures with the same fields, will attempt to concanenate
-% each field columnwise 
-
-fields = fieldnames(MainStruct);
-
-for f_idx = 1:length(fields)
-    % determine if fields exist in Output
-       c_field = fields{f_idx};
-       MainStruct.(c_field) = cat(2,MainStruct.(c_field),...
-                                   SecondStruct.(c_field) );
-
-end
-
-end 
-    
-
-function Out= fillOutWithValue(Out,expt,idx)
-
-
-fields = fieldnames(expt);
-Out_fields = fieldnames(Out);
-
-for f_idx = 1:length(fields)
-
-    c_field = fields{f_idx}; 
-    
-    % extract field value at idx with Nan if idx doesn't exist
-    if idx
-        field_value = expt.(c_field)(idx);
-    else 
-        field_value = nan;
-    end 
-    
-    % determine if fields exist in Output
-    field_in_output_flg = any(strcmp(c_field,Out_fields));
-    % add or concatenate values to output structure
-    if field_in_output_flg
-       Out.(c_field) = cat(1,Out.(c_field),field_value);
-    else
-       Out.(c_field) = field_value;
-    end 
-end
-
-
-
-end
-
+% function  Out = SubsetExpt(expt,SNRs)
+% 
+% Out = struct();
+% % get indicies
+% for curr_SNR = 1:length(SNRs)
+%     
+%   idx = find(expt.SNR' == SNRs(curr_SNR));
+% 
+%  
+%   Out = fillOutWithValue(Out,expt,idx);
+% 
+% end 
+% end 
+% 
+% function MainStruct =  ConcatenateStructs(MainStruct,SecondStruct)
+% % given two structures with the same fields, will attempt to concanenate
+% % each field columnwise 
+% 
+% fields = fieldnames(MainStruct);
+% 
+% for f_idx = 1:length(fields)
+%     % determine if fields exist in Output
+%        c_field = fields{f_idx};
+%        MainStruct.(c_field) = cat(2,MainStruct.(c_field),...
+%                                    SecondStruct.(c_field) );
+% 
+% end
+% 
+% end 
+%     
 

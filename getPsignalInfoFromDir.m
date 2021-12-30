@@ -12,7 +12,7 @@ function handles = getPsignalInfoFromDir(Main_path)
 
 dir_t = dir([Main_path] );
 dir_t = {dir_t.name};
-Psignal_files= ~ cellfun(@isempty,(regexp( dir_t  ,'_Phys_')));
+Psignal_files= ~ cellfun(@isempty,(regexp( dir_t  ,'_Phys_.*mat')));
 
 
 if sum(Psignal_files) == 0

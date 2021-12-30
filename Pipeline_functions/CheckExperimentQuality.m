@@ -7,13 +7,11 @@ tic();
 %Find index of experiment to be used for registration template
 %regidx=find(strcmpi(input.expname,input.regexp));
 %Path of images used for registration template
-for expnum = 1:length(input.DataDirs)
 
-    
-newpath = input.DataDirs{expnum}
+newpath = input.path;
 
 if ~exist(fullfile(newpath,'Fluorescence.mat'),'file')
-    continue
+    return
 end 
 load(fullfile(newpath,'Fluorescence.mat')) % Fluorescence
 load(fullfile(newpath,'CellDefinitions.mat'))%  Cell Definitions
@@ -52,7 +50,7 @@ catch
     end
 end
 else 
-    continue
+    return
 end
 
 
@@ -168,9 +166,8 @@ while TimingInfo.FrameIdx(expt,2) < NumFrames
 
 
 
-expt = expt+1; 
 end
-end
+
 
 function title = KeyTitle(frame,key_times,key_names)
 

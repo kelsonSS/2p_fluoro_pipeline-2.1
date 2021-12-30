@@ -19,7 +19,9 @@ if ~exist('BasePath','var')
     elseif contains(RelativePath{ii},'\\Vault3')
         BasePath = '\\Vault3\Data\Kelson\Analyzed';
     else
-        error('Unknown Base Path')
+        
+        warning('Unknown Base Path. Assuming, Relative Path Given')
+        BasePath = '';
     end 
         
 end 

@@ -71,7 +71,7 @@ end
         
         
         
-        df_by_level = df_by_level.* df_by_level_sig;
+        %df_by_level = df_by_level.* df_by_level_sig;
         if strcmp(Type, 'Significant')
             df_by_level = df_by_level_sig;
             Type = 'BRFS'
@@ -105,8 +105,7 @@ end
    
     if  strcmp(Type, 'interp')
         for class_idx = 1:size(BD,1)
-            % convert answers to half octaves
-            BD{class_idx,1} = cellfun(@(x) x * 2,  BD{class_idx,1},'UniformOutput',0);
+            % 
             % calculate sum and max bandwith
             BD2{class_idx,1} = cellfun(@(X) max(X(:,2)-X(:,1)) , BD{class_idx,1});
             BD3{class_idx,1} = cellfun(@(X) sum(X(:,2)-X(:,1)) , BD{class_idx,1});
@@ -126,6 +125,8 @@ end
 
     else
         BD  = AnalyzeBandwidth(BD);
+        % convert half octave spacing to octaves
+        BD{1,1} =  BD{1,1}/2;
         PlotBandwidth(BD,SaveName)
         
         BD = AnalyzeByAnimal(BD,expt_list,SaveName);
@@ -154,12 +155,12 @@ if ~strcmp(Sig,'Neg')
     if strcmp(Sig,'Pos')
         DF(DF<0) = nan;
     end 
-    m =  max(max(DF));
+    m =  max(max(DF,[],1),[],2);
     DF = DF./m;
      lvl_idx = DF >= Lvl;
 elseif strcmp(Sig,'Neg')
     DF(DF>0) =nan ;
-    m = min(min(DF));
+    m = min(min(DF,[],1),[],2);
     DF = DF./m;
     % DF is in range -1 =0 
     lvl_idx = abs(DF) >= Lvl;  
@@ -195,7 +196,7 @@ switch Type
        title( sprintf('%s Average FRA',ClassName),'Interpreter','none')
        if strcmp(Sig,'Neg'); colormap('bone'); else colormap('hot'); end 
        colorbar
-       set(gca,'CLim', [.02 .10])
+      % set(gca,'CLim', [.02 .10])
        if SaveName
            saveas(gcf,sprintf('%s-FRA.pdf', SaveName))
        end
@@ -283,6 +284,12 @@ switch Type
         errordlg('Illegal Type Keyword')
         return
 end 
+
+
+if size(BD,1) > size(BD,2)
+ BD = BD';
+end 
+
 end
 
 
@@ -298,10 +305,14 @@ function PlotBandwidth(BD,SaveName)
         return
     end 
         
-        
+   
+    
     for ii =  1:size(BD,1)
-      
+       if size( BD{ii,1} ,2) >1
        errorbar([],nanmean(BD{ii,1},2),nanstd(BD{ii,1},[],2) / sqrt(size(BD{ii,1},2)))
+       else 
+         errorbar([],nanmean(BD{ii,1}),nanstd(BD{ii,1}) / sqrt(size(BD{ii,1},1)))
+       end 
 
     end 
      
@@ -309,7 +320,7 @@ function PlotBandwidth(BD,SaveName)
      xticks(0:1:4)
      xlabel('level')
      ylabel('Bandwidth (octaves) ')
-    
+  
      if SaveName
           saveas(gcf,sprintf('%s-Bandwidth.pdf', SaveName))
      end
@@ -350,7 +361,7 @@ end
      legend(BD(:,3),'Interpreter','none')
      xticks(0:1:4)
      xlabel('level')
-     ylabel('Bandwidth (half-octaves) ')
+     ylabel('Bandwidth (octaves) ')
      
      title('Bandwidth By Animal')
     

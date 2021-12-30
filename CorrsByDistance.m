@@ -7,7 +7,7 @@ end
 try
 corrs_all = DF.CorrByAnimal;
 catch
-corrs_all = Correlations(DF);
+corrs_all = CorrelationsByAnimalBehavior(DF);
 end 
 
 [CellDists,max_dist]= getCellDistances(DF);
@@ -20,7 +20,7 @@ max_dist = min(max_dist,300);
 C= struct();
 fn = fieldnames(corrs_all);
 corr_idx = ( contains(fn,'LCorr') | contains(fn,'NCorr') ) &...
-        ( ~( contains(fn,'Animal')| contains(fn,'Diff')) ) ;
+        ( ~( contains(fn,'Animal')| contains(fn,'Diff')|  contains(fn,'Cell') )) ;
 fn = fn(corr_idx);
 
 
@@ -29,11 +29,13 @@ Out.BinSize = BinSizeMicrons;
 Out.max_dist_condisered = max_dist;
 
    for field_idx = 1:length(fn)
+       try
        Out.(fn{field_idx}) = getCorrsAtDistance(corrs_all.(fn{field_idx}),...
                                            CellDists,max_dist,BinSizeMicrons);
 
        PlotCorrsDistance(Out.(fn{field_idx}), [SaveName '-' fn{field_idx}], BinSizeMicrons)
-
+       catch
+       end 
 
    end 
 
@@ -91,7 +93,7 @@ end
 
 % process
 Cell_mu = nanmean(Cell); 
-Cell_CI = nanstd(Cell) / sqrt( length(Cell)) * 1.96;
+Cell_CI = nanstd(Cell) / sqrt( length(Cell)) * 3.291; %99.9 CI
 
 Animal = cellfun(@nanmean,Animal);
 Animal_mu = nanmean(Animal); 
@@ -103,22 +105,36 @@ function  PlotCorrsDistance(CellCorrs,FieldName, BinSizeMicrons)
 
 
 x = [0:BinSizeMicrons:(size(CellCorrs.Cell_mu,1)-1)*BinSizeMicrons];
-levelTitles = {'Tones','+20','+10','0'}
-
 figure
-for ii =1:4
-subplot(2,2,ii)
-shadedErrorBar(x,CellCorrs.Cell_mu(:,ii),CellCorrs.Cell_CI(:,ii))
-title(levelTitles{ii})
-ylim([0 .5])
-ylabel('Correlation (AU)')
-xlabel('Distance (um)')
 set(gcf,'Position',[660 450 560 520])
+
+
+if size(CellCorrs.Cell_mu,2) == 1
     
-end 
+    shadedErrorBar(x,CellCorrs.Cell_mu,CellCorrs.Cell_CI)
+    title('All')
+    stylefig()
+else
+    levelTitles = {'Tones','+20','+10','0'}
+    
+    for ii =1:4
+        subplot(2,2,ii)
+        shadedErrorBar(x,CellCorrs.Cell_mu(:,ii),CellCorrs.Cell_CI(:,ii))
+        title(levelTitles{ii})
+        stylefig()
+        
+    end
+end
+ 
 suptitle(FieldName)
 
 saveas(gcf,sprintf('%s-ByDistance.pdf', FieldName))
+
+
+function stylefig()
+    ylim([0 .5])
+    ylabel('Correlation (AU)')
+    xlabel('Distance (um)')
 
 
 

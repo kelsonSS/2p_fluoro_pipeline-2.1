@@ -25,21 +25,21 @@ function ToneInNoise_MeanTrace(DFF,ID,Type)
     end
     
     % plot lines according to type
-    
-    switch Type
-        case 'ToneNoisePassive'
-            
-            plot([30 30], [aa(3),aa(4)],'--')
-            plot([60 60], [aa(3),aa(4)],'--g')
-            plot([90 90], [aa(3),aa(4)],'--g')
-            plot([120 120], [aa(3),aa(4)],'--r')
-            xlim([0 150])
-        case 'ToneNoiseActive' 
-            plot([30 30], [aa(3),aa(4)],'--g')
-            plot([60 60], [aa(3),aa(4)],'--g')
-            xlim([0 120])
-        
-            
-    end 
+%     
+%     switch Type
+%         case 'ToneNoisePassive'
+%             
+%             plot([30 30], [aa(3),aa(4)],'--')
+%             plot([60 60], [aa(3),aa(4)],'--g')
+%             plot([90 90], [aa(3),aa(4)],'--g')
+%             plot([120 120], [aa(3),aa(4)],'--r')
+%             xlim([0 150])
+%         case 'ToneNoiseActive' 
+%             plot([30 30], [aa(3),aa(4)],'--g')
+%             plot([60 60], [aa(3),aa(4)],'--g')
+%             xlim([0 120])
+%         
+%             
+%     end 
     
   end 

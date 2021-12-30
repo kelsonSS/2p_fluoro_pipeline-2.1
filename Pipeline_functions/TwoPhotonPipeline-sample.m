@@ -108,7 +108,7 @@ strsep = @strsplit;
 
 input.regexp = 'Image_0001_0001.raw';
 
-[expt_paths,psignalfiles,animalID] = createDataList(input);
+[expt_paths2,psignalfiles2,animalID2] = createDataList(input);
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -116,7 +116,8 @@ for expt = 1:length(expt_paths)
     filePreparation(expt_paths{expt},input.inpath,input.savepath,psignalfiles{expt})
     
 end 
-
+% all files have now been moved to the savepath location
+input.inpath = input.savepath
 
 % start of data processing code
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -125,7 +126,10 @@ end
 %selection and fluourescence extraction will be done on data from within the
 %input.savepath subfolder.
 
+
 %%
+
+
 for expt=1:length(expt_paths)
     %Select current path
     input.expname = expt_paths{expt};
@@ -161,12 +165,12 @@ end
 % Extract Timing Params
 for expt=1:length(expt_paths)
     %Select current path
-    input.path = fullfile(input.path,expt_paths(expt));
+    input.path = fullfile(input.inpath,expt_paths{expt});
     %input.expname = expt_paths(expt);
     input.animalID = animalID(expt);
     input.psignalfiles = psignalfiles(expt);
     fprintf('analyzing %d of %d: \n',expt,length(expt_paths)) 
-    ExtractTimingParams(input,1);
+    ExtractTimingParams(input);
 end
 
 
@@ -200,13 +204,12 @@ end
 
 
 %% Quality check extracted Fluorescence
-for i=1:length(paths)
+for expt=1:length(ExtractionPaths)
     %Select current path
-    input.path = paths{i};
-    input.expname = expnames(~cellfun(@isempty,expnames(:,i)),i);
+    input.path = ExtractionPaths{expt};
     %Select current Psignal file
-    input.psignalfiles = psignalfiles(~cellfun(@isempty,psignalfiles(:,i)),i);
-    fprintf('QC-ing %d of %d: %s \n',i,length(paths),input.path) 
+   input.psignalfiles = ExtractionPsignalFiles{expt};
+    fprintf('QC-ing %d of %d: %s \n',expt,length(ExtractionPaths),input.path) 
     CheckExperimentQuality(input);
 end
 

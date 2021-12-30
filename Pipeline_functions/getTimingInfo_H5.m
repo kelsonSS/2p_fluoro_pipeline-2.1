@@ -42,36 +42,57 @@ end
 
 %% Extract Timing Info from h5 file
 fprintf('loading %s \n',ThorSyncFile) 
+
+  
+    TempFile = 'C:\Users\kelsonss\Desktop\Temp\Episode001.h5';
+   % copy to local computer  for speed 
+    copyfile(ThorSyncFile,TempFile)
+    
+
+
 try
-fo=h5read(ThorSyncFile,'/DI/Frame Out');
+fo=h5read(TempFile,'/DI/Frame Out');
 catch    
   fprintf('%s is bad /n', ThorSyncFile)
+    delete(TempFile)
     return
 end 
 
 try
-fc=h5read(ThorSyncFile,'/CI/Frame Counter'); % may be unreliable
+fc=h5read(TempFile,'/CI/Frame Counter'); % may be unreliable
 first_frame = find(fc,1);
 catch
 end 
     
 try
-    gate=h5read(ThorSyncFile,'/AI/ai5'); % trial gate signal
+    gate=h5read(TempFile,'/AI/ai5'); % trial gate signal
 catch
     try
-        gate=h5read(ThorSyncFile,'/AI/PsignalGate');
+        gate=h5read(TempFile,'/AI/PsignalGate');
+   
     catch
         try
-        gate=h5read(ThorSyncFile,'/AI/ai4');
+        gate=h5read(TempFile,'/AI/ai4');
         catch
              fprintf('\n %s is bad \n', ThorSyncFile)
              TimingInfo.Errors =  sprintf('\n %s is bad \n', ThorSyncFile);
+             delete(TempFile)
              return
         end
         
     end
 end
 
+try
+licks=h5read(TempFile,'/AI/Licks');
+catch
+licks = [];
+end 
+
+
+
+delete(TempFile)
+  
 
 
 nchannels = xml.format{2}(3);
@@ -127,6 +148,8 @@ while length(on) ~= TotalTrials || length(on) ~= length(off)
                off = findpeaks(diff(gate * -1),prompt_peak_val);
                on = on.loc;
                off = off.loc;
+               on(find(diff(on) < 10000)) = [];
+               off(find(diff(off) < 10000)) = [];
                off = off(off > 3000); % ensure the first off trigger happens at least .1 sec after trial start
                m = length(on);
                figure; plot(diff(gate)); hold on ; %plot(diff(fo));
@@ -210,7 +233,7 @@ frames = frames.loc;
 trial_frames = cell(length(on),1);
 for trial = 1:length(on)
     % find frames that happened after trial onset and before trial offset
-    trial_frames_temp =  find( frames > on(trial) & frames<off(trial));
+    trial_frames_temp =  find( (frames > on(trial)) & frames<off(trial));
     % find the closest frame to the start of the trial 
    [~, closest_frame] = min(...
                         abs(...
@@ -250,6 +273,9 @@ for trial = 1:length(on)
    end 
    
 end     
+
+%% Extract Licking 
+
 
 %% sanity checks
 
@@ -303,20 +329,69 @@ TimingInfo.SeqEndVals = FrameIdx(:,2);
 %TimingInfo.ITI = ITI;
 
 
-% function [on off] = extract_h5_stimulus_mode(on,off)
-% 
-% 
-% 
-% if num_frames_actual == TimingInfo.tarFnums  * TotalTrials
-%     on = 1 + TimingInfo.tarFnums .*(0:TotalTrials-1);
-%     off = on + TimingInfo.tarFnums - 1; 
-% return
-% end
-%     
-% 
-% end
-% 
-% 
+
+
+%Lick Extraction
+if licks
+       % find lick onset times
+     L = findpeaks(diff(licks),.45);
+     L = L.loc;
+     
+     % ensure all detected licks triggered detector. 
+     % lick detector sends out ~5v signal when lick is detected. 
+     % L has captured the onset of these licks. 
+     % we can rule out false positives by looking slightly ahead and
+     % confirming that the lick signal does in fact cross that threashold.
+     
+     L = L( licks(L+100) >= 4.9);
+     
+    Out.TrialLickFrames = {};
+    Out.TrialLickRelativeFrames ={};
+    for trial_idx = 1:length(on)
+        % get start and end of each trial
+        t_start = on(trial_idx);
+        t_end = off(trial_idx);
+        % find licks that occured duing said trial
+        lick_idx =  (L >= t_start) & (L < t_end);
+        % shift lick times to be relative to trial onset
+        t_licks =  L(lick_idx) - t_start ;
+        % convert to frames 
+        t_licks = t_licks / 1000;
+        
+        % shift lick times relative to tone onset
+        t_licks_rel = t_licks/30000 - Prestim ; % Thorsync fps
+        if isempty(t_licks)
+            t_licks = nan;
+            t_licks_rel = nan;
+        end 
+        Out.TrialLickFrames{trial_idx,1} = t_licks;
+         Out.TrialLickRelativeFrames{trial_idx,1} = t_licks_rel;
+    end 
+        
+   handles = WF_getPsignalInfo(PsignalTimingFile);
+     
+    
+   %% Test 
+  % compare the first response with the first response recorded by psignal
+   first_response = handles.FirstResponse(:,1);
+   first_response_detect = cellfun(@(x) x(1),Out.TrialLickFrames)/handles.pfs;
+   
+   % uncomment to view
+   [first_response, first_response_detect]
+ 
+  %  assert there is less than a 1 frame difference between the two
+     assert(abs(nanmax(first_response - first_response_detect)) < (1/30) )
+     
+     
+     
+     SavePath =  fileparts(ThorSyncFile);
+     OutPath = fullfile(SavePath,'BehavioralResponses_Frames.mat');
+     save(OutPath,'Out')
+end 
+     
+end 
+
+
 
 
 

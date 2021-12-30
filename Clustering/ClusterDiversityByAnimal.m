@@ -29,7 +29,7 @@ expt_prc(expt_idx,:) = counts / neurons;
 Neurons_expt(expt_idx) = neurons;
 end 
 
-expt_prc = expt_prc(Neurons_expt > 20,:);
+%expt_prc = expt_prc(Neurons_expt > 20,:);
 
 active = sum(expt_prc > .05,2)';
 if to_plot

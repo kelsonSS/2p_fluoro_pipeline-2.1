@@ -23,23 +23,26 @@ if length(handles.BackgroundNoise) == 3 && handles.BackgroundNoise(1) ~=99
     noise_off = handles.BackgroundNoise(3)* 30;
 end 
 
-num_classes = 4;
+
 num_neurons = 100;
-num_types = 2;
+%num_types = 2;
 num_reps = 10;
-classes = {'Tones','Noise','Offset'};
+%classes = {'Tones','Noise','Offset'};
 
 Freqs = Passive.FreqLevelOrder{:,1};
 Levels = Passive.FreqLevelOrder{:,2};
 trials = length(Levels);
 uLevels = sort(unique(Levels),'descend');
 bad_idx = ~Passive.Clean_idx;
-if ~(isfield(Passive,'Classes'))
+
+if isfield(Passive,'Combined_Classes')
+    all_classes = Passive.Combined_Classes;
+    num_classes = max(all_classes);
+elseif ~(isfield(Passive,'Classes'))
     all_classes = ones(size(Passive.DFF,3),1);
 elseif iscell(Passive.Classes)
     all_classes = Passive.Class_idx;
-    classes =  Passive.Classes;
-    
+    classes =  Passive.Classes;  
 else 
     all_classes = Passive.Classes;
 end 
@@ -110,57 +113,57 @@ uLevels2 = unique(Levels2);
 % 
 % %save(Savepath,'Passive','-v7.3') 
 
-%Test how classes of neurons encode Tone  information
-for run = 1:num_reps
-    
-     disp([' Classes Tones: Run #' num2str(run) '/' num2str(num_reps)  ': ' ...
-        num2str(floor( toc / 60  )) ' min elapsed' ])
-    
-    for class = length(classes) +1
-        
-        %% indexing
-        class_idx = all_classes == class;                         
-        if class == length(classes)+1       
-            class_idx = ones(size(class_idx));   
-        end             
-        
-      
-        
-        in_idx = class_idx & active_idx & ~ bad_idx;
-        AllData = Passive.DFF_Z(tone_on:tone_off,:,in_idx);
-        
-         if size(AllData,3) < 20
-            continue
-            end
-        for neurons = 2:num_neurons
-            
-            
-            
-            %% subscripting
-            rand_idx = randi( size(AllData,3),neurons,1);
-            %% Modeling
-            mdlData = squeeze(nanmean(AllData(:,1:trials,rand_idx)));
-             mdlData(isnan(mdlData)) = 0;
-            mdl =  fitcnb(mdlData,Freqs,'Crossval','on') ;
-                       
-            %% Predicting
-            %total
-            Prediction = mdl.kfoldPredict;
-            Passive.BayesModels.ClassesTonesLossTotal(neurons,class,run) = sum( Prediction == Freqs )...
-                /length(Freqs);
-            % by level
-            
-            for lvl = 1: length(uLevels)
-                lvl_idx = Levels == uLevels(lvl);
-                Passive.BayesModels.ClassesTonesLossLvl(lvl,neurons,class,run) = sum( Prediction(lvl_idx) == ...
-                    Freqs(lvl_idx) )/length(Freqs(lvl_idx));
-            end
-            
-            
-        end
-    end
-end
-Passive.BayesModels.ClassesTonesLossLvl = permute(Passive.BayesModels.ClassesTonesLossLvl,[2,1,3,4]);
+% %Test how classes of neurons encode Tone  information
+% for run = 1:num_reps
+%     
+%      disp([' Classes Tones: Run #' num2str(run) '/' num2str(num_reps)  ': ' ...
+%         num2str(floor( toc / 60  )) ' min elapsed' ])
+%     
+%     for class = num_classes +1
+%         
+%         %% indexing
+%         class_idx = all_classes == class;                         
+%         if class == num_classes+1       
+%             class_idx = ones(size(class_idx));   
+%         end             
+%         
+%       
+%         
+%         in_idx = class_idx & active_idx & ~ bad_idx;
+%         AllData = Passive.DFF_Z(tone_on:tone_off,:,in_idx);
+%         
+%          if size(AllData,3) < 20
+%             continue
+%             end
+%         for neurons = 2:num_neurons
+%             
+%             
+%             
+%             %% subscripting
+%             rand_idx = randi( size(AllData,3),neurons,1);
+%             %% Modeling
+%             mdlData = squeeze(nanmean(AllData(:,1:trials,rand_idx)));
+%              mdlData(isnan(mdlData)) = 0;
+%             mdl =  fitcnb(mdlData,Freqs,'Crossval','on') ;
+%                        
+%             %% Predicting
+%             %total
+%             Prediction = mdl.kfoldPredict;
+%             Passive.BayesModels.ClassesTonesLossTotal(neurons,class,run) = sum( Prediction == Freqs )...
+%                 /length(Freqs);
+%             % by level
+%             
+%             for lvl = 1: length(uLevels)
+%                 lvl_idx = Levels == uLevels(lvl);
+%                 Passive.BayesModels.ClassesTonesLossLvl(lvl,neurons,class,run) = sum( Prediction(lvl_idx) == ...
+%                     Freqs(lvl_idx) )/length(Freqs(lvl_idx));
+%                          end
+%             
+%
+%         end
+%     end
+% end
+% Passive.BayesModels.ClassesTonesLossLvl = permute(Passive.BayesModels.ClassesTonesLossLvl,[2,1,3,4]);
 
 % save(Savepath,'Passive','-v7.3') 
 
@@ -175,14 +178,14 @@ Passive.BayesModels.ClassesTonesLossLvl = permute(Passive.BayesModels.ClassesTon
 %         num2str(floor( toc / 60  )) ' min elapsed' ])
 %     
 %     for neurons = 2:num_neurons
-%         for class = 1:length(classes)+1
+%         for class = 1:num_classes+1
 %             
 %             %% indexing
 %            
 %                    
 %             class_idx = all_classes == class;
 %             
-%              if class == length(classes)+1
+%              if class == num_classes+1
 %                  class_idx = ones(size(class_idx));
 %              end 
 %            
@@ -240,14 +243,12 @@ zData = AllData;
 for run = 1:num_reps
     disp(['Time: Run #' num2str(run) '/' num2str(num_reps)  ': ' ...
         num2str(floor( toc / 60  )) ' min elapsed' ])
-    %for class = 1:length(classes) +1
-    for class = length(classes) +1
-        for Time = padsize+1:150+padsize
-            
-            
-            %% indexing
+    %for class = 1:num_classes +1
+    %for class =  num_classes +1
+    for class = 1:num_classes+1
+             %% indexing
             class_idx = all_classes == class;         
-            if class == length(classes)+1                
+            if class == num_classes+1                
                 class_idx = ones(size(class_idx));         
             end             
             
@@ -256,7 +257,20 @@ for run = 1:num_reps
         
             
             in_idx = class_idx & active_idx & ~ bad_idx  ;
+            AllData = zData(:,:,in_idx);
+            if size(AllData,3) < 80
+                continue
+            end
+            fprintf('Class: %d \n', class) 
+
+            % padding
+            padding =  nan(padsize,size(AllData,2),size(AllData,3))  ;
+            AllData = [ padding;AllData;padding];
+               
+        for Time = padsize+1:150+padsize
             
+            
+          
             %% subscripting
             % AllData = Passive.DFF_Z;
             
@@ -270,23 +284,15 @@ for run = 1:num_reps
             %
             %            AllData(isnan(AllData)) = rand(sum(sum(sum(isnan(AllData)))),1 );
             % selection
-            AllData = zData(:,:,in_idx);
+           
             
-            % padding
-            padding =  nan(padsize,size(AllData,2),size(AllData,3))  ;
-            AllData = [ padding;AllData;padding];
-            AllData = AllData(Time-padsize:Time+padsize,:,:);
-            
-             if size(AllData,3) < 20
-            continue
-            end
-            
-            
-            rand_idx = randi(size(AllData,3),80,1);
+          %subsetting
+            mdlData = AllData(Time-padsize:Time+padsize,:,:);       
+            rand_idx = randi(size(mdlData,3),80,1);
             
             
             %% Modeling
-            mdlData = squeeze(nanmean(AllData(:,1:trials,rand_idx)));
+            mdlData = squeeze(nanmean(mdlData(:,1:trials,rand_idx)));
              mdlData(isnan(mdlData)) = 0;
             
             
@@ -338,13 +344,13 @@ end
 % for run = 1:num_reps
 %     disp(['Time-Noise: Run #' num2str(run) '/' num2str(num_reps)  ': ' ...
 %         num2str(floor( toc / 60  )) ' min elapsed' ])
-%     for class = 1:length(classes) +1
+%     for class = 1:num_classes +1
 %         for Time = padsize+1:150+padsize
 %             
 %             
 %             %% indexing
 %             class_idx = all_classes == class;  
-%             if class == length(classes)+1      
+%             if class == num_classes+1      
 %                 class_idx = ones(size(class_idx));      
 %             end             
 %             

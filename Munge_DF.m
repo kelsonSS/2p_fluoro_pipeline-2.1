@@ -1,3 +1,4 @@
+
 function DF =  Munge_DF(DF,norm_mode)
 
     if ~exist('norm_mode','var')
@@ -39,7 +40,9 @@ if iscell(DF) % if Cell iterate over cells to get full index
 
 else 
 if isstruct(DF)
-    DF.DFF2 = squeeze(nanmean(DF.DFF,2));
+    if  ~isfield(DF,'DFF2')
+        DF.DFF2 = squeeze(nanmean(DF.DFF,2));
+    end
 else
     temp = DF;
     clear DF

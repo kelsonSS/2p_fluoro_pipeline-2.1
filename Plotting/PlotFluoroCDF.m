@@ -1,13 +1,14 @@
 function dff = PlotFluoroCDF(DF,type,lvl,SaveName)
 
    
-   lvl_str = num2str(lvl);
+   
    
     % type = max or mean
-    if ~exist('lvl','var') || ischar(lvl)
+    if ~exist('lvl','var') || ischar(lvl) || isempty(lvl)
          lvl = true(size(DF.DFF,2),1);
+         lvl_str = 'All'
     else 
-        
+        lvl_str = num2str(lvl);
  
     lvl = DF.FreqLevelOrder{:,2} == lvl;
     end 
@@ -32,6 +33,11 @@ function dff = PlotFluoroCDF(DF,type,lvl,SaveName)
         dff = squeeze(max(max(dff,[],2))) ;
         case 'mean'
         dff = squeeze(nanmean(max(dff,[],2)));
+        case 'min'
+        dff = squeeze(min(min(dff,[],2))) ;
+        case 'min-mean'
+        dff = squeeze(min(min(dff,[],2))) ;
+
     end
     
     figure;

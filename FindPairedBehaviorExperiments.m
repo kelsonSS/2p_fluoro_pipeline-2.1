@@ -2,7 +2,7 @@ function [paired_expts_list,unpaired] = FindPairedBehaviorExperiments()
 
 paired_expts_list = {};
 unpaired = {};
-active_files = dir('Z:\Kelson\Analyzed\**\*\Tones*Active\Fluorescence.mat');
+active_files = dir('Z:\Kelson\Analyzed\**\*\*ones*ctive\Fluorescence.mat');
 folders = unique({active_files.folder}');
 %to_click = {}
 expt_idx = 1; 

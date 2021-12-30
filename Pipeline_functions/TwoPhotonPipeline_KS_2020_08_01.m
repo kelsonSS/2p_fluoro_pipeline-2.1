@@ -36,10 +36,14 @@ clear all; close all;
 % end
 % 
 % end 
-%Path to Data
-input.inpath = '\\vault3\Data\Kelson\Files to upload';
+
 %Input variables
 input=[];
+
+
+
+%Path to Data
+input.inpath = 'Z:\Kelson\Files to unload';
 %Expected frame rate form experiment. According to Thorlabs, the frame rate is
 %effectivly fixed. ThorImage usually shows a frame rate + <1 Hz, which is
 %why there is sometimes an extra frame at the end of a trial. However, if we
@@ -90,7 +94,7 @@ input.plotbrightness = 0;
 %registration zero-pading
 input.border = 1;
 %path to local data storage for processed data
-input.savepath = '\\Vault3\Data\Kelson\Analyzed';
+input.savepath = 'Z:\Kelson\Analyzed';
 %largest movie to load based on number of frames. Beyond this # the movie
 %is processed in chunks for extracting fluorescence.
 input.maxframechunk = 7500;
@@ -107,6 +111,7 @@ strsep = @strsplit;
 input.regexp = 'Image_0001_0001.raw';
 
 [expt_paths,psignalfiles,animalIDS] = createDataList(input);
+
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -161,7 +166,7 @@ end
 
 %% Extract Timing Params
 
-[TimingPaths TimingPsignalFiles] = CreateCellExtractionList; % This should change to TimingExtractionList
+[TimingPaths TimingPsignalFiles] = CreateTimingExtractionList; % This should change to TimingExtractionList
 
 %% Extract Timing Params
 for expt=1:length(TimingPaths)
@@ -172,6 +177,17 @@ for expt=1:length(TimingPaths)
     fprintf('analyzing %d of %d: \n',expt,length(TimingPaths)) 
     ExtractTimingParams(input,1);
 end
+
+%% Extract Licking Behavior 
+for expt=1:length(TimingPaths)
+    %Select current path
+    input.path = TimingPaths{expt};
+    %Select current Psignal file
+    input.psignalfiles = TimingPsignalFiles(expt);
+    fprintf('analyzing %d of %d: \n',expt,length(TimingPaths)) 
+    ExtractBehaviorLicks(input,1);
+end
+
 
 
 CreateCellDefinitionList(input) 

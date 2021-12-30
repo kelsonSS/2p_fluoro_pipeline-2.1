@@ -45,6 +45,10 @@ for expt_id = 1:n_expts
         results{expt_id} = squeeze(max(max(DFF_temp,[],2))) ;
            case 'mean'
         results{expt_id} = squeeze(nanmean(max(DFF_temp,[],2)));
+           case 'min'
+        results{expt_id} = squeeze(min(min(DFF_temp,[],2)));
+           case 'min-mean'
+        results{expt_id} = squeeze(nanmean(min(DFF_temp,[],2)));
        end
          
     expt_ids_plotting{expt_id} = repmat(expt_id, length( results{expt_id} ), 1 ); 
@@ -64,7 +68,7 @@ results_med = cellfun(@median, results );
 scatter( ones(length(results_med),1) - young_flg , results_med,['.', plt_color])
 hold on
 axis tight
-ylim([ 0, max(ylim)] )
+%ylim([ 0, max(ylim)] )
 xlim([-1 , 2])
 
 

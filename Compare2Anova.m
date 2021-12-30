@@ -41,7 +41,7 @@ xticklabels(levels)
 title(SaveName,'interpreter','none')
 xlabel('Levels')
 ylabel('A.U')
-saveas(gcf,sprintf('%s-ComparisonBars.pdf',SaveName))
+saveas(gcf,sprintf('%s_ComparisonBars.pdf',SaveName))
 
 % create indexing for Anova
 
@@ -61,10 +61,14 @@ if ~ full_levels
 lvl_idx = repmat(levels,1,length(all)/length(levels) ) ;
 lvl_idx = lvl_idx(:);
 else 
-    lvl_idx = cat(1,levels(:),levels(:));
+    lvl_idx = full_levels;
 end 
 
 
+clean_idx = ~isnan(all);
+all = all(clean_idx);
+lvl_idx = lvl_idx(clean_idx);
+age_idx = age_idx(clean_idx);
 
 [x,main_effects,stats,z]= anovan(all,{age_idx,lvl_idx},'model','interaction','varnames',varnames);
 
@@ -85,8 +89,13 @@ main_effects_P_value = main_effects(2:3,end);
      saveas(gcf,sprintf('%s -MainEffectsPlot.pdf',SaveName) )
  end 
 
- figure
- all_stats = multcompare(stats,'Dimension',[1 2]);
+
+if length(levels) > 1
+    figure
+    all_stats.comparisions = multcompare(stats,'Dimension',[1 2]);
+end 
+    all_stats.stats = stats;
+end 
 % % 
 % % 
 % % if SaveName

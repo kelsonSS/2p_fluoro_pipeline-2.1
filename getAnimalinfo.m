@@ -18,7 +18,7 @@ DOB = {};
 Sex = {};
 Experiment_Date ={};
 Age_Months = {};
-Age_Days = {};
+Age_Days = [];
 
 if ~exist('BasePath','var')
     BasePath= 'C:\Users\kelsonss\Google Drive\psignalData\KSS';
@@ -61,7 +61,7 @@ for ii = 1:length(AnimalList)
      
      Experiment_Date{ii} = Expt_date;
      Age_Months{ii} = between(DOB{ii},Expt_date,{'months','days'});
-     Age_Days{ii} = caldiff([DOB{ii},Expt_date],'days');
+     Age_Days(ii) = caldays(caldiff([DOB{ii},Expt_date],'days'));
      
 
      

@@ -9,12 +9,14 @@ function PlotScatterLevels(GroupNames,Levelnames,Title,varargin)
 % style - bar or scatter
 % varargin - the data to be plotted, with each group being a seperate entry
 
+%ylim_size = 'auto'
+ylim_size = [0 1]
 
 figure 
 hold on 
 
 % where plotting starts and how much we'll shift each plot by 
-increment = .2 ;
+increment = .15 ;
 start_level = 1;
 all_start_levels = [];
 % to save fig handles 
@@ -39,15 +41,15 @@ for ii = 1:length(varargin)
    errorbar(levels(:,1)+increment/4, nanmean(data,2), nanstd(data,[],2) / sqrt(n_animals) * 1.96 ,'.');   
 end
 
-ylim([0 300])
+ylim(ylim_size)
 legend(h,GroupNames)
 xticks( [ median(all_start_levels) : n_levels+1] )
 xticklabels(Levelnames)
 xlabel('Levels')
 
-if length(Levelnames) == 1 || ischar(Levelnames)
-    xlim( [.5 1.5]+ increment  )
-end 
+%if length(Levelnames) == 1 || ischar(Levelnames)
+%    xlim( [.5 1.5]+ increment  )
+%end 
 
 if Title
     title(Title,'interpreter','none')
