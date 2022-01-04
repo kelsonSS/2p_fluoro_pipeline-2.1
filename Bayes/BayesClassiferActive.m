@@ -12,7 +12,7 @@ function BayesModels = BayesClassiferActive(Active_All)
 N_expts = length(Active_All);
 BayesModels.UsedExperimentIndex =[];
 BayesModels.Baseline_Hits = [];
-BayesModels.Baseline_HitsEarly = [];
+BayesModels.Baseline_AllBehavior = [];
 
 padsize = 3;
 print_size = 0;
@@ -30,7 +30,7 @@ num_reps = 20;
 
 Levels = Active.FreqLevelOrder{:,2};
 trials = length(Levels);
-uLevels = sort(unique(Levels),'descend');
+uLevels = [70,60,50];
 clean_idx = Active.Clean_idx;
 
 if trials < 20 
@@ -71,110 +71,138 @@ in_idx =  active_idx & clean_idx ;
         end
     
 
-% detect_Hits 
+% Create Behavioral outcomes 
 Hits = Active.handles{1}.Hits(1:trials)';
-HitsEarly = Active.handles{1}.Hits +(Active.handles{1}.Early * 2) ;
-HitsEarly = HitsEarly(1:trials)';
+Early  = Active.handles{1}.Early';
+AllBehavior = Active.handles{1}.Hits +(Active.handles{1}.Early * 2) ;
+AllBehavior = AllBehavior(1:trials)';
 
 
  
  for run = 1: ceil(num_reps/3)  
-
-          
+    
          parfor neurons = 2:num_neurons
-             
+
              
              %% subscripting
              
              rand_idx = randi( size(AllData,3),neurons,1);
-             %% Modeling
              mdlData = squeeze(nanmean(AllData(tone_on:tone_off,1:trials,rand_idx)));
-             mdlData(isnan(mdlData)) = 0;
-             cv = cvpartition(Hits,'KFold',5);
-             mdl =  fitcnb(mdlData,Hits,'CrossVal','on','CVPartition',cv) ;
-             %% Predicting
-             %total
-             Prediction =   mdl.kfoldPredict;
-             NumbersLossTotal(neurons) = sum( Prediction == Hits )...
-                 /length(Hits);
-%              % by level
-%              for lvl = 1: length(uLevels)
-%                  lvl_idx = Levels == uLevels(lvl);
-%                  Active.BayesModels.NumbersLossLvl(lvl,neurons,expt,run) = sum( Prediction(lvl_idx) == ...
-%                      Freqs(lvl_idx) )/length(Freqs(lvl_idx));
-%              end
-%               mdlData(isnan(mdlData)) = 0;
-             cv = cvpartition(HitsEarly,'KFold',5);
-             mdl =  fitcnb(mdlData,HitsEarly,'CrossVal','on','CVPartition',cv) ;
-             %% Predicting
-             %total
-             Prediction =  mdl.kfoldPredict;
-             NumbersLossTotal_HitsEarly(neurons) = sum( Prediction == HitsEarly )...
-                 /length(HitsEarly);
-            
+             %% Modeling Hits
              
+            
+             Prediction = RunModel(mdlData,Hits);
+             NumbersLossTotal(neurons) = getPredictionAccuracy(Prediction,Hits);
+             %byLevel
+             NumbersLossLevel(:,:,neurons) = getPredictionAccuracyByLevel(...
+                                            Prediction,Hits,Levels,uLevels);
+            
+             %% Modeling Early                            
+             Prediction = RunModel(mdlData,Early);
+             NumbersLossTotal_Early(neurons) = getPredictionAccuracy(Prediction,Early);
+             %byLevel
+             NumbersLossLevel_Early(:,:,neurons) = getPredictionAccuracyByLevel(...
+                                            Prediction,Early,Levels,uLevels)  ;      
+             
+             
+          
+             
+            
+             %% Modeling All behavior
+             %total
+             AllBehaviorPrediction =  RunModel(mdlData,AllBehavior);
+             NumbersLossTotal_AllBehavior(neurons) = getPredictionAccuracy(Prediction,AllBehavior);
+            
+            NumbersLossLevel_AllBehavior(:,:,neurons) = getPredictionAccuracyByLevel(AllBehaviorPrediction,AllBehavior,Levels,uLevels);
+            
+            
+            
          end
-    BayesModels.NumbersLossTotal_Hits(:,expt,run) = NumbersLossTotal;
-    BayesModels.NumbersLossTotal_HitsEarly(:,expt,run) = NumbersLossTotal_HitsEarly; 
+    
+          
+        %% Packaging  
+    BayesModels.NumbersLossTotal_AllBehavior(:,expt,run) = NumbersLossTotal_AllBehavior;
+    BayesModels.NumbersLossTotal_Hits(:,expt,run) = NumbersLossTotal; 
+    BayesModels.NumbersLossTotal_Early(:,expt,run) = NumbersLossTotal_Early; 
+
+    BayesModels.NumbersLossLevel_AllBehavior(:,:,expt,run) = NumbersLossLevel_AllBehavior;
+    BayesModels.NumbersLossLevel_Hits(:,:,expt,run) = NumbersLossLevel;
+    BayesModels.NumbersLossLevel_Early(:,:,expt,run) = NumbersLossLevel_Early;
  end
      
-%  
-% 
-% for run = 1:num_reps
-%     fprintf(repmat('\b',1,print_size))
-%     print_size = fprintf('Bayes: Expt: %d/%d Run: %d/%d - %d min  \n',expt,N_expts,run,num_reps,floor(toc/60));
-% 
-%     %% create Crossvalidation partitions 
-%    cv_Hits = cvpartition(Hits,'KFold',5);
-%    cv_HitsEarly = cvpartition(HitsEarly,'KFold',5);
-%  parfor Time = (padsize+1:90+padsize)
-%             
-%             
-%           
-%             %% subscripting
-%             
-%           %subsetting
-%             mdlData = AllData(Time-padsize:Time+padsize,:,:);       
-%             rand_idx = randi(size(mdlData,3),80,1);
-%             
-%             
-%             %% Modeling Hits
-%              mdlData = squeeze(nanmean(mdlData(:,1:trials,rand_idx)));
-%              mdlData(isnan(mdlData)) = 0;
-%             
-%             
-%              
-%              mdl =  fitcnb(mdlData,Hits,'CrossVal','on','CVPartition',cv_Hits) ;
-%  
-%             %% Predicting
-%             
-%             %total
-%             Prediction =  mdl.kfoldPredict;
-%             %BayesModels.TimeLossTotal(Time,expt,run) = sum( Prediction == Hits )...
-%             run_TimeLossTotal(Time-padsize) = sum( Prediction == Hits )...
-%                 /length(Hits);
-%           
-%             %% Modeling Hits & Early Trials
-%              
-%              mdl =  fitcnb(mdlData,HitsEarly,'CrossVal','on','CVPartition',cv_HitsEarly) ;
-%  
-%             %% Predicting
-%             
-%             %total
-%             Prediction =  mdl.kfoldPredict;
-%             %BayesModels.TimeLossTotal_HitsEarly(Time,expt,run) = sum( Prediction == HitsEarly )...
-%             run_TimeLossTotal_HitsEarly(Time-padsize) = sum( Prediction == HitsEarly )...
-%             /length(HitsEarly);
-% 
-%             
-%  end
-%   BayesModels.TimeLossTotal_Hits(:,expt,run) = run_TimeLossTotal;
-%  BayesModels.TimeLossTotal_HitsEarly(:,expt,run) = run_TimeLossTotal_HitsEarly;
-% end
+ 
+% Modeling Accuracy Over Time 
+for run = 1:num_reps
+    fprintf(repmat('\b',1,print_size))
+    print_size = fprintf('Bayes: Expt: %d/%d Run: %d/%d - %d min  \n',expt,N_expts,run,num_reps,floor(toc/60));
+
+    %% create Crossvalidation partitions 
+   cv_Hits = cvpartition(Hits,'KFold',5);
+   cv_AllBehavior = cvpartition(AllBehavior,'KFold',5);
+ parfor Time = (padsize+1:90+padsize)
+            
+            
+          
+            %% subscripting
+            
+          %subsetting
+            mdlData = AllData(Time-padsize:Time+padsize,:,:);       
+            rand_idx = randi(size(mdlData,3),80,1);
+           
+             
+            mdlData = squeeze(nanmean(mdlData(:,1:trials,rand_idx)));
+            mdlData(isnan(mdlData)) = 0;
+            
+        
+             %% Modeling Hits
+             
+            
+             Prediction = RunModel(mdlData,Hits);
+             TimeLossTotal(Time-padsize) = getPredictionAccuracy(Prediction,Hits);
+             %byLevel
+             TimeLossLevel(:,:,Time-padsize) = getPredictionAccuracyByLevel(...
+                                            Prediction,Hits,Levels,uLevels);
+              
+   %% Modeling Early
+             
+            
+             Prediction = RunModel(mdlData,Early);
+             TimeLossTotal_Early(Time-padsize) = getPredictionAccuracy(Prediction,Early);
+             %byLevel
+             TimeLossLevel_Early(:,:,Time-padsize) = getPredictionAccuracyByLevel(...
+                                            Prediction,Early,Levels,uLevels);
+            
+             %% Modeling All
+             
+            
+             Prediction = RunModel(mdlData,AllBehavior)
+             TimeLossTotal_AllBehavior(Time-padsize) = getPredictionAccuracy(Prediction,AllBehavior)
+             %byLevel
+             TimeLossLevel_AllBehavior(:,:,Time-padsize) = getPredictionAccuracyByLevel(...
+                                            Prediction,AllBehavior,Levels,uLevels)
+            
+                      
+         
+ 
+           
+        
+
+            
+ end
+
+
+ BayesModels.TimeLossTotal_Hits(:,expt,run) = TimeLossTotal;
+ BayesModels.TimeLossTotal_AllBehavior(:,expt,run) = TimeLossTotal_AllBehavior;
+  BayesModels.TimeLossTotal_Early(:,expt,run) = TimeLossTotal_Early;
+ 
+ BayesModels.TimeLossLevel_Hits(:,:,expt,run) = TimeLossLevel;
+ BayesModels.TimeLossLevel_AllBehavior(:,:,expt,run) = TimeLossLevel_AllBehavior;
+ BayesModels.TimeLossLevel_Early(:,:,expt,run) = TimeLossLevel_Early;
+end
 
 % what is model accuraccy if we guessed every trial was a hit?
 BayesModels.Baseline_Hits(end+1) = sum( Hits == 1) / length(Hits);
-BayesModels.Baseline_HitsEarly(end+1) = sum(HitsEarly == 1) / length(HitsEarly);
+BayesModels.Baseline_AllBehavior(end+1) = sum(AllBehavior == 1) / length(AllBehavior);
 
 BayesModels.UsedExperimentIndex(end+1) = expt;
 end 
@@ -184,4 +212,39 @@ end
 
 end
 
+
+function Prediction = RunModel(mdlData,Labels) 
+
+ mdlData(isnan(mdlData)) = 0;
+             cv = cvpartition(Labels,'KFold',5);
+             mdl =  fitcnb(mdlData,Labels,'CrossVal','on','CVPartition',cv) ;
+             %% Predicting
+             %total
+             Prediction =   mdl.kfoldPredict;
+
+
+end
+
+function acc = getPredictionAccuracy(Prediction,Labels)
+    acc = sum( Prediction == Labels )...
+            /  length(Labels);
+%              
+end 
+
+function out = getPredictionAccuracyByLevel(Prediction,actual,Levels,uLevels)
+
+
+ for lvl = 1: length(uLevels)
+                 lvl_idx = Levels == uLevels(lvl);
+                 if any(lvl_idx)
+                  out(lvl,:) = sum( Prediction(lvl_idx) == ...
+                      actual(lvl_idx) ) / length(Levels(lvl_idx));
+                 else
+                     out(lvl,:) = nan;
+               
+                 end
+ 
+ end
+
+end 
 
