@@ -23,17 +23,26 @@ TNBehavior(:,1) = TNBehavior_Standardize_Freqs(TNBehavior(:,1));
 TNBehavior(:,2) =  TNBehavior_Fix_Timings(TNBehavior(:,2));
 TNBehaviorInfo = getAnimalInfo(TNBehavior(:,4));
 
-%% Create full BehaviorTable
-TNFullBehaviorTable = CreateFullAnimalExperimentSheet(TNBehavior)
 
+
+%% Create full BehaviorTable
+TNFullBehaviorTable = CreateFullAnimalExperimentSheet(TNBehavior);
+
+
+% subset experiments that have more than one level missing
+SNRs_used = [20, 10 ,0] % SNR in dB
+[TNBehavior,TNFullBehaviorTable] = RemoveExptsWithMissingLvl(...
+                                      TNBehavior,...
+                                      TNFullBehaviorTable,...
+                                      SNRs_used);
 % move licks to behavior
 TNBehavior(:,2) = AddLicks_to_Behavior(TNBehavior(:,2),TNFullBehaviorTable.LickResponseTimes);
 
 %% Create Various subsets
 dPrime_gt1_idx = cellfun(@(x) any(x >= 1), TNFullBehaviorTable.dPrimeLevel);
 old_idx = contains(lower(TNBehavior(:,3)),'ia');
-male_idx = strcmp(TNBehaviorInfo.Sex,'M');
-female_idx = strcmp(TNBehaviorInfo.Sex,'F');
+male_idx = strcmp(TNFullBehaviorTable.Sex,'M');
+female_idx = strcmp(TNFullBehaviorTable.Sex,'F');
 
 
 % subset into different groups
@@ -218,27 +227,41 @@ detect = DetectionAnalysis(TNBehavior(:,2));
 DetectionAnalysis(TNBehavior(:,2),old_idx & dPrime_gt1_idx)
 title('Aging Animals') 
 
-DetectionAnalysis(TNBehavior(:,2),~old_idx)
+DetectionAnalysis(TNBehavior(:,2),~old_idx &)
 title('Young Animals')
+%%
+SingleNeuronModel_young = fitlm(TNFullBehaviorTable(~old_idx &dPrime_gt1_idx  ,:),'mean_single_neuron_prediction~DprimeTotal');
+SingleNeuronModel_old = fitlm(TNFullBehaviorTable(old_idx &dPrime_gt1_idx  ,:),'mean_single_neuron_prediction~DprimeTotal');
 
-figure;plot(fitlm(TNFullBehaviorTable(~old_idx &dPrime_gt1_idx  ,:),'mean_single_neuron_prediction~DprimeTotal'))
+figure;plot(SingleNeuronModel_young)
 xlim([0 3])
 ylim([0 .7])
-saveas(gcf,'MeanSingleNeuronDetectionModel_Dprime_Young.pdf')
+saveas(gcf,'MeanSingleNeuronDetectionModel_Dprime_YoungGood.pdf')
 
 
-figure;plot(fitlm(TNFullBehaviorTable(old_idx ,:),'mean_single_neuron_prediction~DprimeTotal'))
+figure;plot(SingleNeuronModel_old)
 xlim([0 3])
 ylim([0 .7])
-saveas(gcf,'MeanSingleNeuronDetectionModel_Dprime_Aging.pdf')
+saveas(gcf,'MeanSingleNeuronDetectionModel_Dprime_OldGood.pdf');
 
-dPrimeAgeModel = fitlm(TNFullBehaviorTable,'DprimeTotal~Days_old')
+
+dPrimeAgeModel = fitlm(TNFullBehaviorTable,'DprimeTotal~Days_old');
 figure;plot(dPrimeAgeModel)
 saveas(gcf,'dPrimeByAge.pdf')
-figure;plot(fitlm(TNFullBehaviorTable(old_idx,:),'mean_single_neuron_prediction~DprimeTotal'))
+figure;plot(fitlm(TNFullBehaviorTable(~old_idx,:),'mean_single_neuron_prediction~DprimeTotal'))
 xlim([-3 3])
 ylim([0 .7])
 saveas(gcf,'MeanSingleNeuronDetectionModel_Dprime_Aging.pdf')
+
+PlotSingleNeuronModelLevels(TNFullBehaviorTable(old_idx & dPrime_gt1_idx,:),'MeanSingleNeuronDetectionModelLevels_OldGood')
+
+[~,p] = ttest2(TNFullBehaviorTable{old_idx ,'DprimeTotal'},...
+    TNFullBehaviorTable{(~old_idx) ,'DprimeTotal'});
+
+
+BehaveStats = Compare2Anova(TNFullBehaviorTable{old_idx & dPrime_gt1_idx,{'dPrimeLevel_20','dPrimeLevel_10','dPrimeLevel_0'} }',...
+    TNFullBehaviorTable{(~old_idx) & dPrime_gt1_idx,{'dPrimeLevel_20','dPrimeLevel_10','dPrimeLevel_0'} }',...
+ {'old','young'},{'20 dB','10db','0db'})
 
 %% Basic hit/ miss analysis.
 
@@ -255,21 +278,98 @@ PlotScatterLevels({'Young-Good','Old-Good'},'All','EarlyRates',early_rates{1}',e
 DprimeTable = createDprimeTable(TNFullBehaviorTable)
 DprimeTable = array2table(DprimeTable,'VariableNames',{'SNR_minus_10','SNR_minus_5','SNR_0','SNR_5','SNR_10','SNR_20'});
 %% d' Analysis 
-Compare2Anova(ReplaceInf(TNBehaviorResultsYoung.DPrime),...
-              ReplaceInf(TNBehaviorResultsOld.DPrime),{'Young','Aging'},...
-              {'20','10','0'},'DPrime')
+YoungGood_dPrimes = TNFullBehaviorTable{~old_idx & dPrime_gt1_idx, {'dPrimeLevel_0','dPrimeLevel_10','dPrimeLevel_20'}}';
+OldGood_dPrimes = TNFullBehaviorTable{old_idx & dPrime_gt1_idx, {'dPrimeLevel_0','dPrimeLevel_10','dPrimeLevel_20'}}';
+dp_stats.OldYoung = Compare2Anova(YoungGood_dPrimes,...
+              OldGood_dPrimes,...
+               {'Young','Aging'},...
+              {'0','10','20'},'DPrime')
 
-Compare2Anova(clip(TNBehaviorResultsYoungMale.DPrime,-3,3),...
-              clip(TNBehaviorResultsOldMale.DPrime,-3,3),{'Young-Male','Aging-Male'},...
-              {'20','10','0'},'DPrime')
-          
-Compare2Anova(clip(TNBehaviorResultsYoungFemale.DPrime,-3,3),...
-              clip(TNBehaviorResultsOldFemale.DPrime,-3,3),{'Young-Female','Aging-Female'},...
-              {'20','10','0'},'DPrime')          
+YoungBad_dPrimes = TNFullBehaviorTable{~old_idx & ~dPrime_gt1_idx, {'dPrimeLevel_0','dPrimeLevel_10','dPrimeLevel_20'}}';
+OldBad_dPrimes = TNFullBehaviorTable{old_idx & ~dPrime_gt1_idx, {'dPrimeLevel_0','dPrimeLevel_10','dPrimeLevel_20'}}';
           
 
+dp_stats.Young_performance  = Compare2Anova(YoungGood_dPrimes,...
+              YoungBad_dPrimes,...
+               {'Young_Good','Young_Bad'},...
+              {'0','10','20'})'
+dp_stats.Old_performance = Compare2Anova(OldGood_dPrimes,...
+              OldBad_dPrimes,...
+               {'Old_Good','Old_Bad'},...
+              {'0','10','20'})
           
+figure; 
+suptitle("d'Prime by Age")
+subplot(1,2,1)
+hold on 
+title('Young')
+xticklabels({'0','10','20'})
+xlabel('SNR (dB)')
+ylim([-3  3])
+ylabel('dPrime')  
+plotShadedErrorBar(YoungBad_dPrimes,'k')
+plotShadedErrorBar(YoungGood_dPrimes,'b')
+%plot(youngGood_dPrimes,'LineWidth',1.5')
+%plot(YoungBad_dPrimes,'k')
+xticks([1,2,3])
+xticklabels({'0','10','20'})
 
+subplot(1,2,2)
+hold on 
+title('Aging')
+xticklabels({'0','10','20'})
+xlabel('SNR (dB)')
+ylim([-3  3])
+ylabel('dPrime')  
+plotShadedErrorBar(OldBad_dPrimes,'k')
+plotShadedErrorBar(OldGood_dPrimes,'r')
+%plot(OldGood_dPrimes,'LineWidth',1.5')
+%plot(OldBad_dPrimes,'k')
+xticks([1,2,3])
+xticklabels({'0','10','20'})
+saveas(gcf,'dPrimeByAgeXLevel.pdf')
+          
+%% percent Correct analysis 
+YoungGood_Accuracy = TNFullBehaviorTable{~old_idx & dPrime_gt1_idx, {'PercentCorrectLevel_0','PercentCorrectLevel_10','PercentCorrectLevel_20'}}';
+OldGood_Accuracy = TNFullBehaviorTable{old_idx & dPrime_gt1_idx, {'PercentCorrectLevel_0','PercentCorrectLevel_10','PercentCorrectLevel_20'}}';
+Compare2Anova(YoungGood_Accuracy,...
+              OldGood_Accuracy,...
+               {'Young','Aging'},...
+              {'0','10','20'},'PercentCorrect')
+
+YoungBad_Accuracy = TNFullBehaviorTable{~old_idx & ~dPrime_gt1_idx, {'PercentCorrectLevel_0','PercentCorrectLevel_10','PercentCorrectLevel_20'}}';
+OldBad_Accuracy = TNFullBehaviorTable{old_idx & ~dPrime_gt1_idx, {'PercentCorrectLevel_0','PercentCorrectLevel_10','PercentCorrectLevel_20'}}';
+
+figure; 
+suptitle("Accuracy by Age")
+subplot(1,2,1)
+hold on 
+title('Young')
+xlabel('SNR (dB)')
+ylim([0  1])
+ylabel('Accuracy')
+plotShadedErrorBar(YoungBad_Accuracy,'k')
+plotShadedErrorBar(YoungGood_Accuracy,'b')
+xticks([1,2,3])
+xticklabels({'0','10','20'})
+
+%plot(YoungGood_Accuracy,'LineWidth',1.5')
+%plot(YoungBad_Accuracy,'k')
+
+subplot(1,2,2)
+hold on 
+title('Aging')
+
+xlabel('SNR (dB)')
+ylim([0  1])
+ylabel('Accuracy')  
+plotShadedErrorBar(OldBad_Accuracy,'k')
+plotShadedErrorBar(OldGood_Accuracy,'r')
+%plot(OldGood_Accuracy,'LineWidth',1.5')
+%plot(OldBad_Accuracy,'k')
+xticks([1,2,3])
+xticklabels({'0','10','20'})
+saveas(gcf,'AccuracyByAgeXLevel.pdf')
 
 
 %% compare licking responses
@@ -278,24 +378,8 @@ PlotFirstResponse(TNBehavior((~old_idx) & (~dPrime_gt1_idx) ,2),'Young_Bad_Respo
 PlotFirstResponse(TNBehavior((old_idx) & (dPrime_gt1_idx) ,2),'Old_Good_Responses')
 PlotFirstResponse(TNBehavior((old_idx) & (~dPrime_gt1_idx) ,2),'Old_Bad_Responses')
 
-%% Active Passive Gain 
-Gain = struct();
-Gain.YoungGood = getActivePassiveGain(TNBehavior((~old_idx) & (dPrime_gt1_idx),:),'YoungGood')
-Gain.YoungBad =  getActivePassiveGain(TNBehavior((~old_idx) & (~dPrime_gt1_idx),:),'YoungBad')
-Gain.OldGood =  getActivePassiveGain(TNBehavior((old_idx) & (dPrime_gt1_idx),:),'OldGood')
-Gain.OldBad =  getActivePassiveGain(TNBehavior((old_idx) & (~dPrime_gt1_idx),:),'OldBad')
-
-Compare2AnovaBehavior({Gain.YoungGood.PosCell_Gain ,Gain.YoungBad.PosCell_Gain},...
-                      {Gain.OldGood.PosCell_Gain ,Gain.OldBad.PosCell_Gain},...
-                      {'Young','Old'},{'Good','Bad'},'AttentionalGain_Pos')
-
-Compare2AnovaBehavior({Gain.YoungGood.NegCell_Gain ,Gain.YoungBad.NegCell_Gain},...
-                      {Gain.OldGood.NegCell_Gain ,Gain.OldBad.NegCell_Gain},...
-                      {'Young','Old'},{'Good','Bad'},'AttentionalGain_Neg')                  
-                  
-                  
-
-
+plotLickTriggeredAverage(TNBehavior((~old_idx) & dPrime_gt1_idx  ,2),'Young_Good')
+plotLickTriggeredAverage(TNBehavior(old_idx & dPrime_gt1_idx  ,2),'Old_Good')
 %% TemporalAnalysis
 
 Temporal = []
@@ -308,12 +392,257 @@ Temporal.OldBad = TemporalAnalysisByAnimal(TN_old_bad_p,'all','Old-bad-P');
 
 % Balance Index
 %% HitMiss Analysis 
-getFluoroHitsMiss(TNBehavior( (dPrime_gt1_idx)& (~old_idx),2),'Young_Good')
+HitMiss.YoungGood = getFluoroHitsMiss(TNBehavior( (dPrime_gt1_idx)& (~old_idx),2),'Young_Good')
 getFluoroHitsMiss(TNBehavior( (~dPrime_gt1_idx)& (~old_idx),2),'Young_Bad')
 getFluoroHitsMiss(TNBehavior( (~dPrime_gt1_idx)& (old_idx),2),'Old_Bad')
-getFluoroHitsMiss(TNBehavior( (dPrime_gt1_idx)& (old_idx),2),'Old_Good')
+HitMiss.OldGood = getFluoroHitsMiss(TNBehavior( (dPrime_gt1_idx)& (old_idx),2),'Old_Good')
+
+%% Active Passive Gain 
+Gain = struct();
+Gain.YoungGood = getActivePassiveGain(TNBehavior((~old_idx) & (dPrime_gt1_idx),:),'YoungGood')
+Gain.YoungBad =  getActivePassiveGain(TNBehavior((~old_idx) & (~dPrime_gt1_idx),:),'YoungBad')
+Gain.OldGood =  getActivePassiveGain(TNBehavior((old_idx) & (dPrime_gt1_idx),:),'OldGood')
+Gain.OldBad =  getActivePassiveGain(TNBehavior((old_idx) & (~dPrime_gt1_idx),:),'OldBad')
+
+
+Gain.Stats.Pos =Compare2AnovaBehavior(Gain.YoungGood.GainLevels.pos_gain_levels ,...
+                      Gain.OldGood.GainLevels.pos_gain_levels,... 
+                      {'Young','Old'},{'+20','+10','+0-SNR'},'AttentionalGain_Pos_Levels')
+
+Gain.Stats.Neg = Compare2AnovaBehavior(Gain.YoungGood.GainLevels.neg_gain_levels ,...
+                      Gain.OldGood.GainLevels.neg_gain_levels,... 
+                      {'Young','Old'},{'+20','+10','+0-SNR'},'AttentionalGain_Neg_Levels')
+ 
+                  
+ 
+Corr_results_prev = struct()
+Corr_results_prev.Hits.YoungGood = CorrelationsActivePassive_prev(TNBehavior( (~old_idx) & (dPrime_gt1_idx) ,:),'YoungGood_Hits','Hit','b' );
+Corr_results_prev.Hits.OldGood = CorrelationsActivePassive_prev(TNBehavior( (old_idx) & (dPrime_gt1_idx) ,:),'OldGood_Hits','Hit','y' );
+Corr_results_prev.Hits.Stats = AnalyzeCorrelationsActivePassive(Corr_results_prev.Hits.YoungGood.Stats,...
+                    Corr_results_prev.Hits.OldGood.Stats,'Hits');
+
+                  
+   
+                  
+%% Correlations 
+Corr_results = struct()
+Corr_results.Hits.YoungGood = CorrelationsActivePassive(TNBehavior( (~old_idx) & (dPrime_gt1_idx) ,:),'YoungGood_Hits','Hit','b' );
+Corr_results.Hits.OldGood = CorrelationsActivePassive(TNBehavior( (old_idx) & (dPrime_gt1_idx) ,:),'OldGood_Hits','Hit','y' );
+Corr_results.Hits.Stats = AnalyzeCorrelationsActivePassive(Corr_results.Hits.YoungGood.Stats,...
+                    Corr_results.Hits.OldGood.Stats,'Hits');
+
+Corr_results.Early.YoungGood = CorrelationsActivePassive(TNBehavior( (~old_idx) & (dPrime_gt1_idx) ,:),'YoungGood_Early','Early','b' );              
+Corr_results.Early.OldGood = CorrelationsActivePassive(TNBehavior( (old_idx) & (dPrime_gt1_idx) ,:),'OldGood_Early','Early','y' );
+Corr_results.Early.Stats = AnalyzeCorrelationsActivePassive(Corr_results.Early.YoungGood.Stats,...
+                    Corr_results.Early.OldGood.Stats,'Early');
+                
+                
+Corr_results.Incorrect.YoungGood = CorrelationsActivePassive(TNBehavior( (~old_idx) & (dPrime_gt1_idx) ,:),'YoungGood_Incorrect','Incorrect','b' );              
+Corr_results.Incorrect.OldGood = CorrelationsActivePassive(TNBehavior( (old_idx) & (dPrime_gt1_idx) ,:),'OldGood_Incorrect','Incorrect','y' );
+Corr_results.Incorrect.Stats = AnalyzeCorrelationsActivePassive(Corr_results.Incorrect.YoungGood.Stats,...
+    Corr_results.Incorrect.OldGood.Stats,'Incorrect');
+                
+ 
+
+                
+
+ 
+Corr_results.GroupStats.Anova_All = Compare2AnovaBehavior({Corr_results.YoungGood.Hits.SNR20.Active',...
+                       Corr_results.YoungGood.Hits.SNR0.Active'},...
+                      {Corr_results.OldGood.Hits.SNR20.Active',...
+                       Corr_results.OldGood.Hits.SNR0.Active'},...
+                                  {'Young','Old'},...
+                                  {'20dB','0dB'},...
+                                  'CorrelationsByLevel_All')
+                              
+Corr_results.GroupStats.Anova_r_plus = Compare2AnovaBehavior({Corr_results.YoungGood.Hits.SNR20.r_plus',...
+                       Corr_results.YoungGood.Hits.SNR0.r_plus'},...
+                      {Corr_results.OldGood.Hits.SNR20.r_plus',...
+                       Corr_results.OldGood.Hits.SNR0.r_plus'},...
+                                  {'Young','Old'},...
+                                  {'20dB','0dB'},...
+                                  'CorrelationsByLevel_r_plus');
+                              
+Corr_results.GroupStats.Anova_r_minus = Compare2AnovaBehavior({Corr_results.YoungGood.Hits.SNR20.r_minus',...
+                       Corr_results.YoungGood.Hits.SNR0.r_minus'},...
+                      {Corr_results.OldGood.Hits.SNR20.r_minus',...
+                       Corr_results.OldGood.Hits.SNR0.r_minus'},...
+                                  {'Young','Old'},...
+                                  {'20dB','0dB'},...
+                                  'CorrelationsByLevel_r_minus');
+                                                            
+ % by BF 
+ Corr_results.GroupStats.Anova_BF_r_plus = Compare3AnovaBehavior(...
+          {Corr_results.YoungGood.Hits.Stats.Close_20_Below.gain',...
+          Corr_results.YoungGood.Hits.Stats.Close_0_Below.gain';...
+          Corr_results.YoungGood.Hits.Stats.Far_20_Below.gain',...
+          Corr_results.YoungGood.Hits.Stats.Far_0_Below.gain'},...
+          {Corr_results.OldGood.Hits.Stats.Close_20_Below.gain',....
+           Corr_results.OldGood.Hits.Stats.Close_0_Below.gain';....
+            Corr_results.OldGood.Hits.Stats.Far_20_Below.gain',....
+             Corr_results.OldGood.Hits.Stats.Far_0_Below.gain'},...
+                                  {'Young','Old'},...
+                                  {'In','out','20dB','Out-0dB'},...
+                                  'CorrelationsByLevel_BF_r_plus');
+                              
+ 
+Corr_results.GroupStats.Anova_BF_r_plus = Compare2AnovaBehavior(...
+          {Corr_results.YoungGood.Hits.Stats.Far_20_Below.gain',...
+          Corr_results.YoungGood.Hits.Stats.Far_0_Below.gain',...
+          Corr_results.YoungGood.Hits.Stats.Close_20_Below.gain',...
+          Corr_results.YoungGood.Hits.Stats.Close_0_Below.gain'},...
+          {Corr_results.OldGood.Hits.Stats.Far_20_Below.gain',....
+           Corr_results.OldGood.Hits.Stats.Far_0_Below.gain',...
+           Corr_results.OldGood.Hits.Stats.Close_20_Below.gain',....
+           Corr_results.OldGood.Hits.Stats.Close_0_Below.gain',},...
+                                  {'Young','Old'},...
+                                  {'Far-20','Far-0','Close-20dB','Close-0dB'},...
+                                  'CorrelationsByLevel_BF_r_plus');
+                                                            
+Corr_results.GroupStats.Anova_BF_r_minus = Compare2AnovaBehavior(...
+          {Corr_results.YoungGood.Hits.Stats.Far_20_Above.gain',...
+          Corr_results.YoungGood.Hits.Stats.Far_0_Above.gain',...
+          Corr_results.YoungGood.Hits.Stats.Close_20_Above.gain',...
+          Corr_results.YoungGood.Hits.Stats.Close_0_Above.gain'},...
+          {Corr_results.OldGood.Hits.Stats.Far_20_Above.gain',....
+           Corr_results.OldGood.Hits.Stats.Far_0_Above.gain',...
+           Corr_results.OldGood.Hits.Stats.Close_20_Above.gain',....
+           Corr_results.OldGood.Hits.Stats.Close_0_Above.gain',},...
+                                  {'Young','Old'},...
+                                  {'Far-20','Far-0','Close-20dB','Close-0dB'},...
+                                  'CorrelationsByLevel_BF_r_minus');
+                                                                                          
+                              
+                               
+                              
+ PlotGroupedErrorBars({Corr_results.YoungGood.Hits.SNR20.Active;...
+                      Corr_results.YoungGood.Hits.SNR0.Active},...
+                      {Corr_results.OldGood.Hits.SNR20.Active;...
+                      Corr_results.OldGood.Hits.SNR0.Active},1)
+
+xticklabels('20dB', '0dB')
+legend('Young','Old','Location','northwest')
+
+saveas(gcf,'CorrelationsActiveLevelsBar.pdf')
+
+% Corr results 2 
+
+Corr_results2.YoungGood = CorrelationsActivePassive_ALL(TNBehavior( (~old_idx) & (dPrime_gt1_idx) ,:),'YoungGood','b' );
+Corr_results2.OldGood = CorrelationsActivePassive_ALL(TNBehavior( (old_idx) & (dPrime_gt1_idx) ,:),'OldGood','y' );
+Corr_results2.Stats = AnalyzeCorrelationsActivePassive_ALL(Corr_results2.YoungGood,Corr_results2.OldGood,{'Hits','Early'});
+Corr_results2.Stats.Young_HitVEarly = PlotCorrHitVsEarly(Corr_results2.YoungGood,'Young');
+Corr_results2.Stats.Old_HitVEarly = PlotCorrHitVsEarly(Corr_results2.OldGood,'Old');
+
+
+% Correlations of PreStim_period
+Corr_results_PreStim.YoungGood = CorrelationsActivePassive_ALL(TNBehavior( (~old_idx) & (dPrime_gt1_idx) ,:),'YoungGood','b','PreStim' );
+Corr_results_PreStim.OldGood = CorrelationsActivePassive_ALL(TNBehavior( (old_idx) & (dPrime_gt1_idx) ,:),'OldGood','y','PreStim' );
+Corr_results_PreStim.Stats = AnalyzeCorrelationsActivePassive_ALL(Corr_results_PreStim.YoungGood,Corr_results_PreStim.OldGood,{'Hits','Early'});
+Corr_results_PreStim.Stats.Young_HitVEarly = PlotCorrHitVsEarlyBF(Corr_results_PreStim.YoungGood,'Young');
+Corr_results_PreStim.Stats.Old_HitVEarly = PlotCorrHitVsEarlyBF(Corr_results_PreStim.OldGood,'Old');
+
+
+
+% results for poorly behaving animals 
+
+
+Corr_results_bad.YoungBad = CorrelationsActivePassive_ALL(TNBehavior( (~old_idx) & (dPrime_gt1_idx) ,:),'YoungBad','b' );
+Corr_results_bad.OldBad = CorrelationsActivePassive_ALL(TNBehavior( (old_idx) & (dPrime_gt1_idx) ,:),'OldBad','y' );
+Corr_results_bad.Stats = AnalyzeCorrelationsActivePassive_ALL(Corr_results_bad.YoungBad,Corr_results_bad.OldBad,{'Hits','Early'});
+
+%% Bayes
+
+
+
+BayesModels = struct();
+BayesStats = struct(); 
+BayesModels.YoungGood = BayesClassiferActive(TNBehavior( (~old_idx) & (dPrime_gt1_idx) ,2));
+BayesModels.YoungGood_Degraded_20 = BayesClassiferActive_Degraded(TNBehavior( (~old_idx) & (dPrime_gt1_idx),2),20);
+BayesModels.YoungGood_Degraded_5 = BayesClassiferActive_Degraded(TNBehavior( (~old_idx) & (dPrime_gt1_idx),2 ,5);
+%BayesModels.YoungBad = BayesClassiferActive(TNBehavior( (~old_idx) & (~dPrime_gt1_idx) ,2));
+% BayesModels.OldBad = BayesClassiferActive(TNBehavior( (old_idx) & (~dPrime_gt1_idx) ,2));
+BayesModels.OldGood = BayesClassiferActive(TNBehavior( (old_idx) & (dPrime_gt1_idx) ,2));
+BayesModels.OldGood_ABS = BayesClassiferActive_Degraded(TNBehavior( (old_idx) & (dPrime_gt1_idx),2) ,80,true);
+
+BayesModels.YoungGood.Stats = PlotBayesActive(BayesModels.YoungGood,'YoungGood');
+BayesModels.YoungGood_Degraded_20.Stats = PlotBayesActive(BayesModels.YoungGood_Degraded,'YoungGood_degraded_20');
+%BayesModels.YoungBad.Stats = PlotBayesActive(BayesModels.YoungBad,'YoungBad');
+BayesModels.OldGood.Stats = PlotBayesActive(BayesModels.OldGood,'OldGood');
+%BayesModels.OldBad.Stats = PlotBayesActive(BayesModels.OldBad,'OldBad');
+%BayesModels.OldGood_ABS.Stats = PlotBayesFig(BayesModels.OldGood_ABS,'OldGood_ABS_VAL');
+
+%PlotBayes(BayesModels.OldGood_ABS)
+%PlotBayesActive(BayesModels.OldGood_ABS)
+PlotBayesFig(BayesModels,'TimeLossTotal_Hits','BayesTiming-Hits')
+PlotBayesFig(BayesModels,'TimeLossTotal_Early','BayesTiming-Early')
+PlotBayesFig(BayesModels,'NumbersLossTotal_Hits','BayesNumbers-Hits')
+
+
+PlotBayesFig(BayesModels,'NumbersLossLevel_Hits','BayesNumbers-Hits_Level')
+BayesStats.Levels.Time_Hits = PlotBayesFig(BayesModels,'TimeLossLevel_Hits','BayesTiming-Hits_Level')
+BayesStats.Levels.Time_Early = PlotBayesFig(BayesModels,'TimeLossLevel_Early','BayesTiming-Early_Level')
+
+
+
+%PlotBayesFig(BayesModels,'NumbersLossTotal_Hits','BayesNumbers-Hits')
+%PlotBayesFig(BayesModels,'NumbersLossTotal_HitsEarly','BayesNumbers-HitsEarly')
+
+BayesStats.Levels.Time_All = PlotBayesFig(BayesModels,'TimeLossLevel_AllBehavior','BayesTiming_AllBehavior_Levels')
+
+
+figure
+subplot(1,3,1)
+boxplot(BayesModels.YoungGood.Stats.TimeLossTotal_Hits.MaxPrediction)
+ylim([.5 1])
+subplot(1,3,2)
+boxplot(BayesModels.YoungGood_Degraded.Stats.TimeLossTotal_Hits.MaxPrediction)
+ylim([.5 1])
+subplot(1,3,3)
+boxplot(BayesModels.OldGood.Stats.TimeLossTotal_Hits.MaxPrediction)
+ylim([.5 1])
+
+
+Compare2AnovaBehavior({BayesModels.YoungGood.Stats.TimeLossTotal_HitsEarly.MaxDeltaPrediction,...
+                       BayesModels.YoungBad.Stats.TimeLossTotal_HitsEarly.MaxDeltaPrediction},...
+                      {BayesModels.OldGood.Stats.TimeLossTotal_HitsEarly.MaxDeltaPrediction,...
+                       BayesModels.OldBad.Stats.TimeLossTotal_HitsEarly.MaxDeltaPrediction},...
+                                  {'Young','Aging'},...
+                                  {'GoodPerformance','PoorPerformance'},...
+                                  'BayesModels.Timing_HitsEarly') ;
+                              
+                              
+Compare2AnovaBehavior({BayesModels.YoungGood.Stats.TimeLossTotal_HitsEarly.MaxPrediction,...
+                       BayesModels.YoungBad.Stats.TimeLossTotal_HitsEarly.MaxPrediction},...
+                      {BayesModels.OldGood.Stats.TimeLossTotal_HitsEarly.MaxPrediction,...
+                       BayesModels.OldBad.Stats.TimeLossTotal_HitsEarly.MaxPrediction},...
+                                  {'Young','Aging'},...
+                                  {'GoodPerformance','PoorPerformance'},...
+                                  'BayesTiming_HitsEarly_Max') ;                               
+
+Compare2AnovaBehavior({BayesModels.YoungGood.Stats.TimeLossTotal_Hits.MaxPrediction,...
+                       BayesModels.YoungBad.Stats.TimeLossTotal_Hits.MaxPrediction},...
+                      {BayesModels.OldGood.Stats.TimeLossTotal_Hits.MaxPrediction,...
+                       BayesModels.OldBad.Stats.TimeLossTotal_Hits.MaxPrediction},...
+                                  {'Young','Aging'},...
+                                  {'GoodPerformance','PoorPerformance'},...
+                                  'BayesTiming_Max') ;                               
+ 
+Compare2AnovaBehavior({BayesModels.YoungGood.Stats.TimeLossTotal_Hits.MaxDeltaPrediction,...
+                       BayesModels.YoungBad.Stats.TimeLossTotal_Hits.MaxDeltaPrediction},...
+                      {BayesModels.OldGood.Stats.TimeLossTotal_Hits.MaxDeltaPrediction,...
+                       BayesModels.OldBad.Stats.TimeLossTotal_Hits.MaxDeltaPrediction},...
+                                  {'Young','Aging'},...
+                                  {'GoodPerformance','PoorPerformance'},...
+                                  'BayesTiming') ;                              
+                      
+
+
+
+
+
 %Intensity
- %% Intensity
+
+%% Intensity
    Intensity = struct()
   % Age Intensity
 
@@ -963,56 +1292,4 @@ Diversity.Stats.Old_GB = Diversityanalysis(TN_old_good_p,TN_old_bad_p,{'OldGood'
 
 %%  Bayes 
 
-BayesModels = struct()
-
- BayesModels.YoungGood = BayesClassiferActive(TNBehavior( (~old_idx) & (dPrime_gt1_idx) ,2));
- BayesModels.YoungBad = BayesClassiferActive(TNBehavior( (~old_idx) & (~dPrime_gt1_idx) ,2));
- BayesModels.OldBad = BayesClassiferActive(TNBehavior( (old_idx) & (~dPrime_gt1_idx) ,2));
- BayesModels.OldGood = BayesClassiferActive(TNBehavior( (old_idx) & (dPrime_gt1_idx) ,2));
-
-BayesModels.YoungGood.Stats = PlotBayesActive(BayesModels.YoungGood,'YoungGood');
-BayesModels.YoungBad.Stats = PlotBayesActive(BayesModels.YoungBad,'YoungBad');
-BayesModels.OldGood.Stats = PlotBayesActive(BayesModels.OldGood,'OldGood');
-BayesModels.OldBad.Stats = PlotBayesActive(BayesModels.OldBad,'OldBad');
-
-
-PlotBayesFig(BayesModels,'TimeLossTotal_Hits','BayesTiming-Hits')
-PlotBayesFig(BayesModels,'NumbersLossTotal_Hits','BayesNumbers-Hits')
-
-PlotBayesFig(BayesModels,'NumbersLossTotal_Hits','BayesNumbers-Hits')
-PlotBayesFig(BayesModels,'NumbersLossTotal_HitsEarly','BayesNumbers-HitsEarly')
-
-
-Compare2AnovaBehavior({BayesModels.YoungGood.Stats.TimeLossTotal_HitsEarly.MaxDeltaPrediction,...
-                       BayesModels.YoungBad.Stats.TimeLossTotal_HitsEarly.MaxDeltaPrediction},...
-                      {BayesModels.OldGood.Stats.TimeLossTotal_HitsEarly.MaxDeltaPrediction,...
-                       BayesModels.OldBad.Stats.TimeLossTotal_HitsEarly.MaxDeltaPrediction},...
-                                  {'Young','Aging'},...
-                                  {'GoodPerformance','PoorPerformance'},...
-                                  'BayesModels.Timing_HitsEarly') ;
-                              
-                              
-Compare2AnovaBehavior({BayesModels.YoungGood.Stats.TimeLossTotal_HitsEarly.MaxPrediction,...
-                       BayesModels.YoungBad.Stats.TimeLossTotal_HitsEarly.MaxPrediction},...
-                      {BayesModels.OldGood.Stats.TimeLossTotal_HitsEarly.MaxPrediction,...
-                       BayesModels.OldBad.Stats.TimeLossTotal_HitsEarly.MaxPrediction},...
-                                  {'Young','Aging'},...
-                                  {'GoodPerformance','PoorPerformance'},...
-                                  'BayesTiming_HitsEarly_Max') ;                               
-
-Compare2AnovaBehavior({BayesModels.YoungGood.Stats.TimeLossTotal_Hits.MaxPrediction,...
-                       BayesModels.YoungBad.Stats.TimeLossTotal_Hits.MaxPrediction},...
-                      {BayesModels.OldGood.Stats.TimeLossTotal_Hits.MaxPrediction,...
-                       BayesModels.OldBad.Stats.TimeLossTotal_Hits.MaxPrediction},...
-                                  {'Young','Aging'},...
-                                  {'GoodPerformance','PoorPerformance'},...
-                                  'BayesTiming_Max') ;                               
- 
-Compare2AnovaBehavior({BayesModels.YoungGood.Stats.TimeLossTotal_Hits.MaxDeltaPrediction,...
-                       BayesModels.YoungBad.Stats.TimeLossTotal_Hits.MaxDeltaPrediction},...
-                      {BayesModels.OldGood.Stats.TimeLossTotal_Hits.MaxDeltaPrediction,...
-                       BayesModels.OldBad.Stats.TimeLossTotal_Hits.MaxDeltaPrediction},...
-                                  {'Young','Aging'},...
-                                  {'GoodPerformance','PoorPerformance'},...
-                                  'BayesTiming') ;                              
-                              
+        

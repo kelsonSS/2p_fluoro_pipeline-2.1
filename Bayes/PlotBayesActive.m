@@ -38,7 +38,9 @@ for model = 1:length(fn)
     % remove expts with no predictions 
     no_predict_idx  = squeeze(nanmean(nanmean(data))) == 0 ;
     data(:,:,no_predict_idx  ) =[];
+    % smooth data
     
+    data = smoothdata(data,1,'movmean',5);
     
 %     data = BayesModels.(fn{model});
 %     data = permute(data(4:end,:,:),[1,3,2])
@@ -74,10 +76,10 @@ for model = 1:length(fn)
      BayesFig(Vec_DF_mu)
      
      % Seperate by max  delta prediction
-     max_prediction = squeeze(max(nanmean(data(31:61,:,:),2)));
-     max_delta_prediction = max(Vec_DF_mu(31:61,:))- Vec_DF_mu(30,:);
-     
-     neural_decode_idx = max_delta_prediction >= .1 ;
+     max_prediction = squeeze(max(nanmean(data,2)));
+     min_prediction = squeeze(min(nanmean(data,2)));
+     max_delta_prediction = max_prediction - min_prediction;
+     neural_decode_idx = max_delta_prediction  >= .1 ;
      
      n_good_decode = sum(neural_decode_idx);
      n_bad_decode = sum(~neural_decode_idx);
@@ -86,13 +88,13 @@ for model = 1:length(fn)
      subplot(2,2,3)
      title(sprintf('Neural Decoding: \n %d of %d',n_good_decode,total))
      if n_good_decode
-     BayesFig(Vec_DF_mu(:,neural_decode_idx));
+     BayesFig(DF(:,:,neural_decode_idx));
      end 
     title(sprintf('Neural Decoding: \n %d of %d',n_good_decode,total))
      % Plotting bad 
      subplot(2,2,4)
      if n_bad_decode
-     BayesFig(Vec_DF_mu(:,~neural_decode_idx));
+     BayesFig(DF(:,:,~neural_decode_idx));
      end 
       title(sprintf('No Decoding:\n %d of %d',n_bad_decode,total))
   
@@ -121,6 +123,10 @@ function BayesFig(data)
 % plots and styles the figures
 
 data = squeeze(data);
+
+if ndims(data) == 3
+    data = reshape(data,size(data,1),[]);
+end
 
 % data should now be 2d steps x reps matrix
 

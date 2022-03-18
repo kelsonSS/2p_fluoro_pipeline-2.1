@@ -8,7 +8,8 @@ end
     passive_norm_all = [];
     active_mu_all = [];
     active_norm_all = [];
-
+    Gain_levels = struct('SNR_20dB',[],'SNR_10dB',[],'SNR_0dB',[]);
+    
 
 for expt = 1:length(TNBehavior)
 
@@ -33,14 +34,17 @@ end
     DF_mu_active = squeeze(nanmean(active.DFF(:,:,final_idx),2));
     DF_norm_passive = squeeze(nanmean(passive.DFF_norm(:,:,final_idx),2));
     DF_norm_active = squeeze(nanmean(active.DFF_norm(:,:,final_idx),2));
+    [Gain_levels] = getActiveLevels(active,DF_mu_passive,final_idx,Gain_levels);
 
-
+   % seperate into active-Hit and active-Miss and active-early ? 
     
     passive_mu_all = cat(2,passive_mu_all,DF_mu_passive);
     passive_norm_all = cat(2,passive_norm_all,DF_norm_passive);
     active_mu_all = cat(2,active_mu_all,DF_mu_active);
     active_norm_all = cat(2,active_norm_all,DF_norm_active);
-
+    
+    
+        
 end 
 
  Gain = active_mu_all(1:90,:) - passive_mu_all;
@@ -54,6 +58,7 @@ end
 
   subplot(1,3,2)
   active_order=PlotMeanResponse(active_mu_all(1:90,:));
+
   title('Active')
  subplot(1,3,1)
   PlotMeanResponse(passive_mu_all,active_order);
@@ -62,28 +67,125 @@ end
   PlotMeanResponse(Gain,active_order);
   title('Gain')
  
+  saveas(gcf,[SaveName '-Gain.pdf'])
+  
+  
 figure 
 plotShadedErrorBar(Gain(:,neg_idx),'b')
 hold on 
 plotShadedErrorBar(Gain(:,~neg_idx),'r')
-plotShadedErrorBar(Gain(:,:),'k')
+ylim([-15 5])
+
+
 title( 'Attentional Gain')
 xlabel( 'Time(s)')
 xticks(0:30:90)
 xticklabels(0:1:3)
 ylabel('DFF (active - passive)') 
+ saveas(gcf,[SaveName '-AverageGain.pdf'])
 
-Out.NegCell_Gain = Gain(70,neg_idx)';
-Out.PosCell_Gain = Gain(70,~neg_idx)';
+
+
+Out.NegCell_Gain = max(Gain(40:70,neg_idx))';
+Out.PosCell_Gain = max(Gain(40:70,~neg_idx))';
 % seperate in to + and n
-PlotCI(Gain(70,neg_idx)')
-PlotCI(Gain(70,~neg_idx)',gcf)
+PlotCI(Out.NegCell_Gain)
+PlotCI(Out.PosCell_Gain,gcf)
 legend({'Neg-Gain','','Pos-Gain'})
 ylim([-15 5])
 
 if SaveName
     saveas(gcf,[SaveName '-AttentionalGainBar.pdf'])
+end
+
+Out.GainLevels = PlotLevelGain(Gain_levels);
+if SaveName
+    saveas(gcf,[SaveName '-AttentionalGain_Levels.pdf'])
+end
+
+
+
+
+
+
+
+
+
+function GainLevels = getActiveLevels(active,passive,final_idx,GainLevels)
+
+ Levels = [70,60,50];
+ LevelNames = {'SNR_20dB','SNR_10dB','SNR_0dB'};
+ 
+ for lvl = 1:length(Levels)
+     
+     lvl_idx = active.FreqLevelOrder{:,2} == Levels(lvl);
+     if any(lvl_idx)
+        DF_mu_active = squeeze(nanmean(active.DFF(:,lvl_idx,final_idx),2));
+        Gain_lvl = DF_mu_active(1:90,:) - passive;
+        GainLevels.(LevelNames{lvl}) = cat(2,GainLevels.(LevelNames{lvl}), Gain_lvl); 
+     end
+ end
+ 
+ 
+ 
+ 
+ function gain_levels = PlotLevelGain(gain_levels)
+        
+    
+f = fieldnames(gain_levels);
+n_levels = length(f);
+figure 
+
+for field_idx = 1 : n_levels
+    fname = f{field_idx};    
+    
+    Gain = gain_levels.(fname);  
+    
+    
+    neg_idx = max(Gain(40:70,:)) <= 0;
+    
+    subplot(1,n_levels,field_idx)
+    plotShadedErrorBar(Gain(:,neg_idx),'y')
+    hold on 
+    plotShadedErrorBar(Gain(:,~neg_idx),'y')
+    ylim([-20 10])
+    xticks(0:30:90)
+    xticklabels(1:3)
+    xlabel('Time (S)')
+    title(fname,'Interpreter','none')
+    
+    
 end 
+
+for field_idx = 1 : n_levels
+    
+    fname = f{field_idx};    
+    
+    Gain = gain_levels.(fname);  
+    
+    
+    neg_idx = max(Gain(40:70,:)) <= 0;
+    
+    pos_gain = mean(Gain(40:70,~neg_idx));
+    neg_gain  = mean(Gain(40:70,neg_idx));
+    
+    
+    gain_levels.pos_gain_levels{field_idx} = pos_gain;
+    gain_levels.neg_gain_levels{field_idx} = neg_gain;
+    
+      
+    
+end 
+
+
+
+
+
+
+ 
+ 
+ 
+
 
 
 

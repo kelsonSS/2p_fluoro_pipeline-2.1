@@ -1,8 +1,8 @@
-function [all_stats] = Compare2AnovaBehavior(behave1,behave2,GroupNames,levels,SaveName,varnames)
+function [all_stats] = Compare3AnovaBehavior(behave1,behave2,GroupNames,levels,SaveName,varnames)
 
-% extends Compare2Anova to work with behavioraldata
+% extends Compare2AnovaBehavior to perform a 3-way ANOVA
 
-% behave1 and 2 are now a N x 1 cell with each cell containing a vector
+% behave1 and 2 are now a   N X M  cell with each cell containing a vector
 % corresponding to the target variable at the Nth 'level'
 
 if ~ exist('SaveName','var')
@@ -35,7 +35,7 @@ all = cat(1,b1_flat,b2_flat);
 group_idx = cat(1,b1_group,b2_group);
 lvl_idx = cat(1,b1_levels,b2_levels);
 
-[x,main_effects,stats,z]= anovan(all,{group_idx,lvl_idx},'model','interaction','varnames',varnames);
+[x,main_effects,stats,z]= anovan(all,{group_idx,lvl_idx,condition_idx},'model','interaction','varnames',varnames);
 
 
 [Means,CIs]= getMeansAndCIs(behave1,behave2);
@@ -75,8 +75,6 @@ end
 
 all_stats.stats = stats;
 all_stats.main_effect = main_effects;
-all_stats.means = Means;
-all_stats.CIs = CIs;
 
 
 function full_lvls = getLevels(b,levels)
@@ -92,8 +90,7 @@ for curr_lvl = 1:length(b)
  lvl_idx = cat(1,lvl_idx,curr_idx);
 end 
 
-full_lvls = levels(lvl_idx);
-full_lvls = full_lvls(:);
+full_lvls = levels(lvl_idx)';
     
 
 function [Means,CIs] =  getMeansAndCIs( b1,b2)

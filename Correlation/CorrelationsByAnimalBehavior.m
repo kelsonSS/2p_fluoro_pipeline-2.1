@@ -1,8 +1,18 @@
-function Out = CorrelationsByAnimalBehavior(TNBehavior,normalized)
+function Out = CorrelationsByAnimalBehavior(TNBehavior,uLevels,Timing)
 
-if ~exist('normalized','var')
-    normalized = 0
+normalized = 0; % zero for DFF 1 for DFF_Z
+
+findLevels_flg = false;
+if ~exist('uLevels','var') || isempty(uLevels)
+    uLevels = [];
+    findLevels_flg = true;
 end 
+
+
+if ~exist('Timing','var')
+    Timing = 'Tone';
+end 
+
 
 
 Expt_num = length(TNBehavior);
@@ -16,15 +26,19 @@ for Expt = 1:Expt_num
     end
     active = TN.active.Activity;
     
-   FLO = TN.FreqLevelOrder;
-        uLevels = sort(unique(FLO.Levels),'descend');
+        FLO = TN.FreqLevelOrder;
+        
+        if findLevels_flg
+            uLevels = sort(unique(FLO.Levels),'descend');
+        end 
         L = length(uLevels);
         uFreqs = unique(FLO.Freqs);
         uFreqs = uFreqs(uFreqs < 60000);
     
     rep_mode = 10; % trials per unique condition
     
-    counts = histcounts2(FLO{:,1},FLO{:,2});
+    lvls_to_check = any(FLO{:,2} == uLevels,2);
+    counts = histcounts2(FLO{lvls_to_check,1},FLO{lvls_to_check,2});
     counts(counts == 0 ) =[];
     rep_mode = min(counts);
     
@@ -40,8 +54,14 @@ for Expt = 1:Expt_num
     if handles.BackgroundNoise(1) ~= -99
         soundon = min(soundon,handles.BackgroundNoise(2) * 30);
         soundoff = max(soundoff,handles.BackgroundNoise(3) * 30);
-end
+    end
 
+
+    % if specifically looking at prestim activity
+    if strcmp(Timing,'PreStim')
+        soundon = 1;
+        soundoff = soundon + handles.PreStimSilence * 30;
+    end 
     
     % unpack cells for this experiment and filter to only responsive cells      
    %  cells = TN.CellID{Expt}; could be used for spatial locations of each
@@ -88,6 +108,7 @@ end
             try
             Vec_DFF_Temp = Vec_DFF_Temp(:,1:rep_mode,:);
             catch
+                Vec_DFF_Temp = nan(size(Vec_DFF_Temp,1),rep_mode,size(Vec_DFF_Temp,3));
             end
           %  plot(Vec_DFF_Temp(:,:,1))
             % baseline = squeeze(nanmean(Vec_DFF_Temp(1:30,:,:),2));
@@ -119,32 +140,40 @@ end
     
     
     % subtract the mean for each sound/level to find residuals
-   % DFF_n = DFF_n2 - permute(repmat(DFF_mu,1,1,1,10),...
-   %                                  [4 2 1 3 ]);
+   % DFF_n = DFF_n2 - permute(repmat(DFF_mu,1,1,1,rep_mode),...
+   %                                  [1 2 4 3 ]);
                                  
-   % DFF_n2 = reshape(DFF_n2, 10 * 7 , 4, [] );           
-    
-  
+
     
     
     
     
     Corr{Expt_ID,1} = getCorrFromCov(cov(DF_flat));
+    
+  
+    
     NCorrAll{Expt_ID,1} = getCorrFromCov( cov(...
                  reshape( DFF_n2(:,:,:,:),...
                           [] , n_neurons) ) );
     
     clear DF_flat
-%     for Lvl = 1:size(DFF_mu,1);
-%     LCorr{Expt_ID,Lvl} = getCorrFromCov(cov(squeeze(DFF_mu(:,:,:))));
-%     %NCorr{Expt,Lvl}  = getCorrFromCov(cov(squeeze(DFF_n(:,Lvl,:))));
-%     
-%     NCorr2{Expt_ID,Lvl} = getCorrFromCov( cov(...
-%                 reshape( DFF_n2(lvl,:,:,:),...
-%                          [] , n_neurons) ) );
-%     end 
-%  
-    Expt_ID = Expt_ID + 1 ;
+     for Lvl = 1:size(DFF_mu,1)
+ 
+   %     LCorr{Expt_ID,Lvl} = getCorrFromCov(cov(squeeze(DFF_mu(Lvl,:,:))));
+        
+        cov_mat = cov( reshape( DFF_n2(Lvl,:,:,:),[],n_neurons) );
+    
+        if all(isnan(cov_mat(:))) || length(cov_mat) == 1 % if we cannot find covarience return NAs
+            NCorr2{Expt_ID,Lvl} = nan(n_neurons);
+        else 
+            
+            NCorr2{Expt_ID,Lvl} = getCorrFromCov( cov_mat );
+       
+        end 
+        
+     end
+     
+     Expt_ID = Expt_ID + 1 ;
       clear DFF_mu
       clear DFF_n2
       clear DFF_c
@@ -154,10 +183,11 @@ end
 %analysis
 
 disp('Analyzing Noise Statistics')
-%[N_mu,N_std,N_CI,N_sig] = getCorrStatistics(NCorr,'Noise');
+[~,~,~,~,~,NCorrAnimal] = getCorrStatistics(NCorr2,'Noise');
 [~,~,~,~,~,NCorrAllAnimal] = getCorrStatistics(NCorrAll,'Noise2'); 
 %disp('Analyzing Signal Statistics')
 [~,~,~,~,~,CorrAnimal] = getCorrStatistics(Corr,'Signal'); 
+%[~,~,~,~,~,LCorrAnimal] = getCorrStatistics(LCorr,'Signal');
 %  Older version - Delete if above is running fine 
 %  LCorr_flat = cell2mat(cellfun(@(x)x(:),LCorr,'UniformOutput',0));
 %  NCorr_flat = cell2mat(cellfun(@(x)x(:),NCorr,'UniformOutput',0));
@@ -198,10 +228,12 @@ disp('Analyzing Noise Statistics')
 
 %% packaging
     Out.Corr = Corr;
-    Out.LCorr = Corr;
-    Out.LCorrAnimal = CorrAnimal;
-    Out.NCorr = NCorrAll;
+   % Out.LCorr = LCorr;
+   % Out.LCorrAnimal = LCorrAnimal;
+    Out.NCorrAll = NCorrAll;
     Out.NCorrAnimal = NCorrAllAnimal;
+    Out.NCorr = NCorr2;
+    Out.NCorrAnimal = NCorrAnimal;
     %Out.NCorr = NCorr2;
     %Out.NCorrAnimal = N_mu_expt;
     %%Out.Signal_Sig = L_sig;

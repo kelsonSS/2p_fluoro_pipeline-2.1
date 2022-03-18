@@ -89,6 +89,7 @@ main_effects_P_value = main_effects(2:3,end);
      saveas(gcf,sprintf('%s -MainEffectsPlot.pdf',SaveName) )
  end 
 
+ all_stats.main_effects = main_effects
 
 if length(levels) > 1
     figure

@@ -55,7 +55,9 @@ detectLevels = detectLevelSNR  + noise_level;
         all_miss_temp = squeeze(nanmean(F(:,all_lvl_idx & miss_idx,:),2));
         all_early_temp = squeeze(nanmean(F(:,all_lvl_idx & early_idx,:),2));
         
-        
+        all_hits_temp = correctBaseline(all_hits_temp,5);
+        all_miss_temp = correctBaseline(all_miss_temp,5);
+        all_early_temp = correctBaseline(all_early_temp,5);
         
         Out.All.Hits = cat(2,Out.All.Hits,all_hits_temp);
         Out.All.Miss = cat(2,Out.All.Miss,all_miss_temp);
@@ -93,6 +95,19 @@ detectLevels = detectLevelSNR  + noise_level;
 end 
 
 
+function  DF_Corrected = correctBaseline(DF,baseline_frames)
+
+% baseline correction
+trialdur = size(DF,1);
+
+B_Vec = repmat(nanmean(DF(1:baseline_frames,:)),[trialdur,1]);
+DF_Corrected = DF -B_Vec;
+
+
+
+
+end 
+
 
 function Out =CreateOutputStructure(levels)
 
@@ -127,49 +142,91 @@ for lvl =1:length(f)
  miss_neg = Out.(f{lvl}).Miss(:,~pos_idx);
  early_pos = Out.(f{lvl}).Early(:,pos_idx);
  early_neg = Out.(f{lvl}).Early(:,~pos_idx);
- figure; hold on
-shadedErrorBar([],nanmean(hits_pos,2),nanstd(hits_pos,[],2)/ sqrt(length(hits_pos)) * 1.96, 'b')
-shadedErrorBar([],nanmean(miss_pos,2),nanstd(miss_pos,[],2)/ sqrt(length(miss_pos)) * 1.96 )
-%shadedErrorBar([],nanmean(early_pos,2),nanstd(early_pos,[],2)/ sqrt(length(early_pos)) * 1.96,'r')
-title_name = sprintf('%s-pos',f{lvl});
-title(title_name,'Interpreter','none');
-%ylim([-1 5])
-print(fullfile(out_path,[title_name '.pdf']),'-dpdf')
-
- figure; hold on
-shadedErrorBar([],nanmean(hits_neg,2),nanstd(hits_neg,[],2)/ sqrt(length(hits_neg)) * 1.96, 'b')
-shadedErrorBar([],nanmean(miss_neg,2),nanstd(miss_neg,[],2)/ sqrt(length(miss_neg)) * 1.96 )
-%shadedErrorBar([],nanmean(early_neg,2),nanstd(early_neg,[],2)/ sqrt(length(early_neg)) * 1.96,'r')
-title_name = sprintf('%s-neg',f{lvl});
-title(title_name,'Interpreter','none');
-%ylim([-5 1])
-print(fullfile(out_path,[title_name '.pdf']),'-dpdf')
-
-
-
-
-
- figure
- shadedErrorBar([],nanmean(hits_pos - miss_pos,2),...
-                   nanstd(hits_pos - miss_pos,[],2)/ sqrt(length(hits_pos)) * 1.96)
- title_name =sprintf('%s: Hit-miss-pos',f{lvl});
-% ylim([-5 5])
-  title(title_name ,'Interpreter','none');
  
- 
- print(fullfile(out_path, sprintf('%s_HitMissDiff-pos.pdf',f{lvl}) ),'-dpdf' ) 
+ lvl_name = strrep(f{lvl},'-','_');
+ % plot pos
+ title_name = sprintf('%s_pos',lvl_name);
+ PlotFigs(hits_pos,miss_pos,early_pos,title_name,[-2 18])
+ PlotFigs(hits_pos(1:30,:),miss_pos(1:30,:),early_pos(1:30,:),['prestim_' title_name],[-3 4])
+% plot neg
+ title_name = sprintf('%s_neg',lvl_name);
+ PlotFigs(hits_neg,miss_neg,early_neg,title_name,[-20 5])
+ PlotFigs(hits_neg(1:30,:),miss_neg(1:30,:),early_neg(1:30,:),['prestim_' title_name],[-8 6]) 
 
-  figure
- shadedErrorBar([],nanmean(hits_neg - miss_neg,2),...
-                   nanstd(hits_neg - miss_neg,[],2)/ sqrt(length(hits_neg)) * 1.96)
- title_name =sprintf('%s: Hit-miss-neg',f{lvl});
-  title(title_name ,'Interpreter','none');
- % ylim([-5 5])
- 
- print(fullfile(out_path, sprintf('%s_HitMissDiff-neg.pdf',f{lvl}) ),'-dpdf' ) 
 
+%% old figs 
+% 
+%  figure
+%  shadedErrorBar([],nanmean(hits_pos - miss_pos,2),...
+%                    nanstd(hits_pos - miss_pos,[],2)/ sqrt(length(hits_pos)) * 1.96)
+%  title_name =sprintf('%s: Hit-miss-pos',f{lvl});
+% % ylim([-5 5])
+%   title(title_name ,'Interpreter','none');
+%  
+%  
+%  print(fullfile(out_path, sprintf('%s_HitMissDiff-pos.pdf',f{lvl}) ),'-dpdf' ) 
+% 
+%   figure
+%  shadedErrorBar([],nanmean(hits_neg - miss_neg,2),...
+%                    nanstd(hits_neg - miss_neg,[],2)/ sqrt(length(hits_neg)) * 1.96)
+%  title_name =sprintf('%s: Hit-miss-neg',f{lvl});
+%   title(title_name ,'Interpreter','none');
+%  % ylim([-5 5])
+%  
+%  print(fullfile(out_path, sprintf('%s_HitMissDiff-neg.pdf',f{lvl}) ),'-dpdf' ) 
+% 
 
  
 
 end 
+
+PlotDiffFig(Out,f)
+
+end 
+
+
+function PlotDiffFig(Out,lvls)
+
+hits_high = Out.(lvls{1}).Hits;
+
+
+end 
+
+
+function PlotFigs(hits,miss,early,title_name,y_lim)
+if ~exist('y_lim','var')
+    y_lim = [];
+end 
+hits = correctBaseline(hits,10);
+miss = correctBaseline(miss,10);
+early = correctBaseline(early,10);
+
+
+ShadedErrorBarFig(hits,miss,early,title_name,y_lim)
+BarPlotFig(hits,miss,early,title_name)
+
+end 
+
+function ShadedErrorBarFig(hits,miss,early,title_name,y_lim)
+
+figure; hold on
+ 
+
+shadedErrorBar([],nanmean(hits,2),nanstd(hits,[],2)/ sqrt(length(hits)) * 1.96, 'g')
+shadedErrorBar([],nanmean(miss,2),nanstd(miss,[],2)/ sqrt(length(miss)) * 1.96 ,'k' )
+shadedErrorBar([],nanmean(early,2),nanstd(early,[],2)/ sqrt(length(early)) * 1.96,'m')
+title(title_name,'Interpreter','none');
+if y_lim
+    ylim(y_lim)
+end 
+%ylim([-1 5])
+xticks(0:30:120)
+xticklabels(0:4)
+xlabel('Time (S)')
+   
+print([title_name '.pdf'],'-dpdf')
+end 
+
+function BarPlotFig(hits,miss,early,title_name)
+
 end 

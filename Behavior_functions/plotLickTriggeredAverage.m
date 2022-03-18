@@ -1,4 +1,8 @@
-function plotLickTriggeredAverage(TNBehavior)
+function plotLickTriggeredAverage(TNBehavior,SaveName)
+
+if ~exist('SaveName','var')
+    SaveName = []
+end 
 
 if ~exist('pad_size','var')
     pad_size = 5;
@@ -22,7 +26,7 @@ HitLick_DFFs = [];
     end  
     
     figure
-    plotShadedErrorBar(data,'k')
+    plotShadedErrorBar(correctBaseline(data,10),'k')
     shifted_xticks = arrayfun(@num2str,[1:size(data,1)]-pad_size,'UniformOutput',0)
     hold on 
     xlim([1 10])
@@ -32,6 +36,9 @@ HitLick_DFFs = [];
     xlabel('time rel. lick')
     plot([5 5],[0 20],'k--')
     title("Lick Triggered Average")
+    if SaveName
+        saveas(gcf, [SaveName , '-LickTriggeredAverage.pdf'])
+    end 
     
 end
 
@@ -151,6 +158,18 @@ end
 end 
 
 
+function  DF_Corrected = correctBaseline(DF,baseline_frames)
+
+% baseline correction
+trialdur = size(DF,1);
+
+B_Vec = repmat(nanmean(DF(1:baseline_frames,:)),[trialdur,1]);
+DF_Corrected = DF -B_Vec;
+
+
+
+
+end 
 
 
 

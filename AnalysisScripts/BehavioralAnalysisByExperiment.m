@@ -40,14 +40,13 @@ for expt_idx = 1:length(ActiveFolders)
         expt = ExtractAnimalBehaviorDaily(psigDay,daily_plot_flag);
         % munge into correct form for concatenation
         results.DprimeTotal = expt.DprimeTotal;
-        results.Dprime2 = expt.Dprime2;
         results.numTrials = sum(expt.TrialsPerLevel);
         results.HitRate = expt.HitRate(end);
         results.EarlyRate = expt.EarlyRate(end);
-        results.EarlyRate2 = expt.EarlyRate2;
         results.MissRate = expt.MissRate(end);
         results.SNRs = {expt.SNR};
         results.PercentCorrectLevel = {expt.PercentCorrect};
+        results.PercentEarlyLevel = {expt.PercentEarly};
         results.dPrimeLevel = {expt.DprimeLevel};
 
         % Package into Output Structure

@@ -25,13 +25,20 @@ hold off
 
 function [Grouped_means,Grouped_CI] = Analyze(x1,x2)
 
+if iscell(x1)
+  Grouped_means = [cellfun(@nanmean,x1),cellfun(@nanmean,x2)];
+  Grouped_CI =   [cellfun(@CI_95,x1),cellfun(@CI_95,x2)];
+    
+else 
+    Grouped_means = [nanmean(x1);nanmean(x2)];
 
-Grouped_means = [nanmean(x1);nanmean(x2)];
-
-Grouped_CI = [ nanstd(x1) / sqrt(size(x1,1)) * 1.96 ;  nanstd(x2) / sqrt(size(x2,1)) * 1.96];
-      
+    Grouped_CI = [ nanstd(x1) / sqrt(size(x1,1)) * 1.96 ;  nanstd(x2) / sqrt(size(x2,1)) * 1.96];
+end 
           
-          
+ 
+function CI = CI_95(x) 
+CI = nanstd(x) / sqrt(size(x,1)) * 1.96;
+ 
           
 
 

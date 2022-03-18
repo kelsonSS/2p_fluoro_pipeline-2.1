@@ -1,9 +1,10 @@
-function CompareCorrsByDistance(C1,C2,SaveName) 
+function out= CompareCorrsByDistanceBehavior(Young,Old,SaveName) 
 
+out.Young = Young;
+out.Old = Old;
 
-
-%PlotCorrs(C1.LCorr,C2.LCorr,C1.BinSize,[SaveName '-', 'SignalCorr'])
-PlotCorrs(C1.NCorr,C2.NCorr,C1.BinSize,[SaveName '-', 'NoiseCorr'])
+%PlotCorrs(Young.LCorr,Old.LCorr,Young.BinSize,[SaveName '-', 'SignalCorr'])
+PlotCorrs(Young.NCorr,Old.NCorr,Young.BinSize,[SaveName '-', 'NoiseCorr'])
 
 
 
@@ -13,10 +14,10 @@ function PlotCorrs(C1,C2,BinSizeMicrons,SaveName)
 
 
 x = [0:BinSizeMicrons:(size(C1.Cell_mu,1)-1)*BinSizeMicrons];
-levelTitles = {'Tones','+20','+10','0'}
+levelTitles = {'+20','+10','0'}
 
 figure
-for ii =1:4
+for ii =1:3
 subplot(2,2,ii)
 shadedErrorBar(x,C1.Cell_mu(:,ii),C1.Cell_CI(:,ii),'b'); hold on
 shadedErrorBar(x,C2.Cell_mu(:,ii),C2.Cell_CI(:,ii),'k'); 
